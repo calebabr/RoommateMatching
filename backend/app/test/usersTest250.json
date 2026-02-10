@@ -1,0 +1,5754 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 2,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 3,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 4,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 5,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 6,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 7,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 8,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 9,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 10,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 11,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 12,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 13,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 14,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 15,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 16,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 17,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 18,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 19,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 20,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 21,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 22,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 23,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 24,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 25,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 26,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 27,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 28,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 29,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 30,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 31,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 32,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 33,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 34,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 35,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 36,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 37,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 38,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 39,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 40,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 41,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 42,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 43,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 44,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 45,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 46,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 47,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 48,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 49,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 50,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 51,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 52,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 53,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 54,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 55,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 56,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 57,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 58,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 59,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 60,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 61,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 62,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 63,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 64,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 65,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 66,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 67,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 68,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 69,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 70,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 71,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 72,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 73,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 74,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 75,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 76,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 77,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 78,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 79,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 80,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 81,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 82,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 83,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 84,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 85,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 86,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 87,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 88,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 89,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 90,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 91,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 92,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 93,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 94,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 95,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 96,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 97,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 98,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 99,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 100,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 101,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 102,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 103,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 104,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 105,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 106,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 107,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 108,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 109,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 110,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 111,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 112,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 113,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 114,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 115,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 116,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 117,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 118,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 119,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 120,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 121,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 122,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 123,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 124,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 125,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 126,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 127,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 128,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 129,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 130,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 131,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 132,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 133,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 134,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 135,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 136,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 137,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 138,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 139,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 140,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 141,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 142,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 143,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 144,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 145,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 146,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 147,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 148,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 149,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 150,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 151,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 152,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 153,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 154,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 155,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 156,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 157,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 158,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 159,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 160,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 161,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 162,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 163,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 164,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 165,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 166,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 167,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 168,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 169,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 170,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 171,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 172,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 173,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 174,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 175,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 176,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 177,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 178,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 179,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 180,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 181,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 182,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 183,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 184,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 185,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 186,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 187,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 188,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 189,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 190,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 191,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 192,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 193,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 194,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 195,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 196,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 197,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 198,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 199,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 200,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 201,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 202,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 203,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 204,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 205,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 206,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 207,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 21,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 208,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 209,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 210,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 211,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 212,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 213,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 214,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 215,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 216,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 217,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 218,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 219,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 8,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 220,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 221,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 222,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 223,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 224,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 225,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 3,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 226,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 227,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 228,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 229,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 230,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 231,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 25,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 232,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 233,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 234,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 235,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 236,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 237,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 238,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 239,
+      "sleepScoreWD": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 23,
+        "isDealBreaker": true
+      },
+      "cleanlinessScore": {
+        "value": 8,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 240,
+      "sleepScoreWD": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 20,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 1,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 241,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 10,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 2,
+        "isDealBreaker": true
+      },
+      "guestsScore": {
+        "value": 4,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 242,
+      "sleepScoreWD": {
+        "value": 23,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 24,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 243,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 244,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 7,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 8,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 245,
+      "sleepScoreWD": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 2,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 7,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 246,
+      "sleepScoreWD": {
+        "value": 21,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 22,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 9,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 2,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 247,
+      "sleepScoreWD": {
+        "value": 0,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 6,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 248,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 1,
+        "isDealBreaker": true
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 9,
+        "isDealBreaker": false
+      }
+    },
+    {
+      "id": 249,
+      "sleepScoreWD": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 3,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 9,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 5,
+        "isDealBreaker": true
+      }
+    },
+    {
+      "id": 250,
+      "sleepScoreWD": {
+        "value": 1,
+        "isDealBreaker": false
+      },
+      "sleepScoreWE": {
+        "value": 4,
+        "isDealBreaker": false
+      },
+      "cleanlinessScore": {
+        "value": 6,
+        "isDealBreaker": false
+      },
+      "noiseToleranceScore": {
+        "value": 5,
+        "isDealBreaker": false
+      },
+      "guestsScore": {
+        "value": 10,
+        "isDealBreaker": false
+      }
+    }
+  ]
+}
