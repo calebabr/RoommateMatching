@@ -3,11 +3,12 @@ import math
 class matchScore:
     def __init__(self):
         self.categoryRange = {
-            "sleepScheduleWeekdays": [24, 0.125],
+            "sleepScheduleWeekdays": [24, 0.125], # 3 hours difference is a dealbreaker. Value should correspond to
+                                                # the military time equivalent to the user's quiet hours
             "sleepScheduleWeekends": [24, 0.125],
-            "cleanliness": [10, 0.2],
-            "noiseTolerance": [10, 0.2],
-            "guests": [10, 1.0],
+            "cleanliness": [10, 0.2], # range of 0-10, 2 point difference is dealbreaker. 0 is messy, 10 is neat freak
+            "noiseTolerance": [10, 0.2], # range of 0-10, 2 point difference is dealbreaker, 0 is quiet, 10 is very loud
+            "guests": [10, 1.0], # range of 0-10. no dealbreaker range. dealbreaker is defined if one person doesn't want people over. 0 means people will not be over a lot, 10 means people will always be visiting
         }
 
     def dealBreak(self, category, user1, user2) -> float:

@@ -1,19 +1,46 @@
-from pydantic import BaseModel, Field
-from typing import List, Tuple
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
+
+# --- Preference ---
 
 class Preference(BaseModel):
     value: float
     isDealBreaker: bool
 
-class User(BaseModel):
-    id: int
+# --- User Models ---
+
+class UserCreate(BaseModel):
+    username: str
     sleepScoreWD: Preference
     sleepScoreWE: Preference
     cleanlinessScore: Preference
     noiseToleranceScore: Preference
     guestsScore: Preference
 
-    def toDict(self):
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    matched: bool
+    matchedWith: Optional[int] = None
+    sleepScoreWD: Preference
+    sleepScoreWE: Preference
+    cleanlinessScore: Preference
+    noiseToleranceScore: Preference
+    guestsScore: Preference
+
+class UserInDB(BaseModel):
+    id: int
+    username: str
+    matched: bool = False
+    matchedWith: Optional[int] = None
+    sleepScoreWD: Preference
+    sleepScoreWE: Preference
+    cleanlinessScore: Preference
+    noiseToleranceScore: Preference
+    guestsScore: Preference
+
+    def toMatchDict(self):
         return {
             "id": self.id,
             "sleepScheduleWeekdays": [self.sleepScoreWD.value, self.sleepScoreWD.isDealBreaker],
@@ -24,10 +51,12 @@ class User(BaseModel):
         }
 
 class UserDB(BaseModel):
-    users: list[User]
+    users: list[UserInDB]
 
     def toDict(self):
-        return {user.id: user.toDict() for user in self.users}
+        return {user.id: user.toMatchDict() for user in self.users}
+
+# --- Match Score Models ---
 
 class MatchScoreRequest(BaseModel):
     user1_id: int
@@ -38,6 +67,44 @@ class MatchResult(BaseModel):
     user2_id: int
     compatibilityScore: float
 
+class MatchRequest(BaseModel):
+    user1: UserInDB
+    user2: UserInDB
+
 class MatchListResult(BaseModel):
     matches: list[MatchResult]
     unmatched_users: list[int]
+
+# --- Like Models ---
+
+class LikeRequest(BaseModel):
+    toUser: int
+
+class LikeResponse(BaseModel):
+    status: str
+    matchedWith: Optional[int] = None
+    likedUser: Optional[int] = None
+
+class Like(BaseModel):
+    fromUser: int
+    toUser: int
+    createdAt: Optional[datetime] = None
+
+# --- Confirmed Match Models ---
+
+class ConfirmedMatch(BaseModel):
+    user1_id: int
+    user2_id: int
+    compatibilityScore: float
+    confirmedAt: Optional[datetime] = None
+
+# --- Recommendation Models ---
+
+class TopMatchesResponse(BaseModel):
+    userId: int
+    matches: list[MatchResult]
+
+class RecommendationMatch(BaseModel):
+    user_id: int
+    compatibilityScore: float
+

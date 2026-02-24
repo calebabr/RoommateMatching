@@ -6,12 +6,16 @@ from app.services.matchingUsers import matchingUsers
 
 from app.models import(
     Preference,
-    User,
-    MatchScoreRequest,
+    UserCreate,
+    UserResponse,
+    UserInDB,
+    UserDB,
+    MatchRequest,
     MatchResult,
     MatchListResult,
-    UserDB
+    MatchScoreRequest,
 )
+
 router = APIRouter()
 matchScoreCalculator = matchScore()
 matchingService = matchingUsers()
