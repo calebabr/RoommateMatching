@@ -4,9 +4,8 @@ from app.services.clusterService import ClusterService
 from app.database import recommendations_collection
 
 class RecommendationService:
-    def __init__(self, cluster_service: ClusterService):
+    def __init__(self):
         self.scorer = matchScore()
-        self.cluster_service = cluster_service
         self.recommendations = recommendations_collection
 
     async def recompute_for_user(self, target_user: dict, candidate_users: list[dict], n=10):
@@ -49,14 +48,5 @@ class RecommendationService:
         await self.recommendations.delete_one({"userId": matched_user_id})
 
     async def recompute_all(self, all_users: list[dict]):
-        self.cluster_service.fit(all_users)
-
         for user in all_users:
-            cluster_id = self.cluster_service.assign_cluster(user)
-            await self.cluster_service.store_user_cluster(user["id"], cluster_id)
-
-            nearby = self.cluster_service.get_nearby_clusters(cluster_id)
-            member_ids = await self.cluster_service.get_cluster_members(nearby)
-            candidates = [u for u in all_users if u["id"] in member_ids]
-
-            await self.recompute_for_user(user, candidates)
+            await self.recompute_for_user(user, all_users)

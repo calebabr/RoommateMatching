@@ -394,7 +394,7 @@ export default function RoomMatchDashboard() {
                 e.currentTarget.style.background = "#fafbfd";
               }}
             >
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
+              <div style={{ fontSize: 40, marginBottom: 12 }}></div>
               <span style={{ fontWeight: 600, color: "#2d3142", fontSize: 15, marginBottom: 4 }}>
                 Drop your JSON file here or click to browse
               </span>
@@ -421,7 +421,7 @@ export default function RoomMatchDashboard() {
                   boxShadow: users.length >= 2 ? "0 4px 16px rgba(45,49,66,0.2)" : "none",
                 }}
               >
-                {loading ? "Computing..." : "⚡ Recompute Matches"}
+                {loading ? "Computing..." : "Recompute Matches"}
               </button>
             </div>
           </div>
@@ -457,11 +457,11 @@ export default function RoomMatchDashboard() {
               />
             </div>
 
-            <PrefSlider label="🌙 Sleep Schedule (Weekdays)" value={sleepWD} onChange={setSleepWD} min={0} max={24} isDealBreaker={sleepWDdb} onDealBreakerChange={setSleepWDdb} />
-            <PrefSlider label="🌙 Sleep Schedule (Weekends)" value={sleepWE} onChange={setSleepWE} min={0} max={24} isDealBreaker={sleepWEdb} onDealBreakerChange={setSleepWEdb} />
-            <PrefSlider label="🧹 Cleanliness" value={clean} onChange={setClean} min={1} max={10} isDealBreaker={cleanDb} onDealBreakerChange={setCleanDb} />
-            <PrefSlider label="🔊 Noise Tolerance" value={noise} onChange={setNoise} min={1} max={10} isDealBreaker={noiseDb} onDealBreakerChange={setNoiseDb} />
-            <PrefSlider label="👥 Guests" value={guests} onChange={setGuests} min={1} max={10} isDealBreaker={guestsDb} onDealBreakerChange={setGuestsDb} />
+            <PrefSlider label="Sleep Schedule (Weekdays)" value={sleepWD} onChange={setSleepWD} min={0} max={24} isDealBreaker={sleepWDdb} onDealBreakerChange={setSleepWDdb} />
+            <PrefSlider label="Sleep Schedule (Weekends)" value={sleepWE} onChange={setSleepWE} min={0} max={24} isDealBreaker={sleepWEdb} onDealBreakerChange={setSleepWEdb} />
+            <PrefSlider label="Cleanliness" value={clean} onChange={setClean} min={1} max={10} isDealBreaker={cleanDb} onDealBreakerChange={setCleanDb} />
+            <PrefSlider label="Noise Tolerance" value={noise} onChange={setNoise} min={1} max={10} isDealBreaker={noiseDb} onDealBreakerChange={setNoiseDb} />
+            <PrefSlider label="Guests" value={guests} onChange={setGuests} min={1} max={10} isDealBreaker={guestsDb} onDealBreakerChange={setGuestsDb} />
 
             <button
               onClick={handleCreateUser}
@@ -565,11 +565,11 @@ export default function RoomMatchDashboard() {
                       </div>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12, color: "#5c6078" }}>
-                      <div>🌙 Sleep WD: <strong>{u.sleepScoreWD?.value}</strong></div>
-                      <div>🌙 Sleep WE: <strong>{u.sleepScoreWE?.value}</strong></div>
-                      <div>🧹 Clean: <strong>{u.cleanlinessScore?.value}</strong></div>
-                      <div>🔊 Noise: <strong>{u.noiseToleranceScore?.value}</strong></div>
-                      <div>👥 Guests: <strong>{u.guestsScore?.value}</strong></div>
+                      <div>Sleep WD: <strong>{u.sleepScoreWD?.value}</strong></div>
+                      <div>Sleep WE: <strong>{u.sleepScoreWE?.value}</strong></div>
+                      <div>Clean: <strong>{u.cleanlinessScore?.value}</strong></div>
+                      <div>Noise: <strong>{u.noiseToleranceScore?.value}</strong></div>
+                      <div>Guests: <strong>{u.guestsScore?.value}</strong></div>
                     </div>
                   </div>
                 ))}
@@ -599,10 +599,10 @@ export default function RoomMatchDashboard() {
                     </div>
                     <div style={{ fontSize: 20, fontWeight: 700 }}>{selectedUserData.username}</div>
                     <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 13, color: "#b0b3c0" }}>
-                      <span>🌙 {selectedUserData.sleepScoreWD?.value}h</span>
-                      <span>🧹 {selectedUserData.cleanlinessScore?.value}/10</span>
-                      <span>🔊 {selectedUserData.noiseToleranceScore?.value}/10</span>
-                      <span>👥 {selectedUserData.guestsScore?.value}/10</span>
+                      <span>{selectedUserData.sleepScoreWD?.value}h</span>
+                      <span>{selectedUserData.cleanlinessScore?.value}/10</span>
+                      <span>{selectedUserData.noiseToleranceScore?.value}/10</span>
+                      <span>{selectedUserData.guestsScore?.value}/10</span>
                     </div>
                   </div>
                 )}
@@ -613,7 +613,7 @@ export default function RoomMatchDashboard() {
                   </div>
                 ) : topMatches.length === 0 ? (
                   <div style={{ ...cardStyle, textAlign: "center", padding: 48 }}>
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>😕</div>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}></div>
                     <p style={{ color: "#8b8fa3", fontSize: 14 }}>
                       No matches found. Make sure you've run Recompute Matches.
                     </p>
@@ -675,10 +675,10 @@ export default function RoomMatchDashboard() {
                             <ScoreBar score={m.compatibilityScore} />
                             {detail && (
                               <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#5c6078", marginTop: 4 }}>
-                                <span>🌙 {detail.sleepScoreWD?.value}h</span>
-                                <span>🧹 {detail.cleanlinessScore?.value}/10</span>
-                                <span>🔊 {detail.noiseToleranceScore?.value}/10</span>
-                                <span>👥 {detail.guestsScore?.value}/10</span>
+                                <span>{detail.sleepScoreWD?.value}h</span>
+                                <span>{detail.cleanlinessScore?.value}/10</span>
+                                <span>{detail.noiseToleranceScore?.value}/10</span>
+                                <span>{detail.guestsScore?.value}/10</span>
                               </div>
                             )}
                           </div>

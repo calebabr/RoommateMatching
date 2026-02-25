@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from app.services.userProfileService import UserProfileService
-from app.services.clusterService import ClusterService
 from app.services.recommendationService import RecommendationService
 from app.services.likeService import LikeService
 from app.models import (
@@ -10,14 +9,12 @@ from app.models import (
     TopMatchesResponse,
     LikeRequest,
     LikeResponse,
-    MatchResult,
 )
 
 router = APIRouter()
 
 userProfileService = UserProfileService()
-clusterService = ClusterService()
-recommendationService = RecommendationService(clusterService)
+recommendationService = RecommendationService()
 likeService = LikeService()
 
 # --- User CRUD ---
@@ -35,10 +32,26 @@ async def get_all_users():
 async def create_user(user: UserCreate):
     try:
         user_data = user.model_dump()
+        print("USER DATA:", user_data)
         result = await userProfileService.create_user(user_data)
+        print("RESULT:", result)
+
+        # Auto-recompute for this user
+        users = await userProfileService.get_all_active_users()
+        if len(users) >= 2:
+            user_dicts = [UserInDB(**u).toMatchDict() for u in users]
+            new_user_dict = UserInDB(**result).toMatchDict()
+            await recommendationService.on_new_user(new_user_dict, user_dicts)
+
         return result
     except ValueError as e:
+        print("VALUE ERROR:", str(e))
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print("ERROR:", type(e).__name__, str(e))
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(user_id: int):

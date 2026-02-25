@@ -4,6 +4,8 @@ import json
 from app.services.matchScore import matchScore
 from app.services.matchingUsers import matchingUsers
 from app.services.userProfileService import UserProfileService
+from app.services.recommendationService import RecommendationService
+
 from app.models import (
     UserInDB,
     UserDB,
@@ -16,6 +18,7 @@ router = APIRouter()
 matchScoreCalculator = matchScore()
 matchingService = matchingUsers()
 userProfileService = UserProfileService()
+recommendationService = RecommendationService()
 
 @router.post("/matchScore", response_model=MatchResult)
 async def calculateMatchScore(request: MatchScoreRequest):
@@ -36,13 +39,25 @@ async def upload_users(file: UploadFile = File(...)):
     contents = await file.read()
     data = json.loads(contents)
 
+    created = 0
+    skipped = 0
     for user_data in data["users"]:
         try:
             await userProfileService.create_user(user_data)
+            created += 1
         except ValueError:
-            continue
+            skipped += 1
 
-    return {"message": f"Uploaded {len(data['users'])} users"}
+    # Auto-recompute after upload
+    users = await userProfileService.get_all_active_users()
+    if len(users) >= 2:
+        user_dicts = []
+        for u in users:
+            user_in_db = UserInDB(**u)
+            user_dicts.append(user_in_db.toMatchDict())
+        await recommendationService.recompute_all(user_dicts)
+
+    return {"message": f"Created {created} users, skipped {skipped} duplicates. Recommendations computed."}
 
 @router.post("/match", response_model=MatchListResult)
 async def find_all_matches():

@@ -100,9 +100,13 @@ class ConfirmedMatch(BaseModel):
 
 # --- Recommendation Models ---
 
+class RecommendationMatch(BaseModel):
+    user_id: int
+    compatibilityScore: float
+
 class TopMatchesResponse(BaseModel):
     userId: int
-    matches: list[MatchResult]
+    matches: list[RecommendationMatch]
 
 class RecommendationMatch(BaseModel):
     user_id: int
