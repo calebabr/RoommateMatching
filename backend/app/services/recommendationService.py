@@ -1,6 +1,5 @@
 from datetime import datetime
 from app.services.matchScore import matchScore
-from app.services.clusterService import ClusterService
 from app.database import recommendations_collection
 
 class RecommendationService:
@@ -33,19 +32,38 @@ class RecommendationService:
         result = await self.recommendations.find_one({"userId": user_id})
         return result["matches"] if result else []
 
-    async def on_new_user(self, new_user: dict, all_cluster_users: list[dict]):
-        await self.recompute_for_user(new_user, all_cluster_users)
+    async def on_new_user(self, new_user: dict, all_users: list[dict]):
+        # Compute recommendations for the new user
+        await self.recompute_for_user(new_user, all_users)
 
-        for user in all_cluster_users:
+        # Recompute for everyone since new user is now available
+        for user in all_users:
             if user["id"] != new_user["id"]:
-                await self.recompute_for_user(user, all_cluster_users)
+                await self.recompute_for_user(user, all_users)
 
     async def on_user_matched(self, matched_user_id: int):
+        # Remove matched user from everyone's recommendations
         await self.recommendations.update_many(
             {},
             {"$pull": {"matches": {"user_id": matched_user_id}}}
         )
+        # Delete matched user's own recommendations
         await self.recommendations.delete_one({"userId": matched_user_id})
+
+    async def on_user_unmatched(self, user_id: int, all_users: list[dict]):
+        # User is back in the pool, recompute their recommendations
+        user_dict = None
+        for u in all_users:
+            if u["id"] == user_id:
+                user_dict = u
+                break
+
+        if user_dict:
+            await self.recompute_for_user(user_dict, all_users)
+            # Also update everyone else since this user is available again
+            for user in all_users:
+                if user["id"] != user_id:
+                    await self.recompute_for_user(user, all_users)
 
     async def recompute_all(self, all_users: list[dict]):
         for user in all_users:

@@ -1,10 +1,9 @@
 from datetime import datetime
-from app.database import users_collection
+from app.database import users_collection, likes_collection, recommendations_collection, matches_collection
 
 class UserProfileService:
     def __init__(self):
         self.collection = users_collection
-        self.counter = 0
 
     async def get_next_id(self) -> int:
         last_user = await self.collection.find_one(sort=[("id", -1)])
@@ -46,6 +45,28 @@ class UserProfileService:
 
     async def delete_user(self, user_id: int) -> bool:
         result = await self.collection.delete_one({"id": user_id})
+
+        # Clean up all related data
+        await likes_collection.delete_many({
+            "$or": [{"fromUser": user_id}, {"toUser": user_id}]
+        })
+        await recommendations_collection.update_many(
+            {},
+            {"$pull": {"matches": {"user_id": user_id}}}
+        )
+        await recommendations_collection.delete_one({"userId": user_id})
+        await matches_collection.delete_many({
+            "$or": [{"user1_id": user_id}, {"user2_id": user_id}]
+        })
+
+        # If they were matched, unmatch their partner
+        partner = await self.collection.find_one({"matchedWith": user_id})
+        if partner:
+            await self.collection.update_one(
+                {"id": partner["id"]},
+                {"$set": {"matched": False, "matchedWith": None}}
+            )
+
         return result.deleted_count > 0
 
     async def get_all_active_users(self) -> list[dict]:

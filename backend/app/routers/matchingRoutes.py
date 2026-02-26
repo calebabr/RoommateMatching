@@ -5,7 +5,6 @@ from app.services.matchScore import matchScore
 from app.services.matchingUsers import matchingUsers
 from app.services.userProfileService import UserProfileService
 from app.services.recommendationService import RecommendationService
-
 from app.models import (
     UserInDB,
     UserDB,
