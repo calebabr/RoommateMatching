@@ -71,7 +71,7 @@ async def update_profile(user_id: int, user: UserCreate):
 
         return result
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: int):
@@ -95,13 +95,6 @@ async def get_top_matches(user_id: int):
 async def like_user(user_id: int, request: LikeRequest):
     try:
         result = await likeService.send_like(user_id, request.toUser)
-
-        if result["status"] == "matched":
-            await userProfileService.mark_matched(user_id, request.toUser)
-            await userProfileService.mark_matched(request.toUser, user_id)
-            await recommendationService.on_user_matched(user_id)
-            await recommendationService.on_user_matched(request.toUser)
-
         return LikeResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -117,24 +110,19 @@ async def get_matches(user_id: int):
 @router.post("/users/{user_id}/unmatch")
 async def unmatch_user(user_id: int):
     try:
-        user = await userProfileService.get_user(user_id)
-        matched_with = user.get("matchedWith")
-
-        await userProfileService.unmatch_user(user_id)
-        if matched_with:
-            await userProfileService.unmatch_user(matched_with)
+        result = await likeService.unmatch(user_id)
 
         # Recompute recommendations for both users
         users = await userProfileService.get_all_active_users()
         if len(users) >= 2:
             user_dicts = [UserInDB(**u).toMatchDict() for u in users]
-            await recommendationService.on_user_unmatched(user_id, user_dicts)
-            if matched_with:
-                await recommendationService.on_user_unmatched(matched_with, user_dicts)
+            await recommendationService.on_user_unmatched(result["unmatched_user"], user_dicts)
+            if result["was_matched_with"]:
+                await recommendationService.on_user_unmatched(result["was_matched_with"], user_dicts)
 
         return {"message": "Unmatched successfully"}
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 # --- Admin ---
 
