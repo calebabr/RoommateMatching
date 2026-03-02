@@ -11,18 +11,18 @@ class LikeService:
     async def send_like(self, from_id: int, to_id: int) -> dict:
         """
         Sends a like from one user to another. Creates a match if both users like each other.
-        
+
         Parameters:
             from_id (int): User ID sending the like.
             to_id (int): User ID receiving the like.
-        
+
         Returns:
             dict: Status response with 'status' key ('liked' or 'matched') and relevant user ID.
-        
+
         Raises:
             ValueError: If user tries to like themselves, target doesn't exist, already liked,
                         or either user is already matched.
-        
+
         Notes:
             When mutual likes are detected, both users are marked as matched and all other
             pending likes are cleaned up. Recommendations are also removed for matched users.
@@ -119,13 +119,13 @@ class LikeService:
     async def get_likes_received(self, user_id: int) -> list[dict]:
         """
         Retrieves all pending likes received by a user that require response.
-        
+
         Parameters:
             user_id (int): The user ID to get likes for.
-        
+
         Returns:
             list[dict]: List of like objects from users who are unmatched and haven't received a response.
-        
+
         Notes:
             Filters out likes from already-matched users and likes where mutual response already exists.
         """
@@ -154,10 +154,10 @@ class LikeService:
     async def get_matches(self, user_id: int) -> list[dict]:
         """
         Retrieves all confirmed matches for a user.
-        
+
         Parameters:
             user_id (int): The user ID to get matches for.
-        
+
         Returns:
             list[dict]: List of match objects where the user is either user1_id or user2_id.
         """
@@ -173,16 +173,16 @@ class LikeService:
     async def unmatch(self, user_id: int) -> dict:
         """
         Unmatches a user from their current match partner.
-        
+
         Parameters:
             user_id (int): The user ID to unmatch.
-        
+
         Returns:
             dict: Status object with 'unmatched_user' and 'was_matched_with' keys.
-        
+
         Raises:
             ValueError: If user not found or user is not currently matched.
-        
+
         Notes:
             Removes match record and cleans up mutual likes between the unmatched users.
             Both users are unmarked as matched.
