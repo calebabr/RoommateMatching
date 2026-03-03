@@ -8,10 +8,10 @@ class UserProfileService:
     async def get_next_id(self) -> int:
         """
         Retrieves the next available user ID by finding the maximum existing ID and incrementing it.
-        
+
         Parameters:
             None
-        
+
         Returns:
             int: The next available user ID. Returns 1 if no users exist.
         """
@@ -23,13 +23,13 @@ class UserProfileService:
     async def create_user(self, user_data: dict) -> dict:
         """
         Creates a new user account with provided information.
-        
+
         Parameters:
             user_data (dict): Dictionary containing user information (username, password, preferences, etc.)
-        
+
         Returns:
             dict: The created user object with assigned ID and metadata.
-        
+
         Raises:
             ValueError: If username already exists in the database.
         """
@@ -49,13 +49,13 @@ class UserProfileService:
     async def get_user(self, user_id: int) -> dict:
         """
         Retrieves a user profile by user ID.
-        
+
         Parameters:
             user_id (int): The unique identifier of the user to retrieve.
-        
+
         Returns:
             dict: The user object containing all profile information.
-        
+
         Raises:
             ValueError: If user with the specified ID does not exist.
         """
@@ -68,14 +68,14 @@ class UserProfileService:
     async def update_profile(self, user_id: int, preferences: dict) -> dict:
         """
         Updates a user's profile with new preference information.
-        
+
         Parameters:
             user_id (int): The unique identifier of the user to update.
             preferences (dict): Dictionary of preference fields to update.
-        
+
         Returns:
             dict: The updated user profile object.
-        
+
         Raises:
             ValueError: If user not found or if user is already matched.
         """
@@ -96,13 +96,13 @@ class UserProfileService:
     async def delete_user(self, user_id: int) -> bool:
         """
         Deletes a user account and all associated data including matches, likes, and recommendations.
-        
+
         Parameters:
             user_id (int): The unique identifier of the user to delete.
-        
+
         Returns:
             bool: True if user was successfully deleted, False if user did not exist.
-        
+
         Notes:
             Automatically unmatches the user's partner if they are currently matched.
             Removes all likes sent by and received by the user.
@@ -144,10 +144,10 @@ class UserProfileService:
     async def get_all_active_users(self) -> list[dict]:
         """
         Retrieves all users who are currently not matched.
-        
+
         Parameters:
             None
-        
+
         Returns:
             list[dict]: List of all unmatched user objects.
         """
@@ -161,14 +161,14 @@ class UserProfileService:
     async def mark_matched(self, user_id: int, matched_with: int) -> dict:
         """
         Marks a user as matched with another user.
-        
+
         Parameters:
             user_id (int): The user ID to mark as matched.
             matched_with (int): The user ID of the matched partner.
-        
+
         Returns:
             dict: The updated user profile object with matched status.
-        
+
         Raises:
             ValueError: If user with the specified ID does not exist.
         """
@@ -185,13 +185,13 @@ class UserProfileService:
     async def unmatch_user(self, user_id: int) -> dict:
         """
         Unmatches a user from their current match partner.
-        
+
         Parameters:
             user_id (int): The user ID to unmatch.
-        
+
         Returns:
             dict: The updated user profile object with matched status set to False.
-        
+
         Raises:
             ValueError: If user with the specified ID does not exist.
         """

@@ -14,12 +14,12 @@ class matchScore:
     def dealBreak(self, category, user1, user2) -> float:
         """
         Checks if a preference difference between two users is a dealbreaker.
-        
+
         Parameters:
             category (str): The preference category to check (e.g., 'cleanliness', 'noiseTolerance').
             user1 (dict): First user's preference data.
             user2 (dict): Second user's preference data.
-        
+
         Returns:
             float: 0.0 if the difference is a dealbreaker, 1.0 otherwise.
         """
@@ -30,12 +30,12 @@ class matchScore:
     def preferenceScore(self, category, cat1, cat2) -> float:
         """
         Calculates a compatibility score for a specific preference category between two values.
-        
+
         Parameters:
             category (str): The preference category being compared.
             cat1 (float): First user's preference value.
             cat2 (float): Second user's preference value.
-        
+
         Returns:
             float: A compatibility score from 0.0 to 1.0, where 1.0 is perfect match.
         """
@@ -45,11 +45,11 @@ class matchScore:
     def matchScore(self, user1, user2) -> float:
         """
         Calculates the overall match score from user1's perspective to user2.
-        
+
         Parameters:
             user1 (dict): First user's preference object.
             user2 (dict): Second user's preference object.
-        
+
         Returns:
             float: Match score from 0.0 to 1.0. Returns 0.0 if any dealbreaker exists.
         """
@@ -65,11 +65,11 @@ class matchScore:
     def compatibilityScore(self, user1, user2) -> float:
         """
         Calculates the mutual compatibility score between two users (symmetric).
-        
+
         Parameters:
             user1 (dict): First user's preference object.
             user2 (dict): Second user's preference object.
-        
+
         Returns:
             float: The minimum of both directional match scores (0.0 to 1.0).
         """
