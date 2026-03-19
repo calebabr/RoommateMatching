@@ -20,7 +20,7 @@ router = APIRouter()
 matchScoreCalculator = matchScore()
 matchingService = matchingUsers()
 
-userStore = {"users: ": None}
+userStore = {"users": None}
 
 @router.post("/uploadUsers")
 async def upload_users(file: UploadFile = File(...)):
@@ -41,7 +41,7 @@ async def find_all_matches():
     if userStore["users"] is None:
         raise HTTPException(status_code=400, detail="No users uploaded. Use /uploadUsers first.")
 
-    user_dicts = [u.toDict() for u in userStore["users"].users]
+    user_dicts = [u.toMatchDict() for u in userStore["users"].users]
     matches = matchingService.find_matches(user_dicts)
     return matches
 
@@ -61,5 +61,5 @@ async def calculateMatchScore(request: MatchScoreRequest) -> MatchResult:
     if not user1 or not user2:
         raise HTTPException(status_code=404, detail="User not found")
 
-    score = matchScoreCalculator.compatibilityScore(user1.toDict(), user2.toDict())
+    score = matchScoreCalculator.compatibilityScore(user1.toMatchDict(), user2.toMatchDict())
     return MatchResult(user1_id=user1.id, user2_id=user2.id, compatibilityScore=score)

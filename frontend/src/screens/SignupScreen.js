@@ -10,9 +10,10 @@ import {
   ActivityIndicator,
   Switch,
   Platform,
+  Image,
 } from 'react-native';
 import { Colors, Radius } from '../utils/theme';
-import { CATEGORIES } from '../utils/categories';
+import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import { createUser, setApiBase } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import SliderPicker from '../components/SliderPicker';
@@ -20,8 +21,11 @@ import SliderPicker from '../components/SliderPicker';
 export default function SignupScreen({ navigation }) {
   const { signup } = useAuth();
   const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(0); // 0 = name, 1 = preferences
+  const [step, setStep] = useState(0); // 0 = profile, 1 = preferences, 2 = tags
 
   const [preferences, setPreferences] = useState(
     CATEGORIES.reduce((acc, cat) => {
@@ -37,6 +41,12 @@ export default function SignupScreen({ navigation }) {
     }));
   };
 
+  const toggleTag = (tag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
   const handleCreate = async () => {
     if (!username.trim()) {
       Alert.alert('Missing Name', 'Please enter a username.');
@@ -44,7 +54,13 @@ export default function SignupScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      const payload = { username: username.trim(), ...preferences };
+      const payload = {
+        username: username.trim(),
+        bio: bio.trim(),
+        photoUrl: photoUrl.trim(),
+        lifestyleTags: selectedTags,
+        ...preferences,
+      };
       const user = await createUser(payload);
       Alert.alert(
         'Account Created!',
@@ -59,17 +75,22 @@ export default function SignupScreen({ navigation }) {
     }
   };
 
+  const totalSteps = 3;
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (step === 0 ? navigation.goBack() : setStep(0))}>
+        <TouchableOpacity onPress={() => (step === 0 ? navigation.goBack() : setStep(step - 1))}>
           <Text style={styles.backBtn}>← Back</Text>
         </TouchableOpacity>
         <View style={styles.stepIndicator}>
-          <View style={[styles.dot, step >= 0 && styles.dotActive]} />
-          <View style={[styles.dotLine, step >= 1 && styles.dotLineActive]} />
-          <View style={[styles.dot, step >= 1 && styles.dotActive]} />
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <View style={[styles.dotLine, step >= i && styles.dotLineActive]} />}
+              <View style={[styles.dot, step >= i && styles.dotActive]} />
+            </React.Fragment>
+          ))}
         </View>
       </View>
 
@@ -79,12 +100,11 @@ export default function SignupScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         {step === 0 ? (
-          /* ─── Step 1: Username ─── */
+          /* ─── Step 1: Profile Info ─── */
           <View>
             <Text style={styles.title}>Create Your Profile</Text>
-            <Text style={styles.subtitle}>
-              Let's start with your name
-            </Text>
+            <Text style={styles.subtitle}>Tell potential roommates about yourself</Text>
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username</Text>
               <TextInput
@@ -98,6 +118,46 @@ export default function SignupScreen({ navigation }) {
                 returnKeyType="next"
               />
             </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Bio</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="A short intro — what are you like as a roommate?"
+                placeholderTextColor={Colors.textMuted}
+                value={bio}
+                onChangeText={setBio}
+                multiline
+                numberOfLines={3}
+                maxLength={200}
+                textAlignVertical="top"
+              />
+              <Text style={styles.charCount}>{bio.length}/200</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Profile Photo URL (optional)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="https://example.com/your-photo.jpg"
+                placeholderTextColor={Colors.textMuted}
+                value={photoUrl}
+                onChangeText={setPhotoUrl}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+              {photoUrl.trim() !== '' && (
+                <View style={styles.photoPreviewWrap}>
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={styles.photoPreview}
+                    defaultSource={undefined}
+                  />
+                </View>
+              )}
+            </View>
+
             <TouchableOpacity
               style={[styles.button, !username.trim() && styles.buttonDisabled]}
               onPress={() => {
@@ -113,13 +173,11 @@ export default function SignupScreen({ navigation }) {
               <Text style={styles.buttonText}>Next — Set Preferences</Text>
             </TouchableOpacity>
           </View>
-        ) : (
+        ) : step === 1 ? (
           /* ─── Step 2: Preferences ─── */
           <View>
             <Text style={styles.title}>Your Preferences</Text>
-            <Text style={styles.subtitle}>
-              Rate each category and mark deal-breakers
-            </Text>
+            <Text style={styles.subtitle}>Rate each category and mark deal-breakers</Text>
 
             {CATEGORIES.map((cat) => (
               <View key={cat.key} style={styles.prefCard}>
@@ -145,6 +203,44 @@ export default function SignupScreen({ navigation }) {
                 />
               </View>
             ))}
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => setStep(2)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>Next — Lifestyle Tags</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          /* ─── Step 3: Lifestyle Tags ─── */
+          <View>
+            <Text style={styles.title}>Lifestyle Tags</Text>
+            <Text style={styles.subtitle}>
+              Pick tags that describe you — shared tags boost your match score!
+            </Text>
+
+            <View style={styles.tagGrid}>
+              {LIFESTYLE_TAGS.map((tag) => {
+                const selected = selectedTags.includes(tag);
+                return (
+                  <TouchableOpacity
+                    key={tag}
+                    style={[styles.tagChip, selected && styles.tagChipSelected]}
+                    onPress={() => toggleTag(tag)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.tagChipText, selected && styles.tagChipTextSelected]}>
+                      {tag}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={styles.tagCount}>
+              {selectedTags.length} selected
+            </Text>
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
@@ -179,12 +275,12 @@ const styles = StyleSheet.create({
   stepIndicator: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.border },
   dotActive: { backgroundColor: Colors.accent },
-  dotLine: { width: 30, height: 2, backgroundColor: Colors.border, marginHorizontal: 4 },
+  dotLine: { width: 24, height: 2, backgroundColor: Colors.border, marginHorizontal: 4 },
   dotLineActive: { backgroundColor: Colors.accent },
   scroll: { paddingHorizontal: 24, paddingBottom: 60 },
   title: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary, marginTop: 8, marginBottom: 4 },
   subtitle: { fontSize: 15, color: Colors.textSecondary, marginBottom: 28 },
-  inputGroup: { marginBottom: 24 },
+  inputGroup: { marginBottom: 20 },
   label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
   input: {
     backgroundColor: Colors.bgInput,
@@ -196,6 +292,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
+  textArea: {
+    minHeight: 80,
+    paddingTop: 14,
+  },
+  charCount: { fontSize: 11, color: Colors.textMuted, textAlign: 'right', marginTop: 4 },
+  photoPreviewWrap: { alignItems: 'center', marginTop: 12 },
+  photoPreview: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.bgCard, borderWidth: 2, borderColor: Colors.accent },
   button: {
     backgroundColor: Colors.accent,
     borderRadius: Radius.md,
@@ -219,4 +322,20 @@ const styles = StyleSheet.create({
   prefDesc: { fontSize: 13, color: Colors.textSecondary, marginTop: 4, marginBottom: 16 },
   dealBreakerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dealBreakerText: { fontSize: 11, color: Colors.danger, fontWeight: '600', textTransform: 'uppercase' },
+  tagGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  tagChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  tagChipSelected: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accentGlow,
+  },
+  tagChipText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+  tagChipTextSelected: { color: Colors.accent },
+  tagCount: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', marginBottom: 8 },
 });

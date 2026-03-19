@@ -25,7 +25,8 @@ class UserProfileService:
         Creates a new user account with provided information.
 
         Parameters:
-            user_data (dict): Dictionary containing user information (username, password, preferences, etc.)
+            user_data (dict): Dictionary containing user information (username, preferences,
+                              bio, photoUrl, lifestyleTags, etc.)
 
         Returns:
             dict: The created user object with assigned ID and metadata.
@@ -41,6 +42,11 @@ class UserProfileService:
         user_data["matched"] = False
         user_data["matchedWith"] = None
         user_data["createdAt"] = datetime.utcnow()
+
+        # Ensure new optional fields have defaults if not provided
+        user_data.setdefault("bio", "")
+        user_data.setdefault("photoUrl", "")
+        user_data.setdefault("lifestyleTags", [])
 
         await self.collection.insert_one(user_data)
         user_data.pop("_id", None)

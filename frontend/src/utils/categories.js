@@ -1,4 +1,4 @@
-// Human-readable labels for the 5 preference categories
+// Human-readable labels for the 9 preference categories
 export const CATEGORIES = [
   {
     key: 'sleepScoreWD',
@@ -70,6 +70,70 @@ export const CATEGORIES = [
       return `${Math.round(v)} — Always`;
     },
   },
+  {
+    key: 'personalityScore',
+    label: 'Personality',
+    description: 'Are you more introverted or extroverted?',
+    min: 0,
+    max: 10,
+    unit: '/10',
+    formatValue: (v) => {
+      if (v <= 2) return `${Math.round(v)} — Very Introverted`;
+      if (v <= 4) return `${Math.round(v)} — Introverted`;
+      if (v <= 6) return `${Math.round(v)} — Ambivert`;
+      if (v <= 8) return `${Math.round(v)} — Extroverted`;
+      return `${Math.round(v)} — Very Extroverted`;
+    },
+  },
+  {
+    key: 'smokingScore',
+    label: 'Smoking / Substances',
+    description: 'How comfortable are you with smoking or substance use?',
+    min: 0,
+    max: 10,
+    unit: '/10',
+    formatValue: (v) => {
+      if (v <= 1) return `${Math.round(v)} — None at all`;
+      if (v <= 4) return `${Math.round(v)} — Prefer not`;
+      if (v <= 7) return `${Math.round(v)} — Occasionally OK`;
+      return `${Math.round(v)} — Totally fine`;
+    },
+  },
+  {
+    key: 'sharedSpaceScore',
+    label: 'Shared Space',
+    description: 'How do you feel about sharing common areas and items?',
+    min: 0,
+    max: 10,
+    unit: '/10',
+    formatValue: (v) => {
+      if (v <= 2) return `${Math.round(v)} — Very Private`;
+      if (v <= 5) return `${Math.round(v)} — Some Boundaries`;
+      if (v <= 8) return `${Math.round(v)} — Pretty Open`;
+      return `${Math.round(v)} — Fully Communal`;
+    },
+  },
+  {
+    key: 'communicationScore',
+    label: 'Communication Style',
+    description: 'How do you handle conflict or issues with a roommate?',
+    min: 0,
+    max: 10,
+    unit: '/10',
+    formatValue: (v) => {
+      if (v <= 2) return `${Math.round(v)} — Avoid Conflict`;
+      if (v <= 5) return `${Math.round(v)} — Hints & Patience`;
+      if (v <= 8) return `${Math.round(v)} — Direct Talk`;
+      return `${Math.round(v)} — Very Upfront`;
+    },
+  },
+];
+
+// Predefined lifestyle tags users can pick from
+export const LIFESTYLE_TAGS = [
+  'Early Bird', 'Night Owl', 'Fitness', 'Studying', 'Gaming',
+  'Greek Life', 'Homebody', 'Outdoors', 'Music', 'Pet Lover',
+  'Sports', 'Art', 'Reading', 'Party/Going Out', 'Film/TV',
 ];
 
 export const getCompatibilityColor = (score) => {

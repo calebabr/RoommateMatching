@@ -8,10 +8,12 @@ import {
   Alert,
   ActivityIndicator,
   Switch,
+  TextInput,
+  Image,
   Platform,
 } from 'react-native';
 import { Colors, Radius } from '../utils/theme';
-import { CATEGORIES } from '../utils/categories';
+import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
 import { updateUser, deleteUser } from '../services/api';
 import SliderPicker from '../components/SliderPicker';
@@ -20,6 +22,10 @@ export default function ProfileScreen() {
   const { user, refreshUser, logout } = useAuth();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const [bio, setBio] = useState(user?.bio || '');
+  const [photoUrl, setPhotoUrl] = useState(user?.photoUrl || '');
+  const [selectedTags, setSelectedTags] = useState(user?.lifestyleTags || []);
 
   const [preferences, setPreferences] = useState(
     CATEGORIES.reduce((acc, cat) => {
@@ -38,20 +44,48 @@ export default function ProfileScreen() {
     }));
   };
 
+  const toggleTag = (tag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { username: user.username, ...preferences };
+      const payload = {
+        username: user.username,
+        bio: bio.trim(),
+        photoUrl: photoUrl.trim(),
+        lifestyleTags: selectedTags,
+        ...preferences,
+      };
       await updateUser(user.id, payload);
       await refreshUser();
       setEditing(false);
-      Alert.alert('Saved', 'Your preferences have been updated.');
+      Alert.alert('Saved', 'Your profile has been updated.');
     } catch (err) {
       const msg = err?.response?.data?.detail || 'Could not update profile.';
       Alert.alert('Error', msg);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+    setBio(user?.bio || '');
+    setPhotoUrl(user?.photoUrl || '');
+    setSelectedTags(user?.lifestyleTags || []);
+    setPreferences(
+      CATEGORIES.reduce((acc, cat) => {
+        acc[cat.key] = {
+          value: user?.[cat.key]?.value ?? Math.round((cat.max - cat.min) / 2),
+          isDealBreaker: user?.[cat.key]?.isDealBreaker ?? false,
+        };
+        return acc;
+      }, {})
+    );
   };
 
   const handleDelete = () => {
@@ -67,7 +101,7 @@ export default function ProfileScreen() {
             try {
               await deleteUser(user.id);
               await logout();
-            } catch (err) {
+            } catch {
               Alert.alert('Error', 'Could not delete account.');
             }
           },
@@ -78,23 +112,105 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
+  const displayTags = editing ? selectedTags : (user.lifestyleTags || []);
+  const displayBio = editing ? bio : (user.bio || '');
+  const displayPhoto = editing ? photoUrl : (user.photoUrl || '');
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       {/* Profile Header */}
       <View style={styles.profileHeader}>
-        <View style={styles.avatarLarge}>
-          <Text style={styles.avatarLargeText}>
-            {(user.username || '?')[0].toUpperCase()}
-          </Text>
-        </View>
+        {displayPhoto ? (
+          <Image source={{ uri: displayPhoto }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatarLarge}>
+            <Text style={styles.avatarLargeText}>
+              {(user.username || '?')[0].toUpperCase()}
+            </Text>
+          </View>
+        )}
         <Text style={styles.username}>{user.username}</Text>
         <Text style={styles.userId}>ID: {user.id}</Text>
+
+        {displayBio !== '' && (
+          <Text style={styles.bioText}>{displayBio}</Text>
+        )}
+
+        {displayTags.length > 0 && (
+          <View style={styles.tagRow}>
+            {displayTags.map((tag) => (
+              <View key={tag} style={styles.tagPill}>
+                <Text style={styles.tagPillText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={[styles.statusBadge, user.matched ? styles.statusMatched : styles.statusSearching]}>
           <Text style={[styles.statusText, { color: user.matched ? Colors.success : Colors.accent }]}>
             {user.matched ? `Matched with #${user.matchedWith}` : 'Searching for roommate'}
           </Text>
         </View>
       </View>
+
+      {/* Bio & Photo Edit (when editing) */}
+      {editing && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Profile Info</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Bio</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="A short intro about yourself..."
+              placeholderTextColor={Colors.textMuted}
+              value={bio}
+              onChangeText={setBio}
+              multiline
+              numberOfLines={3}
+              maxLength={200}
+              textAlignVertical="top"
+            />
+            <Text style={styles.charCount}>{bio.length}/200</Text>
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Photo URL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="https://example.com/photo.jpg"
+              placeholderTextColor={Colors.textMuted}
+              value={photoUrl}
+              onChangeText={setPhotoUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+          </View>
+        </View>
+      )}
+
+      {/* Lifestyle Tags Edit (when editing) */}
+      {editing && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Lifestyle Tags</Text>
+          <View style={styles.tagGrid}>
+            {LIFESTYLE_TAGS.map((tag) => {
+              const selected = selectedTags.includes(tag);
+              return (
+                <TouchableOpacity
+                  key={tag}
+                  style={[styles.tagChip, selected && styles.tagChipSelected]}
+                  onPress={() => toggleTag(tag)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.tagChipText, selected && styles.tagChipTextSelected]}>
+                    {tag}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       {/* Preferences Section */}
       <View style={styles.section}>
@@ -124,7 +240,7 @@ export default function ProfileScreen() {
 
               {editing ? (
                 <View>
-                  <View style={styles.dealBreakerRow}>
+                  <View style={styles.dealBreakerToggleRow}>
                     <Text style={styles.dealBreakerToggleText}>Mark as deal-breaker</Text>
                     <Switch
                       value={preferences[cat.key].isDealBreaker}
@@ -167,23 +283,7 @@ export default function ProfileScreen() {
                 <Text style={styles.saveBtnText}>Save Changes</Text>
               )}
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => {
-                setEditing(false);
-                // Reset to current user values
-                setPreferences(
-                  CATEGORIES.reduce((acc, cat) => {
-                    acc[cat.key] = {
-                      value: user?.[cat.key]?.value ?? Math.round((cat.max - cat.min) / 2),
-                      isDealBreaker: user?.[cat.key]?.isDealBreaker ?? false,
-                    };
-                    return acc;
-                  }, {})
-                );
-              }}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel} activeOpacity={0.7}>
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -220,10 +320,30 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   avatarLargeText: { fontSize: 36, fontWeight: '800', color: Colors.accent },
+  avatarImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 3,
+    borderColor: Colors.accent,
+    marginBottom: 16,
+    backgroundColor: Colors.bgCard,
+  },
   username: { fontSize: 26, fontWeight: '800', color: Colors.textPrimary },
   userId: { fontSize: 14, color: Colors.textMuted, marginTop: 4 },
+  bioText: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 20, paddingHorizontal: 12 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 12 },
+  tagPill: {
+    backgroundColor: Colors.accentGlow,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+  },
+  tagPillText: { fontSize: 12, fontWeight: '600', color: Colors.accent },
   statusBadge: {
-    marginTop: 12,
+    marginTop: 14,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: Radius.full,
@@ -234,8 +354,34 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 13, fontWeight: '600' },
   section: { marginBottom: 28 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginBottom: 14 },
   editBtn: { fontSize: 15, fontWeight: '600', color: Colors.accent },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
+  input: {
+    backgroundColor: Colors.bgInput,
+    borderRadius: Radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  textArea: { minHeight: 80, paddingTop: 14 },
+  charCount: { fontSize: 11, color: Colors.textMuted, textAlign: 'right', marginTop: 4 },
+  tagGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tagChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  tagChipSelected: { borderColor: Colors.accent, backgroundColor: Colors.accentGlow },
+  tagChipText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
+  tagChipTextSelected: { color: Colors.accent },
   prefCard: {
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.md,
@@ -253,7 +399,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   dealBreakerBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.danger, textTransform: 'uppercase' },
-  dealBreakerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  dealBreakerToggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   dealBreakerToggleText: { fontSize: 13, color: Colors.danger },
   prefDisplay: {},
   prefValue: { fontSize: 15, fontWeight: '700', color: Colors.accent, marginBottom: 8 },
@@ -280,7 +426,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 10,
     borderWidth: 1,
     borderColor: Colors.border,
   },

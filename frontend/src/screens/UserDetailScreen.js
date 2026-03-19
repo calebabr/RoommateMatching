@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
@@ -72,6 +73,11 @@ export default function UserDetailScreen({ route, navigation }) {
   const color = score != null ? getCompatibilityColor(score) : Colors.textMuted;
   const label = score != null ? getCompatibilityLabel(score) : '';
 
+  // Compute shared tags
+  const myTags = user?.lifestyleTags || [];
+  const theirTags = profile.lifestyleTags || [];
+  const sharedTags = myTags.filter((t) => theirTags.includes(t));
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -84,13 +90,44 @@ export default function UserDetailScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Avatar & Name */}
         <View style={styles.profileHeader}>
-          <View style={[styles.avatar, { borderColor: color }]}>
-            <Text style={[styles.avatarText, { color }]}>
-              {(profile.username || '?')[0].toUpperCase()}
-            </Text>
-          </View>
+          {profile.photoUrl ? (
+            <Image source={{ uri: profile.photoUrl }} style={[styles.avatarImage, { borderColor: color }]} />
+          ) : (
+            <View style={[styles.avatar, { borderColor: color }]}>
+              <Text style={[styles.avatarText, { color }]}>
+                {(profile.username || '?')[0].toUpperCase()}
+              </Text>
+            </View>
+          )}
           <Text style={styles.username}>{profile.username}</Text>
           <Text style={styles.userId}>User ID: {profile.id}</Text>
+
+          {/* Bio */}
+          {profile.bio ? (
+            <Text style={styles.bioText}>{profile.bio}</Text>
+          ) : null}
+
+          {/* Lifestyle Tags */}
+          {theirTags.length > 0 && (
+            <View style={styles.tagRow}>
+              {theirTags.map((tag) => {
+                const isShared = sharedTags.includes(tag);
+                return (
+                  <View key={tag} style={[styles.tagPill, isShared && styles.tagPillShared]}>
+                    <Text style={[styles.tagPillText, isShared && styles.tagPillTextShared]}>
+                      {tag}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {sharedTags.length > 0 && (
+            <Text style={styles.sharedTagNote}>
+              {sharedTags.length} shared {sharedTags.length === 1 ? 'interest' : 'interests'} with you!
+            </Text>
+          )}
 
           {/* Status */}
           {profile.matched && (
@@ -146,7 +183,7 @@ export default function UserDetailScreen({ route, navigation }) {
           );
         })}
 
-        {/* Like Button (only if not already matched and not viewing self) */}
+        {/* Like Button */}
         {!profile.matched && profile.id !== user?.id && !user?.matched && (
           <TouchableOpacity
             style={styles.likeBtn}
@@ -187,9 +224,34 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     marginBottom: 14,
   },
+  avatarImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    marginBottom: 14,
+    backgroundColor: Colors.bgCard,
+  },
   avatarText: { fontSize: 40, fontWeight: '800' },
   username: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary },
   userId: { fontSize: 13, color: Colors.textMuted, marginTop: 4 },
+  bioText: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 20, paddingHorizontal: 8 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 12 },
+  tagPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  tagPillShared: {
+    borderColor: Colors.success,
+    backgroundColor: Colors.successDim,
+  },
+  tagPillText: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary },
+  tagPillTextShared: { color: Colors.success },
+  sharedTagNote: { fontSize: 13, fontWeight: '600', color: Colors.success, marginTop: 8 },
   matchedBadge: {
     marginTop: 10,
     backgroundColor: Colors.infoDim,

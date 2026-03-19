@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Colors, Radius } from '../utils/theme';
@@ -30,7 +31,6 @@ export default function DiscoverScreen({ navigation }) {
       const topList = data.matches || [];
       setMatches(topList);
 
-      // Fetch profiles for each recommended user
       const profiles = await Promise.all(
         topList.map(async (m) => {
           try {
@@ -76,7 +76,6 @@ export default function DiscoverScreen({ navigation }) {
         await loadMatches();
       } else {
         Alert.alert('Like Sent!', 'They\'ll see your interest. Fingers crossed!');
-        // Remove from the visible list
         setMatchProfiles((prev) => prev.filter((p) => p.id !== targetId));
       }
     } catch (err) {
@@ -127,6 +126,9 @@ export default function DiscoverScreen({ navigation }) {
     const score = item.compatibilityScore;
     const color = getCompatibilityColor(score);
     const label = getCompatibilityLabel(score);
+    const myTags = user?.lifestyleTags || [];
+    const theirTags = item.lifestyleTags || [];
+    const sharedTags = myTags.filter((t) => theirTags.includes(t));
 
     return (
       <TouchableOpacity
@@ -142,16 +144,47 @@ export default function DiscoverScreen({ navigation }) {
 
         {/* User info */}
         <View style={styles.cardBody}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {(item.username || '?')[0].toUpperCase()}
-            </Text>
-          </View>
+          {item.photoUrl ? (
+            <Image source={{ uri: item.photoUrl }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(item.username || '?')[0].toUpperCase()}
+              </Text>
+            </View>
+          )}
           <View style={styles.cardInfo}>
             <Text style={styles.cardName}>{item.username || `User #${item.id}`}</Text>
-            <Text style={styles.cardId}>ID: {item.id}</Text>
+            {item.bio ? (
+              <Text style={styles.cardBio} numberOfLines={2}>{item.bio}</Text>
+            ) : (
+              <Text style={styles.cardId}>ID: {item.id}</Text>
+            )}
           </View>
         </View>
+
+        {/* Lifestyle Tags */}
+        {theirTags.length > 0 && (
+          <View style={styles.tagRow}>
+            {theirTags.slice(0, 6).map((tag) => {
+              const isShared = sharedTags.includes(tag);
+              return (
+                <View key={tag} style={[styles.tagPill, isShared && styles.tagPillShared]}>
+                  <Text style={[styles.tagPillText, isShared && styles.tagPillTextShared]}>{tag}</Text>
+                </View>
+              );
+            })}
+            {theirTags.length > 6 && (
+              <Text style={styles.tagMore}>+{theirTags.length - 6}</Text>
+            )}
+          </View>
+        )}
+
+        {sharedTags.length > 0 && (
+          <Text style={styles.sharedNote}>
+            {sharedTags.length} shared {sharedTags.length === 1 ? 'interest' : 'interests'}
+          </Text>
+        )}
 
         {/* Mini preference bars */}
         <View style={styles.prefBars}>
@@ -162,7 +195,7 @@ export default function DiscoverScreen({ navigation }) {
             return (
               <View key={cat.key} style={styles.miniBar}>
                 <Text style={styles.miniBarLabel} numberOfLines={1}>
-                  {cat.label.replace(' (Weekdays)', ' WD').replace(' (Weekends)', ' WE')}
+                  {cat.label.replace(' (Weekdays)', ' WD').replace(' (Weekends)', ' WE').replace('Smoking / Substances', 'Smoking')}
                 </Text>
                 <View style={styles.miniBarTrack}>
                   <View style={[styles.miniBarFill, { width: `${pct}%` }]} />
@@ -241,7 +274,7 @@ const styles = StyleSheet.create({
   },
   scorePercent: { fontSize: 16, fontWeight: '800' },
   scoreLabel: { fontSize: 12, fontWeight: '600' },
-  cardBody: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  cardBody: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   avatar: {
     width: 48,
     height: 48,
@@ -253,10 +286,34 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.accent,
   },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: Colors.accent,
+    backgroundColor: Colors.bgCard,
+  },
   avatarText: { fontSize: 20, fontWeight: '800', color: Colors.accent },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
+  cardBio: { fontSize: 13, color: Colors.textSecondary, marginTop: 2, lineHeight: 18 },
   cardId: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+  tagPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCardLight,
+  },
+  tagPillShared: { borderColor: Colors.success, backgroundColor: Colors.successDim },
+  tagPillText: { fontSize: 11, fontWeight: '600', color: Colors.textMuted },
+  tagPillTextShared: { color: Colors.success },
+  tagMore: { fontSize: 11, color: Colors.textMuted, alignSelf: 'center' },
+  sharedNote: { fontSize: 12, fontWeight: '600', color: Colors.success, marginBottom: 10 },
   prefBars: { marginBottom: 16 },
   miniBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   miniBarLabel: { fontSize: 11, color: Colors.textMuted, width: 80 },

@@ -21,9 +21,9 @@ class matchingUsers:
         G = nx.Graph()
 
         for u in users:
-            G.add_node(u["id"]) # Create nodes for each user
+            G.add_node(u["id"])
 
-        for i in range(len(users)): # Assign weights to edges based on compatibility scores
+        for i in range(len(users)):
             for j in range(i + 1, len(users)):
                 score = self.scorer.compatibilityScore(users[i], users[j])
                 if score > 0:
