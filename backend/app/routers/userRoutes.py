@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+import os
+import uuid
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from app.services.userProfileService import UserProfileService
 from app.services.recommendationService import RecommendationService
 from app.services.likeService import LikeService
@@ -16,6 +18,8 @@ router = APIRouter()
 userProfileService = UserProfileService()
 recommendationService = RecommendationService()
 likeService = LikeService()
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "photos")
 
 # --- User CRUD ---
 
@@ -75,10 +79,87 @@ async def update_profile(user_id: int, user: UserCreate):
 
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: int):
+    # Clean up photo file if it exists
+    try:
+        user = await userProfileService.get_user(user_id)
+        photo_url = user.get("photoUrl", "")
+        if photo_url and photo_url.startswith("/uploads/photos/"):
+            filename = photo_url.split("/")[-1]
+            filepath = os.path.join(UPLOAD_DIR, filename)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+    except Exception:
+        pass
+
     deleted = await userProfileService.delete_user(user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted"}
+
+# --- Photo Upload ---
+
+@router.post("/users/{user_id}/photo")
+async def upload_photo(user_id: int, file: UploadFile = File(...)):
+    # Validate user exists
+    try:
+        user = await userProfileService.get_user(user_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Validate file type
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/heic"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail=f"File type {file.content_type} not allowed. Use JPEG, PNG, or WebP.")
+
+    # Limit file size (5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
+
+    # Delete old photo if exists
+    old_url = user.get("photoUrl", "")
+    if old_url and old_url.startswith("/uploads/photos/"):
+        old_file = os.path.join(UPLOAD_DIR, old_url.split("/")[-1])
+        if os.path.exists(old_file):
+            os.remove(old_file)
+
+    # Save new photo
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{user_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    # Update user record with the photo path
+    photo_path = f"/uploads/photos/{filename}"
+    await userProfileService.collection.find_one_and_update(
+        {"id": user_id},
+        {"$set": {"photoUrl": photo_path}}
+    )
+
+    return {"photoUrl": photo_path}
+
+@router.delete("/users/{user_id}/photo")
+async def delete_photo(user_id: int):
+    try:
+        user = await userProfileService.get_user(user_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    photo_url = user.get("photoUrl", "")
+    if photo_url and photo_url.startswith("/uploads/photos/"):
+        filename = photo_url.split("/")[-1]
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+    await userProfileService.collection.find_one_and_update(
+        {"id": user_id},
+        {"$set": {"photoUrl": ""}}
+    )
+
+    return {"message": "Photo removed"}
 
 # --- Recommendations ---
 
