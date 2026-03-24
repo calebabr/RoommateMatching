@@ -12,6 +12,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Radius } from '../utils/theme';
@@ -24,6 +25,7 @@ import NotificationBell from '../components/NotificationBell';
 export default function ProfileScreen() {
   const navigation = useNavigation();
   const { user, refreshUser, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -170,7 +172,7 @@ export default function ProfileScreen() {
     : getPhotoUrl(user.photoUrl);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]} showsVerticalScrollIndicator={false}>
       {/* Top bar with notification bell */}
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>Profile</Text>
@@ -290,7 +292,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Preferences</Text>
-          {!editing && !user.matched && (
+          {!editing && (
             <TouchableOpacity onPress={() => setEditing(true)}>
               <Text style={styles.editBtn}>Edit</Text>
             </TouchableOpacity>
@@ -380,7 +382,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  scroll: { paddingHorizontal: 24, paddingBottom: 60, paddingTop: 16 },
+  scroll: { paddingHorizontal: 24, paddingBottom: 60 },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',

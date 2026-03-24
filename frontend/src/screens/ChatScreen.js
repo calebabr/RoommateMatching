@@ -13,12 +13,14 @@ import {
     Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
-import { getChatMessages, sendChatMessage, getUser, getPhotoUrl } from '../services/api';
+import { getChatMessages, sendChatMessage, getUser, getPhotoUrl, unmatchUser } from '../services/api';
 
 export default function ChatScreen({ navigation }) {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
+    const insets = useSafeAreaInsets();
     const [messages, setMessages] = useState([]);
     const [partner, setPartner] = useState(null);
     const [input, setInput] = useState('');
@@ -26,6 +28,29 @@ export default function ChatScreen({ navigation }) {
     const [sending, setSending] = useState(false);
     const flatListRef = useRef(null);
     const pollRef = useRef(null);
+
+    const handleUnmatch = () => {
+        Alert.alert(
+            'Unmatch',
+            "Are you sure you want to unmatch? You'll both return to the matching pool.",
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Unmatch',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await unmatchUser(user.id);
+                            await refreshUser();
+                        } catch (err) {
+                            const msg = err?.response?.data?.detail || 'Could not unmatch.';
+                            Alert.alert('Error', msg);
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     const loadMessages = async () => {
         if (!user?.id || !user?.matched) return;
@@ -133,7 +158,7 @@ export default function ChatScreen({ navigation }) {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
             <View style={styles.headerContent}>
             {partnerPhoto ? (
                 <Image source={{ uri: partnerPhoto }} style={styles.partnerAvatarImg} />
@@ -144,10 +169,13 @@ export default function ChatScreen({ navigation }) {
                 </Text>
                 </View>
             )}
-            <View>
+            <View style={{ flex: 1 }}>
                 <Text style={styles.partnerName}>{partner?.username || 'Roommate'}</Text>
                 <Text style={styles.partnerStatus}>Your matched roommate</Text>
             </View>
+            <TouchableOpacity style={styles.unmatchBtn} onPress={handleUnmatch} activeOpacity={0.7}>
+                <Text style={styles.unmatchBtnText}>Unmatch</Text>
+            </TouchableOpacity>
             </View>
         </View>
 
@@ -205,7 +233,9 @@ export default function ChatScreen({ navigation }) {
     emptyTitle: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
     emptySubtitle: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
     loadingText: { fontSize: 14, color: Colors.textSecondary, marginTop: 16 },
-    header: { paddingTop: Platform.OS === 'ios' ? 60 : 40, paddingBottom: 14, paddingHorizontal: 20, backgroundColor: Colors.bgCard, borderBottomWidth: 1, borderBottomColor: Colors.border },
+    header: { paddingBottom: 14, paddingHorizontal: 20, backgroundColor: Colors.bgCard, borderBottomWidth: 1, borderBottomColor: Colors.border },
+    unmatchBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.danger },
+    unmatchBtnText: { fontSize: 12, fontWeight: '600', color: Colors.danger },
     headerContent: { flexDirection: 'row', alignItems: 'center' },
     partnerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.successDim, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 2, borderColor: Colors.success },
     partnerAvatarImg: { width: 40, height: 40, borderRadius: 20, marginRight: 12, borderWidth: 2, borderColor: Colors.success, backgroundColor: Colors.bgCard },

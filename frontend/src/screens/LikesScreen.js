@@ -10,6 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { getLikesReceived, sendLike, getUser } from '../services/api';
@@ -18,6 +19,7 @@ import NotificationBell from '../components/NotificationBell';
 export default function LikesScreen() {
   const navigation = useNavigation();
   const { user, refreshUser } = useAuth();
+  const insets = useSafeAreaInsets();
   const [likes, setLikes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -135,7 +137,7 @@ export default function LikesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View>
           <Text style={styles.headerTitle}>Likes</Text>
           <Text style={styles.headerSub}>

@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +21,7 @@ import NotificationBell from '../components/NotificationBell';
 export default function DiscoverScreen() {
   const navigation = useNavigation();
   const { user, refreshUser } = useAuth();
+  const insets = useSafeAreaInsets();
   const [matches, setMatches] = useState([]);
   const [matchProfiles, setMatchProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,7 @@ export default function DiscoverScreen() {
   if (matchProfiles.length === 0) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <View>
             <Text style={styles.headerTitle}>Discover</Text>
             <Text style={styles.headerSub}>Find your roommate</Text>
@@ -225,7 +227,7 @@ export default function DiscoverScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View>
           <Text style={styles.headerTitle}>Discover</Text>
           <Text style={styles.headerSub}>{matchProfiles.length} compatible roommates</Text>

@@ -10,6 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +20,7 @@ import NotificationBell from '../components/NotificationBell';
 export default function MatchesScreen() {
   const navigation = useNavigation();
   const { user, refreshUser } = useAuth();
+  const insets = useSafeAreaInsets();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -185,7 +187,7 @@ export default function MatchesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View>
           <Text style={styles.headerTitle}>Matches</Text>
           <Text style={styles.headerSub}>
