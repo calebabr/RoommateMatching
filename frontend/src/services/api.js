@@ -85,8 +85,8 @@ export const getMatches = async (userId) => {
   return res.data;
 };
 
-export const unmatchUser = async (userId) => {
-  const res = await api.post(`/users/${userId}/unmatch`);
+export const unmatchUser = async (userId, partnerId) => {
+  const res = await api.post(`/users/${userId}/unmatch/${partnerId}`);
   return res.data;
 };
 
@@ -102,13 +102,18 @@ export const getMatchScore = async (user1Id, user2Id) => {
 
 // ─── Chat ────────────────────────────────────────────────
 
-export const sendChatMessage = async (userId, content) => {
-  const res = await api.post(`/users/${userId}/chat`, { content });
+export const getChatConversations = async (userId) => {
+  const res = await api.get(`/users/${userId}/chat/conversations`);
   return res.data;
 };
 
-export const getChatMessages = async (userId, limit = 100) => {
-  const res = await api.get(`/users/${userId}/chat`, { params: { limit } });
+export const sendChatMessage = async (userId, partnerId, content) => {
+  const res = await api.post(`/users/${userId}/chat/${partnerId}`, { content });
+  return res.data;
+};
+
+export const getChatMessages = async (userId, partnerId, limit = 100) => {
+  const res = await api.get(`/users/${userId}/chat/${partnerId}`, { params: { limit } });
   return res.data;
 };
 

@@ -11,6 +11,7 @@ import {
   TextInput,
   Image,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -172,7 +173,8 @@ export default function ProfileScreen() {
     : getPhotoUrl(user.photoUrl);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       {/* Top bar with notification bell */}
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>Profile</Text>
@@ -377,6 +379,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

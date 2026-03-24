@@ -40,7 +40,8 @@ class UserProfileService:
 
         user_data["id"] = await self.get_next_id()
         user_data["matched"] = False
-        user_data["matchedWith"] = None
+        user_data["matchCount"] = 0
+        user_data["matchedWith"] = []
         user_data["createdAt"] = datetime.utcnow()
 
         # Ensure new optional fields have defaults if not provided
@@ -88,8 +89,6 @@ class UserProfileService:
         user = await self.collection.find_one({"id": user_id})
         if not user:
             raise ValueError("User not found")
-        if user.get("matched"):
-            raise ValueError("Cannot update profile while matched")
 
         result = await self.collection.find_one_and_update(
             {"id": user_id},
@@ -118,13 +117,32 @@ class UserProfileService:
         if not user:
             return False
 
-        # If matched, unmatch partner first
-        if user.get("matched") and user.get("matchedWith"):
-            partner_id = user["matchedWith"]
-            await self.collection.update_one(
-                {"id": partner_id},
-                {"$set": {"matched": False, "matchedWith": None}}
-            )
+        # Unmatch all partners
+        raw_mw = user.get("matchedWith")
+        if raw_mw is None:
+            partner_ids = []
+        elif isinstance(raw_mw, list):
+            partner_ids = [x for x in raw_mw if x is not None]
+        elif isinstance(raw_mw, int):
+            partner_ids = [raw_mw]
+        else:
+            partner_ids = []
+
+        for partner_id in partner_ids:
+            partner = await self.collection.find_one({"id": partner_id})
+            if partner:
+                p_mw = partner.get("matchedWith") or []
+                if isinstance(p_mw, int):
+                    p_mw = [p_mw]
+                new_p_mw = [x for x in p_mw if x != user_id]
+                await self.collection.update_one(
+                    {"id": partner_id},
+                    {"$set": {
+                        "matchedWith": new_p_mw,
+                        "matchCount": len(new_p_mw),
+                        "matched": len(new_p_mw) > 0
+                    }}
+                )
             await matches_collection.delete_many({
                 "$or": [
                     {"user1_id": user_id, "user2_id": partner_id},
@@ -149,15 +167,14 @@ class UserProfileService:
 
     async def get_all_active_users(self) -> list[dict]:
         """
-        Retrieves all users who are currently not matched.
-
-        Parameters:
-            None
-
-        Returns:
-            list[dict]: List of all unmatched user objects.
+        Retrieves all users who have fewer than MAX_MATCHES confirmed matches.
+        These users are still available in the discovery/recommendation pool.
         """
-        cursor = self.collection.find({"matched": False})
+        from app.models import MAX_MATCHES
+        cursor = self.collection.find({"$or": [
+            {"matchCount": {"$lt": MAX_MATCHES}},
+            {"matchCount": {"$exists": False}},
+        ]})
         users = []
         async for user in cursor:
             user.pop("_id", None)

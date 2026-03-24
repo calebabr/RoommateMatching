@@ -7,15 +7,16 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     RefreshControl,
-    Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { getNotifications, markNotificationsRead, getUser } from '../services/api';
 
 export default function NotificationsScreen({ navigation }) {
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [notifications, setNotifications] = useState([]);
     const [profiles, setProfiles] = useState({});
     const [loading, setLoading] = useState(true);
@@ -138,7 +139,7 @@ export default function NotificationsScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.backBtn}>← Back</Text>
             </TouchableOpacity>
@@ -177,7 +178,6 @@ export default function NotificationsScreen({ navigation }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingTop: Platform.OS === 'ios' ? 60 : 40,
         paddingBottom: 12,
         borderBottomWidth: 1,
         borderBottomColor: Colors.border,

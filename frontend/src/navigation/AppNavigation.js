@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Platform, View } from 'react-native';
+import { Text, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -14,12 +14,14 @@ import LikesScreen from '../screens/LikesScreen';
 import MatchesScreen from '../screens/MatchesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import UserDetailScreen from '../screens/UserDetailScreen';
+import ChatListScreen from '../screens/ChatListScreen';
 import ChatScreen from '../screens/ChatScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 
+const MAX_MATCHES = 5;
+
 const AuthStack = createNativeStackNavigator();
-const UnmatchedTab = createBottomTabNavigator();
-const MatchedTab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
 
 function AuthNavigator() {
@@ -38,10 +40,10 @@ function AuthNavigator() {
 
 function TabIcon({ label, focused }) {
   const icons = {
+    Profile: '👤',
     Discover: '🔍',
     Likes: '💌',
     Matches: '🤝',
-    Profile: '👤',
     Chat: '💬',
   };
   return (
@@ -67,76 +69,33 @@ const tabScreenOptions = ({ route }) => ({
     fontSize: 11,
     fontWeight: '600',
   },
-  headerStyle: {
-    backgroundColor: Colors.bg,
-    borderBottomColor: Colors.border,
-    borderBottomWidth: 1,
-  },
-  headerTintColor: Colors.textPrimary,
-  headerTitleStyle: { fontWeight: '700' },
+  headerShown: false,
 });
 
-/**
- * Tabs shown when user is NOT matched:
- * Discover | Likes | Matches | Profile
- */
-function UnmatchedTabs() {
-  return (
-    <UnmatchedTab.Navigator screenOptions={tabScreenOptions}>
-      <UnmatchedTab.Screen
-        name="Discover"
-        component={DiscoverScreen}
-        options={{ headerShown: false }}
-      />
-      <UnmatchedTab.Screen
-        name="Likes"
-        component={LikesScreen}
-        options={{ headerShown: false }}
-      />
-      <UnmatchedTab.Screen
-        name="Matches"
-        component={MatchesScreen}
-        options={{ headerShown: false }}
-      />
-      <UnmatchedTab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ headerShown: false }}
-      />
-    </UnmatchedTab.Navigator>
-  );
-}
+function MainTabs() {
+  const { user } = useAuth();
+  const matchCount = user?.matchCount ?? (user?.matched ? 1 : 0);
+  const isFull = matchCount >= MAX_MATCHES;
 
-/**
- * Tabs shown when user IS matched:
- * Chat | Profile
- */
-function MatchedTabs() {
   return (
-    <MatchedTab.Navigator screenOptions={tabScreenOptions}>
-      <MatchedTab.Screen
-        name="Chat"
-        component={ChatScreen}
-        options={{ headerShown: false }}
-      />
-      <MatchedTab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ headerShown: false }}
-      />
-    </MatchedTab.Navigator>
+    <Tab.Navigator screenOptions={tabScreenOptions} initialRouteName="Profile">
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+      {!isFull && <Tab.Screen name="Discover" component={DiscoverScreen} />}
+      {!isFull && <Tab.Screen name="Likes" component={LikesScreen} />}
+      <Tab.Screen name="Matches" component={MatchesScreen} />
+      <Tab.Screen name="Chat" component={ChatListScreen} />
+    </Tab.Navigator>
   );
 }
 
 function AppNavigator() {
-  const { user } = useAuth();
-  const isMatched = user?.matched === true;
-
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="MainTabs" component={MainTabs} />
       <RootStack.Screen
-        name="MainTabs"
-        component={isMatched ? MatchedTabs : UnmatchedTabs}
+        name="ChatRoom"
+        component={ChatScreen}
+        options={{ animation: 'slide_from_right' }}
       />
       <RootStack.Screen
         name="UserDetail"
@@ -155,9 +114,7 @@ function AppNavigator() {
 export default function AppNavigation() {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
   return (
     <NavigationContainer>

@@ -11,8 +11,10 @@ import {
   Switch,
   Platform,
   Image,
+  KeyboardAvoidingView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import { createUser, uploadPhoto, getPhotoUrl, setApiBase } from '../services/api';
@@ -21,6 +23,7 @@ import SliderPicker from '../components/SliderPicker';
 
 export default function SignupScreen({ navigation }) {
   const { signup } = useAuth();
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState('');
   const [gender, setGender] = useState(''); // 'male' or 'female'
   const [bio, setBio] = useState('');
@@ -136,9 +139,12 @@ export default function SignupScreen({ navigation }) {
   const canProceedStep0 = username.trim() && gender;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => (step === 0 ? navigation.goBack() : setStep(step - 1))}>
           <Text style={styles.backBtn}>← Back</Text>
         </TouchableOpacity>
@@ -377,7 +383,7 @@ export default function SignupScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -388,7 +394,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 12,
   },
   backBtn: { fontSize: 16, color: Colors.accent, fontWeight: '600' },

@@ -8,12 +8,13 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
-import { getLikesReceived, sendLike, getUser } from '../services/api';
+import { getLikesReceived, sendLike, getUser, getPhotoUrl } from '../services/api';
 import NotificationBell from '../components/NotificationBell';
 
 export default function LikesScreen() {
@@ -92,6 +93,7 @@ export default function LikesScreen() {
 
   const renderLike = ({ item }) => {
     const p = item.profile;
+    const photoSrc = getPhotoUrl(p?.photoUrl);
     return (
       <View style={styles.card}>
         <TouchableOpacity
@@ -99,11 +101,15 @@ export default function LikesScreen() {
           onPress={() => navigation.navigate('UserDetail', { userId: p.id })}
           activeOpacity={0.8}
         >
+          {photoSrc ? (
+            <Image source={{ uri: photoSrc }} style={styles.avatarImage} />
+          ) : (
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
               {(p.username || '?')[0].toUpperCase()}
             </Text>
           </View>
+          )}
           <View style={styles.cardInfo}>
             <Text style={styles.cardName}>{p.username || `User #${p.id}`}</Text>
             <Text style={styles.cardSub}>Wants to be your roommate!</Text>
@@ -203,6 +209,15 @@ const styles = StyleSheet.create({
     marginRight: 14,
     borderWidth: 2,
     borderColor: Colors.danger,
+  },
+  avatarImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: Colors.danger,
+    backgroundColor: Colors.bgCard,
   },
   avatarText: { fontSize: 22, fontWeight: '800', color: Colors.danger },
   cardInfo: { flex: 1 },

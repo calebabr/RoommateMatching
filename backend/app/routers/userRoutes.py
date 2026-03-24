@@ -71,7 +71,7 @@ async def get_user(user_id: int):
 @router.put("/users/{user_id}", response_model=UserResponse)
 async def update_profile(user_id: int, user: UserCreate):
     try:
-        preferences = user.model_dump()
+        preferences = user.model_dump(exclude_none=True)
         result = await userProfileService.update_profile(user_id, preferences)
 
         # Recompute recommendations with new preferences
@@ -119,17 +119,16 @@ async def get_likes_received(user_id: int):
 async def get_matches(user_id: int):
     return await likeService.get_matches(user_id)
 
-@router.post("/users/{user_id}/unmatch")
-async def unmatch_user(user_id: int):
+@router.post("/users/{user_id}/unmatch/{partner_id}")
+async def unmatch_user(user_id: int, partner_id: int):
     try:
-        result = await likeService.unmatch(user_id)
+        result = await likeService.unmatch(user_id, partner_id)
 
         users = await userProfileService.get_all_active_users()
         if len(users) >= 2:
             user_dicts = [UserInDB(**u).toMatchDict() for u in users]
             await recommendationService.on_user_unmatched(result["unmatched_user"], user_dicts)
-            if result["was_matched_with"]:
-                await recommendationService.on_user_unmatched(result["was_matched_with"], user_dicts)
+            await recommendationService.on_user_unmatched(result["was_matched_with"], user_dicts)
 
         return {"message": "Unmatched successfully"}
     except ValueError as e:
@@ -137,18 +136,25 @@ async def unmatch_user(user_id: int):
 
 # --- Chat ---
 
-@router.post("/users/{user_id}/chat")
-async def send_chat_message(user_id: int, message: ChatMessageCreate):
+@router.get("/users/{user_id}/chat/conversations")
+async def get_conversations(user_id: int):
     try:
-        result = await chatService.send_message(user_id, message.content)
+        return await chatService.get_conversations(user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/users/{user_id}/chat/{partner_id}")
+async def send_chat_message(user_id: int, partner_id: int, message: ChatMessageCreate):
+    try:
+        result = await chatService.send_message(user_id, partner_id, message.content)
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/users/{user_id}/chat")
-async def get_chat_messages(user_id: int, limit: int = 100):
+@router.get("/users/{user_id}/chat/{partner_id}")
+async def get_chat_messages(user_id: int, partner_id: int, limit: int = 100):
     try:
-        return await chatService.get_messages(user_id, limit)
+        return await chatService.get_messages(user_id, partner_id, limit)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -8,13 +8,14 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getMatches, getUser, unmatchUser, getMatchScore } from '../services/api';
+import { getMatches, getUser, unmatchUser, getMatchScore, getPhotoUrl } from '../services/api';
 import NotificationBell from '../components/NotificationBell';
 
 export default function MatchesScreen() {
@@ -71,10 +72,10 @@ export default function MatchesScreen() {
     setRefreshing(false);
   };
 
-  const handleUnmatch = async (matchedUserId) => {
+  const handleUnmatch = async (partnerId, partnerName) => {
     Alert.alert(
       'Unmatch',
-      'Are you sure you want to unmatch? You\'ll both return to the matching pool.',
+      `Are you sure you want to unmatch with ${partnerName}? You'll both return to the matching pool.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -82,13 +83,12 @@ export default function MatchesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await unmatchUser(user.id);
+              await unmatchUser(user.id, partnerId);
               await refreshUser();
               await loadMatches();
               Alert.alert('Unmatched', 'You are back in the matching pool.');
             } catch (err) {
-              const msg = err?.response?.data?.detail || 'Could not unmatch.';
-              Alert.alert('Error', msg);
+              Alert.alert('Error', err?.response?.data?.detail || 'Could not unmatch.');
             }
           },
         },
@@ -107,6 +107,7 @@ export default function MatchesScreen() {
   const renderMatch = ({ item }) => {
     const p = item.profile;
     const score = item.compatibilityScore;
+    const photoSrc = getPhotoUrl(p?.photoUrl);
 
     return (
       <View style={styles.card}>
@@ -125,11 +126,13 @@ export default function MatchesScreen() {
           onPress={() => navigation.navigate('UserDetail', { userId: p.id, score })}
           activeOpacity={0.8}
         >
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {(p.username || '?')[0].toUpperCase()}
-            </Text>
-          </View>
+          {photoSrc ? (
+            <Image source={{ uri: photoSrc }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{(p.username || '?')[0].toUpperCase()}</Text>
+            </View>
+          )}
           <View style={styles.cardInfo}>
             <Text style={styles.cardName}>{p.username || `User #${p.id}`}</Text>
             <Text style={styles.cardId}>ID: {p.id}</Text>
@@ -174,13 +177,22 @@ export default function MatchesScreen() {
           </View>
         )}
 
-        <TouchableOpacity
-          style={styles.unmatchBtn}
-          onPress={() => handleUnmatch(p.id)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.unmatchText}>Unmatch</Text>
-        </TouchableOpacity>
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.chatBtn}
+            onPress={() => navigation.navigate('ChatRoom', { partnerId: p.id, partnerName: p.username })}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.chatBtnText}>💬 Chat</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.unmatchBtn}
+            onPress={() => handleUnmatch(p.id, p.username || `User #${p.id}`)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.unmatchText}>Unmatch</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -225,7 +237,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 16,
     paddingBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -242,12 +253,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.success,
   },
-  matchBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 8,
-  },
+  matchBanner: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 8 },
   matchEmoji: { fontSize: 20 },
   matchLabel: { fontSize: 14, fontWeight: '700', color: Colors.success },
   scorePill: {
@@ -270,6 +276,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.success,
   },
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: Colors.success,
+    backgroundColor: Colors.bgCard,
+  },
   avatarText: { fontSize: 24, fontWeight: '800', color: Colors.success },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
@@ -289,7 +304,17 @@ const styles = StyleSheet.create({
   compThem: { fontSize: 13, fontWeight: '700', color: Colors.info },
   simBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: Radius.full, minWidth: 42, alignItems: 'center' },
   simText: { fontSize: 11, fontWeight: '700' },
+  actionRow: { flexDirection: 'row', gap: 10 },
+  chatBtn: {
+    flex: 1,
+    backgroundColor: Colors.accent,
+    borderRadius: Radius.md,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  chatBtnText: { fontSize: 14, fontWeight: '700', color: Colors.black },
   unmatchBtn: {
+    flex: 1,
     borderWidth: 1.5,
     borderColor: Colors.danger,
     borderRadius: Radius.md,

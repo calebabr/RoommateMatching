@@ -1,6 +1,8 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional, List
 from datetime import datetime
+
+MAX_MATCHES = 5
 
 # --- Preference ---
 
@@ -13,40 +15,65 @@ class Preference(BaseModel):
 class UserCreate(BaseModel):
     username: str
     gender: str  # "male" or "female"
+    bio: Optional[str] = ""
+    photoUrl: Optional[str] = ""
+    lifestyleTags: Optional[List[str]] = []
     sleepScoreWD: Preference
     sleepScoreWE: Preference
     cleanlinessScore: Preference
     noiseToleranceScore: Preference
     guestsScore: Preference
+    personalityScore: Optional[Preference] = None
+    smokingScore: Optional[Preference] = None
+    sharedSpaceScore: Optional[Preference] = None
+    communicationScore: Optional[Preference] = None
 
 class UserResponse(BaseModel):
     id: int
     username: str
     gender: str
     matched: bool
-    matchedWith: Optional[int] = None
+    matchCount: int = 0
+    matchedWith: List[int] = []
+    bio: Optional[str] = ""
+    photoUrl: Optional[str] = ""
+    lifestyleTags: Optional[List[str]] = []
     sleepScoreWD: Preference
     sleepScoreWE: Preference
     cleanlinessScore: Preference
     noiseToleranceScore: Preference
     guestsScore: Preference
+    personalityScore: Optional[Preference] = None
+    smokingScore: Optional[Preference] = None
+    sharedSpaceScore: Optional[Preference] = None
+    communicationScore: Optional[Preference] = None
 
 class UserInDB(BaseModel):
     id: int
     username: str
-    gender: str = "male"  # default for backwards compat
+    gender: str = "male"
     matched: bool = False
-    matchedWith: Optional[int] = None
+    matchCount: int = 0
+    matchedWith: List[int] = []
+    bio: Optional[str] = ""
+    photoUrl: Optional[str] = ""
+    lifestyleTags: Optional[List[str]] = []
     sleepScoreWD: Preference
     sleepScoreWE: Preference
     cleanlinessScore: Preference
     noiseToleranceScore: Preference
     guestsScore: Preference
+    personalityScore: Optional[Preference] = None
+    smokingScore: Optional[Preference] = None
+    sharedSpaceScore: Optional[Preference] = None
+    communicationScore: Optional[Preference] = None
 
     def toMatchDict(self):
         return {
             "id": self.id,
             "gender": self.gender,
+            "matchedWith": self.matchedWith,
+            "matchCount": self.matchCount,
             "sleepScheduleWeekdays": [self.sleepScoreWD.value, self.sleepScoreWD.isDealBreaker],
             "sleepScheduleWeekends": [self.sleepScoreWE.value, self.sleepScoreWE.isDealBreaker],
             "cleanliness": [self.cleanlinessScore.value, self.cleanlinessScore.isDealBreaker],

@@ -8,9 +8,17 @@ class RecommendationService:
         self.recommendations = recommendations_collection
 
     async def recompute_for_user(self, target_user: dict, candidate_users: list[dict], n=10):
+        already_matched = target_user.get("matchedWith") or []
+        if isinstance(already_matched, int):
+            already_matched = [already_matched]
+        already_matched_set = set(already_matched)
+
         scores = []
         for user in candidate_users:
             if user["id"] == target_user["id"]:
+                continue
+            # Skip users already matched with
+            if user["id"] in already_matched_set:
                 continue
             # Gender filter: only same-gender candidates
             if not self.scorer.genderCompatible(target_user, user):
