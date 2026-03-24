@@ -11,12 +11,14 @@ import {
   Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getTopMatches, sendLike, getUser } from '../services/api';
+import { getTopMatches, sendLike, getUser, getPhotoUrl } from '../services/api';
 
 export default function DiscoverScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { user, refreshUser } = useAuth();
   const [matches, setMatches] = useState([]);
   const [matchProfiles, setMatchProfiles] = useState([]);
@@ -88,7 +90,7 @@ export default function DiscoverScreen({ navigation }) {
 
   if (user?.matched) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
         <Text style={styles.emoji}>🎉</Text>
         <Text style={styles.matchedTitle}>You're Matched!</Text>
         <Text style={styles.matchedSubtitle}>
@@ -100,7 +102,7 @@ export default function DiscoverScreen({ navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color={Colors.accent} />
         <Text style={styles.loadingText}>Finding compatible roommates...</Text>
       </View>
@@ -109,7 +111,7 @@ export default function DiscoverScreen({ navigation }) {
 
   if (matchProfiles.length === 0) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
         <Text style={styles.emoji}>🔍</Text>
         <Text style={styles.emptyTitle}>No Matches Yet</Text>
         <Text style={styles.emptySubtitle}>
@@ -144,8 +146,8 @@ export default function DiscoverScreen({ navigation }) {
 
         {/* User info */}
         <View style={styles.cardBody}>
-          {item.photoUrl ? (
-            <Image source={{ uri: item.photoUrl }} style={styles.avatarImage} />
+          {getPhotoUrl(item.photoUrl) ? (
+            <Image source={{ uri: getPhotoUrl(item.photoUrl) }} style={styles.avatarImage} />
           ) : (
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
@@ -225,7 +227,7 @@ export default function DiscoverScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>Discover</Text>
         <Text style={styles.headerSub}>{matchProfiles.length} compatible roommates</Text>
       </View>

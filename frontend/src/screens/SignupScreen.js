@@ -12,9 +12,10 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
-import { createUser, setApiBase } from '../services/api';
+import { createUser, uploadPhoto, setApiBase } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import SliderPicker from '../components/SliderPicker';
 
@@ -22,7 +23,7 @@ export default function SignupScreen({ navigation }) {
   const { signup } = useAuth();
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoUri, setPhotoUri] = useState(null); // local image URI from picker
   const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0); // 0 = profile, 1 = preferences, 2 = tags
@@ -47,6 +48,25 @@ export default function SignupScreen({ navigation }) {
     );
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Needed', 'Please allow photo library access to upload a profile picture.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
   const handleCreate = async () => {
     if (!username.trim()) {
       Alert.alert('Missing Name', 'Please enter a username.');
@@ -57,15 +77,33 @@ export default function SignupScreen({ navigation }) {
       const payload = {
         username: username.trim(),
         bio: bio.trim(),
-        photoUrl: photoUrl.trim(),
+        photoUrl: '', // Will be set after photo upload
         lifestyleTags: selectedTags,
         ...preferences,
       };
       const user = await createUser(payload);
+
+      // Upload photo if one was picked
+      if (photoUri) {
+        try {
+          await uploadPhoto(user.id, photoUri);
+        } catch (photoErr) {
+          console.warn('Photo upload failed:', photoErr);
+          // Account still created — just no photo
+        }
+      }
+
+      // Re-fetch user to get updated photoUrl
+      const { getUser } = require('../services/api');
+      let finalUser = user;
+      try {
+        finalUser = await getUser(user.id);
+      } catch {}
+
       Alert.alert(
         'Account Created!',
-        `Welcome ${user.username}! Your ID is ${user.id}. Remember this for logging in.`,
-        [{ text: 'OK', onPress: () => signup(user) }]
+        `Welcome ${finalUser.username}! Your ID is ${finalUser.id}. Remember this for logging in.`,
+        [{ text: 'OK', onPress: () => signup(finalUser) }]
       );
     } catch (err) {
       const msg = err?.response?.data?.detail || 'Could not create account.';
@@ -135,26 +173,23 @@ export default function SignupScreen({ navigation }) {
               <Text style={styles.charCount}>{bio.length}/200</Text>
             </View>
 
+            {/* Photo Picker */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Profile Photo URL (optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="https://example.com/your-photo.jpg"
-                placeholderTextColor={Colors.textMuted}
-                value={photoUrl}
-                onChangeText={setPhotoUrl}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-              />
-              {photoUrl.trim() !== '' && (
-                <View style={styles.photoPreviewWrap}>
-                  <Image
-                    source={{ uri: photoUrl }}
-                    style={styles.photoPreview}
-                    defaultSource={undefined}
-                  />
-                </View>
+              <Text style={styles.label}>Profile Photo (optional)</Text>
+              <TouchableOpacity style={styles.photoPicker} onPress={pickImage} activeOpacity={0.7}>
+                {photoUri ? (
+                  <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+                ) : (
+                  <View style={styles.photoPlaceholder}>
+                    <Text style={styles.photoPlaceholderIcon}>📷</Text>
+                    <Text style={styles.photoPlaceholderText}>Tap to add a photo</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              {photoUri && (
+                <TouchableOpacity onPress={() => setPhotoUri(null)} style={styles.removePhotoBtn}>
+                  <Text style={styles.removePhotoText}>Remove photo</Text>
+                </TouchableOpacity>
               )}
             </View>
 
@@ -292,13 +327,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  textArea: {
-    minHeight: 80,
-    paddingTop: 14,
-  },
+  textArea: { minHeight: 80, paddingTop: 14 },
   charCount: { fontSize: 11, color: Colors.textMuted, textAlign: 'right', marginTop: 4 },
-  photoPreviewWrap: { alignItems: 'center', marginTop: 12 },
-  photoPreview: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.bgCard, borderWidth: 2, borderColor: Colors.accent },
+  photoPicker: { alignItems: 'center', marginTop: 4 },
+  photoPreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 3,
+    borderColor: Colors.accent,
+  },
+  photoPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoPlaceholderIcon: { fontSize: 28, marginBottom: 4 },
+  photoPlaceholderText: { fontSize: 11, color: Colors.textMuted, textAlign: 'center' },
+  removePhotoBtn: { alignItems: 'center', marginTop: 8 },
+  removePhotoText: { fontSize: 13, color: Colors.danger, fontWeight: '600' },
   button: {
     backgroundColor: Colors.accent,
     borderRadius: Radius.md,

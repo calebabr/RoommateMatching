@@ -18,7 +18,7 @@ import { setApiBase } from '../services/api';
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [userId, setUserId] = useState('');
-  const [serverUrl, setServerUrl] = useState('http://172.20.10.2:8000/api');
+  const [serverUrl, setServerUrl] = useState('http://172.20.10.2:8000');
   const [loading, setLoading] = useState(false);
   const [showServer, setShowServer] = useState(false);
 

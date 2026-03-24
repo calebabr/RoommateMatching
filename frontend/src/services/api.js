@@ -1,100 +1,186 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Change this to your backend URL
-const API_BASE = 'http://172.20.10.2:8000/api';
+const SESSION_KEY = 'roommatch_session';
 
-const api = axios.create({
-  baseURL: API_BASE,
-  timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
-});
+// Default: use your machine's local IP for Expo Go on a real device
+// Change this to your server's IP address
+let API_URL = 'http://172.20.10.2:8000';
 
-// ─── User CRUD ───────────────────────────────────────────
+export function setApiBase(url) {
+  API_URL = url.replace(/\/+$/, '');
+}
 
-export const createUser = async (userData) => {
-  const res = await api.post('/users', userData);
+export function getApiBase() {
+  return API_URL;
+}
+
+const api = () =>
+  axios.create({
+    baseURL: API_URL,
+    timeout: 10000,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+// --- Helper: resolve photo URLs ---
+// photoUrl from the DB may be a relative server path like "/uploads/photos/123_abc.jpg"
+// or an empty string / null. This returns a full URL or null.
+export function getPhotoUrl(photoUrl) {
+  if (!photoUrl || photoUrl.trim() === '') return null;
+  // Already a full URL (http/https)
+  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+    return photoUrl;
+  }
+  // Relative path from our server
+  return `${API_URL}${photoUrl}`;
+}
+
+// --- Users ---
+
+export async function createUser(data) {
+  const res = await api().post('/api/users', data);
   return res.data;
-};
+}
 
-export const getUser = async (userId) => {
-  const res = await api.get(`/users/${userId}`);
+export async function getUser(userId) {
+  const res = await api().get(`/api/users/${userId}`);
   return res.data;
-};
+}
 
-export const updateUser = async (userId, userData) => {
-  const res = await api.put(`/users/${userId}`, userData);
+export async function updateUser(userId, data) {
+  const res = await api().put(`/api/users/${userId}`, data);
   return res.data;
-};
+}
 
-export const deleteUser = async (userId) => {
-  const res = await api.delete(`/users/${userId}`);
+export async function deleteUser(userId) {
+  const res = await api().delete(`/api/users/${userId}`);
   return res.data;
-};
+}
 
-// ─── Recommendations ─────────────────────────────────────
+// --- Photo Upload ---
 
-export const getTopMatches = async (userId) => {
-  const res = await api.get(`/users/${userId}/top-matches`);
-  return res.data;
-};
+export async function uploadPhoto(userId, imageUri) {
+  const formData = new FormData();
 
-// ─── Likes & Matching ────────────────────────────────────
+  // Get file extension from URI
+  const uriParts = imageUri.split('.');
+  const ext = uriParts[uriParts.length - 1] || 'jpg';
 
-export const sendLike = async (userId, toUserId) => {
-  const res = await api.post(`/users/${userId}/like`, { toUser: toUserId });
-  return res.data;
-};
+  // Determine mime type
+  const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic' };
+  const mimeType = mimeMap[ext.toLowerCase()] || 'image/jpeg';
 
-export const getLikesReceived = async (userId) => {
-  const res = await api.get(`/users/${userId}/likes-received`);
-  return res.data;
-};
+  formData.append('file', {
+    uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
+    name: `photo_${userId}.${ext}`,
+    type: mimeType,
+  });
 
-export const getMatches = async (userId) => {
-  const res = await api.get(`/users/${userId}/matches`);
-  return res.data;
-};
-
-export const unmatchUser = async (userId) => {
-  const res = await api.post(`/users/${userId}/unmatch`);
-  return res.data;
-};
-
-// ─── Match Score ─────────────────────────────────────────
-
-export const getMatchScore = async (user1Id, user2Id) => {
-  const res = await api.post('/matchScore', {
-    user1_id: user1Id,
-    user2_id: user2Id,
+  const res = await axios.post(`${API_URL}/api/users/${userId}/photo`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
   });
   return res.data;
-};
+}
 
-// ─── Health Check ────────────────────────────────────────
-
-export const healthCheck = async () => {
-  const res = await api.get('/health');
+export async function deletePhoto(userId) {
+  const res = await api().delete(`/api/users/${userId}/photo`);
   return res.data;
-};
+}
 
-// ─── Local Auth Storage ──────────────────────────────────
+// --- Recommendations ---
 
-export const saveSession = async (user) => {
-  await AsyncStorage.setItem('roommatch_user', JSON.stringify(user));
-};
+export async function getTopMatches(userId) {
+  const res = await api().get(`/api/users/${userId}/top-matches`);
+  return res.data;
+}
 
-export const loadSession = async () => {
-  const data = await AsyncStorage.getItem('roommatch_user');
-  return data ? JSON.parse(data) : null;
-};
+export async function getMatchScore(userId1, userId2) {
+  const res = await api().post('/api/matchScore', {
+    user1_id: userId1,
+    user2_id: userId2,
+  });
+  return res.data;
+}
 
-export const clearSession = async () => {
-  await AsyncStorage.removeItem('roommatch_user');
-};
+// --- Likes & Matching ---
 
-export const setApiBase = (url) => {
-  api.defaults.baseURL = url;
-};
+export async function sendLike(fromUserId, toUserId) {
+  const res = await api().post(`/api/users/${fromUserId}/like`, {
+    toUser: toUserId,
+  });
+  return res.data;
+}
 
-export default api;
+export async function getLikesReceived(userId) {
+  const res = await api().get(`/api/users/${userId}/likes-received`);
+  return res.data;
+}
+
+export async function getMatches(userId) {
+  const res = await api().get(`/api/users/${userId}/matches`);
+  return res.data;
+}
+
+export async function unmatchUser(userId) {
+  const res = await api().post(`/api/users/${userId}/unmatch`);
+  return res.data;
+}
+
+// --- Admin ---
+
+export async function recomputeAll() {
+  const res = await api().post('/api/admin/recompute');
+  return res.data;
+}
+
+// --- Session Persistence ---
+
+export async function saveSession(userData) {
+  try {
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(userData));
+  } catch (e) {
+    console.warn('Failed to save session:', e);
+  }
+}
+
+export async function loadSession() {
+  try {
+    const raw = await AsyncStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.warn('Failed to load session:', e);
+    return null;
+  }
+}
+
+export async function clearSession() {
+  try {
+    await AsyncStorage.removeItem(SESSION_KEY);
+  } catch (e) {
+    console.warn('Failed to clear session:', e);
+  }
+}
+
+// --- Chat ---
+
+export async function sendMessage(userId, receiverId, text) {
+  const res = await api().post(`/api/chat/${userId}/send`, {
+    receiverId,
+    text,
+  });
+  return res.data;
+}
+
+export async function getMessages(userId, otherUserId, after = null, limit = 50) {
+  const params = { limit };
+  if (after) params.after = after;
+  const res = await api().get(`/api/chat/${userId}/messages/${otherUserId}`, { params });
+  return res.data;
+}
+
+export async function getConversations(userId) {
+  const res = await api().get(`/api/chat/${userId}/conversations`);
+  return res.data;
+}

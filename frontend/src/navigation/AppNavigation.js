@@ -14,6 +14,7 @@ import LikesScreen from '../screens/LikesScreen';
 import MatchesScreen from '../screens/MatchesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import UserDetailScreen from '../screens/UserDetailScreen';
+import ChatScreen from '../screens/ChatScreen';
 
 const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -106,6 +107,11 @@ function AppNavigator() {
       <RootStack.Screen
         name="UserDetail"
         component={UserDetailScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <RootStack.Screen
+        name="Chat"
+        component={ChatScreen}
         options={{ presentation: 'modal' }}
       />
     </RootStack.Navigator>

@@ -13,7 +13,7 @@ import {
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getUser, getMatchScore, sendLike } from '../services/api';
+import { getUser, getMatchScore, sendLike, getPhotoUrl } from '../services/api';
 
 export default function UserDetailScreen({ route, navigation }) {
   const { userId, score: passedScore } = route.params;
@@ -90,8 +90,8 @@ export default function UserDetailScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Avatar & Name */}
         <View style={styles.profileHeader}>
-          {profile.photoUrl ? (
-            <Image source={{ uri: profile.photoUrl }} style={[styles.avatarImage, { borderColor: color }]} />
+          {getPhotoUrl(profile.photoUrl) ? (
+            <Image source={{ uri: getPhotoUrl(profile.photoUrl) }} style={[styles.avatarImage, { borderColor: color }]} />
           ) : (
             <View style={[styles.avatar, { borderColor: color }]}>
               <Text style={[styles.avatarText, { color }]}>
