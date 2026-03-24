@@ -160,7 +160,8 @@ class LikeService:
         return {"status": "liked", "likedUser": to_id}
 
     async def get_likes_received(self, user_id: int) -> list[dict]:
-        """Return pending likes received by user (excludes already-matched users)."""
+        """Return pending likes received by user.
+        If the user has already liked a sender back, auto-resolve into a match."""
         user = await self.users.find_one({"id": user_id})
         if not user:
             return []
@@ -171,12 +172,29 @@ class LikeService:
         if len(matched_with) >= MAX_MATCHES:
             return []
 
-        cursor = self.likes.find({"toUser": user_id})
+        # Snapshot the cursor results first so mutations don't affect iteration
+        raw = await self.likes.find({"toUser": user_id}).to_list(length=None)
+
         likes = []
-        async for like in cursor:
+        for like in raw:
+            sender_id = like["fromUser"]
+
             # Skip if already matched with this sender
-            if like["fromUser"] in matched_with:
+            if sender_id in matched_with:
                 continue
+
+            # If user already liked this sender back, auto-create the match
+            already_liked_back = await self.likes.find_one({"fromUser": user_id, "toUser": sender_id})
+            if already_liked_back:
+                try:
+                    await self.send_like(user_id, sender_id)
+                    # Refresh matched_with so subsequent likes see the updated state
+                    refreshed = await self.users.find_one({"id": user_id})
+                    matched_with = _normalize_matched_with(refreshed)
+                except Exception:
+                    pass
+                continue  # Don't show — it resolved into a match
+
             like["_id"] = str(like["_id"])
             likes.append(like)
         return likes

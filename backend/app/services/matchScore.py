@@ -8,6 +8,10 @@ class matchScore:
             "cleanliness": [10, 0.2],
             "noiseTolerance": [10, 0.2],
             "guests": [10, 1.0],
+            "personality": [10, 0.2],
+            "smoking": [10, 0.1],
+            "sharedSpace": [10, 0.2],
+            "communication": [10, 0.2],
         }
 
     def genderCompatible(self, user1, user2) -> bool:

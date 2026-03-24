@@ -23,10 +23,10 @@ class UserCreate(BaseModel):
     cleanlinessScore: Preference
     noiseToleranceScore: Preference
     guestsScore: Preference
-    personalityScore: Optional[Preference] = None
-    smokingScore: Optional[Preference] = None
-    sharedSpaceScore: Optional[Preference] = None
-    communicationScore: Optional[Preference] = None
+    personalityScore: Preference
+    smokingScore: Preference
+    sharedSpaceScore: Preference
+    communicationScore: Preference
 
 class UserResponse(BaseModel):
     id: int
@@ -105,6 +105,11 @@ class UserInDB(BaseModel):
     communicationScore: Optional[Preference] = None
 
     def toMatchDict(self):
+        def _pref(p, default=5.0):
+            if p is None:
+                return [default, False]
+            return [p.value, p.isDealBreaker]
+
         return {
             "id": self.id,
             "gender": self.gender,
@@ -115,6 +120,10 @@ class UserInDB(BaseModel):
             "cleanliness": [self.cleanlinessScore.value, self.cleanlinessScore.isDealBreaker],
             "noiseTolerance": [self.noiseToleranceScore.value, self.noiseToleranceScore.isDealBreaker],
             "guests": [self.guestsScore.value, self.guestsScore.isDealBreaker],
+            "personality": _pref(self.personalityScore),
+            "smoking": _pref(self.smokingScore, default=0.0),
+            "sharedSpace": _pref(self.sharedSpaceScore),
+            "communication": _pref(self.communicationScore),
         }
 
 class UserDB(BaseModel):
