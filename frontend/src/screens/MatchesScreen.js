@@ -8,17 +8,16 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  Image,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getMatches, getUser, unmatchUser, getMatchScore, getPhotoUrl } from '../services/api';
+import { getMatches, getUser, unmatchUser, getMatchScore } from '../services/api';
+import NotificationBell from '../components/NotificationBell';
 
-export default function MatchesScreen({ navigation }) {
-  const insets = useSafeAreaInsets();
+export default function MatchesScreen() {
+  const navigation = useNavigation();
   const { user, refreshUser } = useAuth();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -97,7 +96,7 @@ export default function MatchesScreen({ navigation }) {
 
   if (loading) {
     return (
-      <View style={[styles.centered, { paddingTop: insets.top }]}>
+      <View style={styles.centered}>
         <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
@@ -110,6 +109,7 @@ export default function MatchesScreen({ navigation }) {
     return (
       <View style={styles.card}>
         <View style={styles.matchBanner}>
+          <Text style={styles.matchEmoji}>🤝</Text>
           <Text style={styles.matchLabel}>Roommate Match</Text>
           {score !== null && (
             <View style={styles.scorePill}>
@@ -124,13 +124,9 @@ export default function MatchesScreen({ navigation }) {
           activeOpacity={0.8}
         >
           <View style={styles.avatar}>
-            {getPhotoUrl(p.photoUrl) ? (
-              <Image source={{ uri: getPhotoUrl(p.photoUrl) }} style={styles.avatarImg} />
-            ) : (
-              <Text style={styles.avatarText}>
-                {(p.username || '?')[0].toUpperCase()}
-              </Text>
-            )}
+            <Text style={styles.avatarText}>
+              {(p.username || '?')[0].toUpperCase()}
+            </Text>
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.cardName}>{p.username || `User #${p.id}`}</Text>
@@ -138,6 +134,7 @@ export default function MatchesScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
+        {/* Preference comparison */}
         {p.sleepScoreWD && (
           <View style={styles.comparison}>
             <Text style={styles.compTitle}>Preference Comparison</Text>
@@ -176,14 +173,6 @@ export default function MatchesScreen({ navigation }) {
         )}
 
         <TouchableOpacity
-          style={styles.chatBtn}
-          onPress={() => navigation.navigate('Chat', { partnerId: p.id, partnerName: p.username })}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.chatBtnText}>💬 Chat</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={styles.unmatchBtn}
           onPress={() => handleUnmatch(p.id)}
           activeOpacity={0.7}
@@ -196,15 +185,18 @@ export default function MatchesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.headerTitle}>Matches</Text>
-        <Text style={styles.headerSub}>
-          {matches.length} confirmed {matches.length === 1 ? 'match' : 'matches'}
-        </Text>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Matches</Text>
+          <Text style={styles.headerSub}>
+            {matches.length} confirmed {matches.length === 1 ? 'match' : 'matches'}
+          </Text>
+        </View>
+        <NotificationBell onPress={() => navigation.navigate('Notifications')} />
       </View>
 
       {matches.length === 0 ? (
-        <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <View style={styles.centered}>
           <Text style={styles.emoji}>🏠</Text>
           <Text style={styles.emptyTitle}>No Matches Yet</Text>
           <Text style={styles.emptySubtitle}>
@@ -229,7 +221,14 @@ export default function MatchesScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  header: { paddingHorizontal: 24, paddingBottom: 8 },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   headerTitle: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary },
   headerSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
   list: { paddingHorizontal: 20, paddingBottom: 30 },
@@ -247,6 +246,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 8,
   },
+  matchEmoji: { fontSize: 20 },
   matchLabel: { fontSize: 14, fontWeight: '700', color: Colors.success },
   scorePill: {
     marginLeft: 'auto',
@@ -269,7 +269,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.success,
   },
   avatarText: { fontSize: 24, fontWeight: '800', color: Colors.success },
-  avatarImg: { width: 52, height: 52, borderRadius: 26 },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   cardId: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
@@ -288,14 +287,6 @@ const styles = StyleSheet.create({
   compThem: { fontSize: 13, fontWeight: '700', color: Colors.info },
   simBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: Radius.full, minWidth: 42, alignItems: 'center' },
   simText: { fontSize: 11, fontWeight: '700' },
-  chatBtn: {
-    backgroundColor: Colors.accent,
-    borderRadius: Radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  chatBtnText: { fontSize: 14, fontWeight: '700', color: Colors.black },
   unmatchBtn: {
     borderWidth: 1.5,
     borderColor: Colors.danger,

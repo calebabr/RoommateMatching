@@ -1,24 +1,11 @@
 import os
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routers.matchingRoutes import router as matchingRouter
 from app.routers.userRoutes import router as userRouter
-from app.routers.chatRoutes import router as chatRouter
-from app.services.chatService import ChatService
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup: create indexes
-    chat = ChatService()
-    await chat.ensure_indexes()
-    yield
-    # Shutdown: nothing needed
-
-
-app = FastAPI(title="RoomMatch API", lifespan=lifespan)
+app = FastAPI(title="RoomMatch API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,18 +15,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "photos")
+# Create uploads directory if it doesn't exist
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-app.mount("/uploads", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "uploads")), name="uploads")
+# Serve uploaded photos as static files at /uploads/filename.jpg
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.include_router(matchingRouter, prefix="/api")
 app.include_router(userRouter, prefix="/api")
-app.include_router(chatRouter, prefix="/api")
 
 @app.get("/")
 def root():
-    return {"status": "Matching Algorithm API running", "version": "0.3.0"}
+    return {"status": "Matching Algorithm API running", "version": "0.2.0"}
 
 @app.get("/health")
 def health():

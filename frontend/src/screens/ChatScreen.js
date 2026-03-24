@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -6,130 +6,122 @@ import {
     FlatList,
     TextInput,
     TouchableOpacity,
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator,
+    Alert,
     Image,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
-import { getMessages, sendMessage, getUser, getPhotoUrl } from '../services/api';
+import { getChatMessages, sendChatMessage, getUser, getPhotoUrl } from '../services/api';
 
-const POLL_INTERVAL = 3000; // 3 seconds
-
-export default function ChatScreen({ route, navigation }) {
-    const { partnerId, partnerName: initialName } = route.params;
-    const insets = useSafeAreaInsets();
+export default function ChatScreen({ navigation }) {
     const { user } = useAuth();
     const [messages, setMessages] = useState([]);
-    const [text, setText] = useState('');
-    const [sending, setSending] = useState(false);
+    const [partner, setPartner] = useState(null);
+    const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
-    const [partner, setPartner] = useState({ username: initialName || `User #${partnerId}`, photoUrl: '' });
+    const [sending, setSending] = useState(false);
     const flatListRef = useRef(null);
-    const lastTimestampRef = useRef(null);
     const pollRef = useRef(null);
 
-    // Load partner profile
-    useEffect(() => {
-        (async () => {
+    const loadMessages = async () => {
+        if (!user?.id || !user?.matched) return;
         try {
-            const p = await getUser(partnerId);
-            setPartner(p);
-            navigation.setOptions({ title: p.username });
+        const msgs = await getChatMessages(user.id);
+        setMessages(msgs);
         } catch {}
-        })();
-    }, [partnerId]);
+    };
 
-    // Fetch messages
-    const fetchMessages = useCallback(async (isInitial = false) => {
-        if (!user?.id) return;
+    const loadPartner = async () => {
+        if (!user?.matchedWith) return;
         try {
-        const after = isInitial ? null : lastTimestampRef.current;
-        const data = await getMessages(user.id, partnerId, after);
-        const newMsgs = data.messages || [];
-
-        if (newMsgs.length > 0) {
-            lastTimestampRef.current = newMsgs[newMsgs.length - 1].sentAt;
-
-            if (isInitial) {
-            setMessages(newMsgs);
-            } else {
-            setMessages((prev) => {
-                // Deduplicate by _id
-                const existingIds = new Set(prev.map((m) => m._id));
-                const unique = newMsgs.filter((m) => !existingIds.has(m._id));
-                if (unique.length === 0) return prev;
-                return [...prev, ...unique];
-            });
-            }
+        const p = await getUser(user.matchedWith);
+        setPartner(p);
+        } catch {
+        setPartner({ id: user.matchedWith, username: `User #${user.matchedWith}` });
         }
-        } catch (err) {
-        console.warn('Failed to fetch messages:', err);
-        } finally {
-        if (isInitial) setLoading(false);
-        }
-    }, [user?.id, partnerId]);
+    };
 
-    // Initial load
-    useEffect(() => {
-        fetchMessages(true);
-    }, [fetchMessages]);
-
-    // Polling
-    useEffect(() => {
-        pollRef.current = setInterval(() => fetchMessages(false), POLL_INTERVAL);
+    useFocusEffect(
+        useCallback(() => {
+        let active = true;
+        (async () => {
+            setLoading(true);
+            await loadPartner();
+            await loadMessages();
+            if (active) setLoading(false);
+        })();
+        pollRef.current = setInterval(() => {
+            if (active) loadMessages();
+        }, 3000);
         return () => {
-        if (pollRef.current) clearInterval(pollRef.current);
+            active = false;
+            if (pollRef.current) clearInterval(pollRef.current);
         };
-    }, [fetchMessages]);
-
-    // Auto-scroll when new messages arrive
-    useEffect(() => {
-        if (messages.length > 0 && flatListRef.current) {
-        setTimeout(() => {
-            flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-        }
-    }, [messages.length]);
+        }, [user?.id, user?.matchedWith])
+    );
 
     const handleSend = async () => {
-        const trimmed = text.trim();
-        if (!trimmed || sending) return;
-
+        const text = input.trim();
+        if (!text) return;
         setSending(true);
-        setText('');
-
+        setInput('');
         try {
-        const msg = await sendMessage(user.id, partnerId, trimmed);
-        // Add optimistically
-        const formatted = {
-            ...msg,
-            sentAt: msg.sentAt || new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, formatted]);
-        lastTimestampRef.current = formatted.sentAt;
+        await sendChatMessage(user.id, text);
+        await loadMessages();
+        setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
         } catch (err) {
-        console.warn('Failed to send:', err);
-        setText(trimmed); // Restore text on failure
+        const msg = err?.response?.data?.detail || 'Could not send message.';
+        Alert.alert('Error', msg);
+        setInput(text);
         } finally {
         setSending(false);
         }
     };
 
-    const resolvedPhoto = getPhotoUrl(partner.photoUrl);
+    const getTimeStr = (dateStr) => {
+        const d = new Date(dateStr);
+        const h = d.getHours();
+        const m = d.getMinutes().toString().padStart(2, '0');
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        return `${h12}:${m} ${ampm}`;
+    };
+
+    if (!user?.matched) {
+        return (
+        <View style={styles.centered}>
+            <Text style={styles.emoji}>💬</Text>
+            <Text style={styles.emptyTitle}>No Chat Available</Text>
+            <Text style={styles.emptySubtitle}>Chat becomes available after you match with a roommate.</Text>
+        </View>
+        );
+    }
+
+    if (loading) {
+        return (
+        <View style={styles.centered}>
+            <ActivityIndicator size="large" color={Colors.accent} />
+            <Text style={styles.loadingText}>Loading chat...</Text>
+        </View>
+        );
+    }
+
+    const partnerPhoto = getPhotoUrl(partner?.photoUrl);
 
     const renderMessage = ({ item }) => {
-        const isMe = item.senderId === user?.id;
+        const isMe = item.fromUser === user.id;
         return (
-        <View style={[styles.messageBubbleWrap, isMe ? styles.myWrap : styles.theirWrap]}>
-            <View style={[styles.bubble, isMe ? styles.myBubble : styles.theirBubble]}>
-            <Text style={[styles.bubbleText, isMe ? styles.myBubbleText : styles.theirBubbleText]}>
-                {item.text}
+        <View style={[styles.msgRow, isMe && styles.msgRowMe]}>
+            <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
+            <Text style={[styles.bubbleText, isMe ? styles.bubbleTextMe : styles.bubbleTextThem]}>
+                {item.content}
             </Text>
-            <Text style={[styles.bubbleTime, isMe ? styles.myBubbleTime : styles.theirBubbleTime]}>
-                {formatTime(item.sentAt)}
+            <Text style={[styles.timeText, isMe ? styles.timeTextMe : styles.timeTextThem]}>
+                {getTimeStr(item.createdAt)}
             </Text>
             </View>
         </View>
@@ -140,185 +132,105 @@ export default function ChatScreen({ route, navigation }) {
         <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
         >
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-            <View style={styles.headerProfile}>
-            {resolvedPhoto ? (
-                <Image source={{ uri: resolvedPhoto }} style={styles.headerAvatar} />
+        <View style={styles.header}>
+            <View style={styles.headerContent}>
+            {partnerPhoto ? (
+                <Image source={{ uri: partnerPhoto }} style={styles.partnerAvatarImg} />
             ) : (
-                <View style={styles.headerAvatarFallback}>
-                <Text style={styles.headerAvatarText}>
-                    {(partner.username || '?')[0].toUpperCase()}
+                <View style={styles.partnerAvatar}>
+                <Text style={styles.partnerAvatarText}>
+                    {(partner?.username || '?')[0].toUpperCase()}
                 </Text>
                 </View>
             )}
-            <Text style={styles.headerName} numberOfLines={1}>{partner.username}</Text>
+            <View>
+                <Text style={styles.partnerName}>{partner?.username || 'Roommate'}</Text>
+                <Text style={styles.partnerStatus}>Your matched roommate</Text>
             </View>
-            <View style={styles.backButton} />
+            </View>
         </View>
 
-        {/* Messages */}
-        {loading ? (
-            <View style={styles.centered}>
-            <ActivityIndicator size="large" color={Colors.accent} />
-            </View>
-        ) : messages.length === 0 ? (
-            <View style={styles.centered}>
-            <Text style={styles.emptyEmoji}>👋</Text>
-            <Text style={styles.emptyTitle}>Say hello!</Text>
-            <Text style={styles.emptySubtitle}>
-                Start a conversation with {partner.username}.
-            </Text>
+        {messages.length === 0 ? (
+            <View style={styles.emptyChat}>
+            <Text style={styles.emptyChatEmoji}>👋</Text>
+            <Text style={styles.emptyChatTitle}>Say hello!</Text>
+            <Text style={styles.emptyChatSub}>Start the conversation with your new roommate.</Text>
             </View>
         ) : (
             <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={(item) => item._id || `${item.sentAt}-${item.senderId}`}
+            keyExtractor={(item) => item.id}
             renderItem={renderMessage}
-            contentContainerStyle={styles.messageList}
+            contentContainerStyle={styles.messagesList}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
             />
         )}
 
-        {/* Input */}
-        <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={styles.inputBar}>
             <TextInput
-            style={styles.textInput}
+            style={styles.chatInput}
             placeholder="Type a message..."
             placeholderTextColor={Colors.textMuted}
-            value={text}
-            onChangeText={setText}
+            value={input}
+            onChangeText={setInput}
+            returnKeyType="send"
+            onSubmitEditing={handleSend}
             multiline
-            maxLength={2000}
-            returnKeyType="default"
+            maxLength={1000}
             />
             <TouchableOpacity
-            style={[styles.sendBtn, (!text.trim() || sending) && styles.sendBtnDisabled]}
+            style={[styles.sendBtn, (!input.trim() || sending) && styles.sendBtnDisabled]}
             onPress={handleSend}
-            disabled={!text.trim() || sending}
+            disabled={!input.trim() || sending}
             activeOpacity={0.7}
             >
             {sending ? (
                 <ActivityIndicator size="small" color={Colors.black} />
             ) : (
-                <Text style={styles.sendBtnText}>Send</Text>
+                <Text style={styles.sendBtnText}>↑</Text>
             )}
             </TouchableOpacity>
         </View>
         </KeyboardAvoidingView>
     );
-}
-
-function formatTime(isoString) {
-    if (!isoString) return '';
-    try {
-        const d = new Date(isoString);
-        const now = new Date();
-        const isToday = d.toDateString() === now.toDateString();
-        if (isToday) {
-        return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-        }
-        return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
-        ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    } catch {
-        return '';
-    }
     }
 
     const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.bg },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-        backgroundColor: Colors.bgCard,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.border,
-    },
-    backButton: { width: 44, alignItems: 'center' },
-    backText: { fontSize: 24, color: Colors.accent, fontWeight: '600' },
-    headerProfile: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-    headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.bgCard },
-    headerAvatarFallback: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: Colors.accentGlow,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    headerAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.accent },
-    headerName: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, maxWidth: 180 },
-    centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
-    emptyEmoji: { fontSize: 48, marginBottom: 12 },
-    emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, marginBottom: 6 },
-    emptySubtitle: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
-    messageList: { paddingHorizontal: 16, paddingVertical: 12 },
-    messageBubbleWrap: { marginBottom: 8 },
-    myWrap: { alignItems: 'flex-end' },
-    theirWrap: { alignItems: 'flex-start' },
-    bubble: {
-        maxWidth: '78%',
-        borderRadius: 18,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-    },
-    myBubble: {
-        backgroundColor: Colors.accent,
-        borderBottomRightRadius: 4,
-    },
-    theirBubble: {
-        backgroundColor: Colors.bgCard,
-        borderBottomLeftRadius: 4,
-        borderWidth: 1,
-        borderColor: Colors.border,
-    },
+    centered: { flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', padding: 40 },
+    emoji: { fontSize: 56, marginBottom: 16 },
+    emptyTitle: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
+    emptySubtitle: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+    loadingText: { fontSize: 14, color: Colors.textSecondary, marginTop: 16 },
+    header: { paddingTop: Platform.OS === 'ios' ? 60 : 40, paddingBottom: 14, paddingHorizontal: 20, backgroundColor: Colors.bgCard, borderBottomWidth: 1, borderBottomColor: Colors.border },
+    headerContent: { flexDirection: 'row', alignItems: 'center' },
+    partnerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.successDim, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 2, borderColor: Colors.success },
+    partnerAvatarImg: { width: 40, height: 40, borderRadius: 20, marginRight: 12, borderWidth: 2, borderColor: Colors.success, backgroundColor: Colors.bgCard },
+    partnerAvatarText: { fontSize: 18, fontWeight: '800', color: Colors.success },
+    partnerName: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
+    partnerStatus: { fontSize: 12, color: Colors.success, marginTop: 1 },
+    messagesList: { paddingHorizontal: 16, paddingVertical: 16, paddingBottom: 8 },
+    msgRow: { marginBottom: 8, alignItems: 'flex-start' },
+    msgRowMe: { alignItems: 'flex-end' },
+    bubble: { maxWidth: '78%', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
+    bubbleMe: { backgroundColor: Colors.accent, borderBottomRightRadius: 4 },
+    bubbleThem: { backgroundColor: Colors.bgCard, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: Colors.border },
     bubbleText: { fontSize: 15, lineHeight: 21 },
-    myBubbleText: { color: Colors.black },
-    theirBubbleText: { color: Colors.textPrimary },
-    bubbleTime: { fontSize: 10, marginTop: 4 },
-    myBubbleTime: { color: 'rgba(0,0,0,0.45)', textAlign: 'right' },
-    theirBubbleTime: { color: Colors.textMuted },
-    inputBar: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        paddingHorizontal: 12,
-        paddingTop: 10,
-        backgroundColor: Colors.bgCard,
-        borderTopWidth: 1,
-        borderTopColor: Colors.border,
-        gap: 8,
-    },
-    textInput: {
-        flex: 1,
-        backgroundColor: Colors.bgInput,
-        borderRadius: 20,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        fontSize: 15,
-        color: Colors.textPrimary,
-        maxHeight: 100,
-        borderWidth: 1,
-        borderColor: Colors.border,
-    },
-    sendBtn: {
-        backgroundColor: Colors.accent,
-        borderRadius: 20,
-        paddingHorizontal: 18,
-        paddingVertical: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 2,
-    },
+    bubbleTextMe: { color: Colors.black },
+    bubbleTextThem: { color: Colors.textPrimary },
+    timeText: { fontSize: 10, marginTop: 4 },
+    timeTextMe: { color: 'rgba(0,0,0,0.45)', textAlign: 'right' },
+    timeTextThem: { color: Colors.textMuted },
+    emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
+    emptyChatEmoji: { fontSize: 48, marginBottom: 12 },
+    emptyChatTitle: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, marginBottom: 6 },
+    emptyChatSub: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
+    inputBar: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 12, paddingVertical: 10, paddingBottom: Platform.OS === 'ios' ? 34 : 10, backgroundColor: Colors.bgCard, borderTopWidth: 1, borderTopColor: Colors.border, gap: 8 },
+    chatInput: { flex: 1, backgroundColor: Colors.bgInput, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 10, fontSize: 15, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border, maxHeight: 100 },
+    sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.accent, alignItems: 'center', justifyContent: 'center' },
     sendBtnDisabled: { opacity: 0.4 },
-    sendBtnText: { fontSize: 15, fontWeight: '700', color: Colors.black },
+    sendBtnText: { fontSize: 20, fontWeight: '800', color: Colors.black, marginTop: -2 },
 });

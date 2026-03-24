@@ -18,7 +18,7 @@ import { setApiBase } from '../services/api';
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [userId, setUserId] = useState('');
-  const [serverUrl, setServerUrl] = useState('http://172.20.10.2:8000');
+  const [serverUrl, setServerUrl] = useState('http://172.17.202.174:8000/api');
   const [loading, setLoading] = useState(false);
   const [showServer, setShowServer] = useState(false);
 
@@ -49,14 +49,12 @@ export default function LoginScreen({ navigation }) {
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Brand */}
         <View style={styles.brand}>
           <Text style={styles.logo}>🏠</Text>
           <Text style={styles.title}>RoomMatch</Text>
           <Text style={styles.subtitle}>Find your perfect roommate</Text>
         </View>
 
-        {/* Login Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome Back</Text>
           <Text style={styles.cardDesc}>Enter your User ID to sign in</Text>
@@ -102,7 +100,6 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Server Config */}
         <TouchableOpacity
           style={styles.serverToggle}
           onPress={() => setShowServer(!showServer)}

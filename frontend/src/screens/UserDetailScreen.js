@@ -73,14 +73,15 @@ export default function UserDetailScreen({ route, navigation }) {
   const color = score != null ? getCompatibilityColor(score) : Colors.textMuted;
   const label = score != null ? getCompatibilityLabel(score) : '';
 
-  // Compute shared tags
   const myTags = user?.lifestyleTags || [];
   const theirTags = profile.lifestyleTags || [];
   const sharedTags = myTags.filter((t) => theirTags.includes(t));
 
+  const genderLabel = profile.gender === 'female' ? '♀ Female' : profile.gender === 'male' ? '♂ Male' : '';
+  const photoSrc = getPhotoUrl(profile.photoUrl);
+
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backBtn}>← Back</Text>
@@ -88,10 +89,9 @@ export default function UserDetailScreen({ route, navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Avatar & Name */}
         <View style={styles.profileHeader}>
-          {getPhotoUrl(profile.photoUrl) ? (
-            <Image source={{ uri: getPhotoUrl(profile.photoUrl) }} style={[styles.avatarImage, { borderColor: color }]} />
+          {photoSrc ? (
+            <Image source={{ uri: photoSrc }} style={[styles.avatarImage, { borderColor: color }]} />
           ) : (
             <View style={[styles.avatar, { borderColor: color }]}>
               <Text style={[styles.avatarText, { color }]}>
@@ -102,12 +102,16 @@ export default function UserDetailScreen({ route, navigation }) {
           <Text style={styles.username}>{profile.username}</Text>
           <Text style={styles.userId}>User ID: {profile.id}</Text>
 
-          {/* Bio */}
+          {genderLabel !== '' && (
+            <View style={styles.genderBadge}>
+              <Text style={styles.genderBadgeText}>{genderLabel}</Text>
+            </View>
+          )}
+
           {profile.bio ? (
             <Text style={styles.bioText}>{profile.bio}</Text>
           ) : null}
 
-          {/* Lifestyle Tags */}
           {theirTags.length > 0 && (
             <View style={styles.tagRow}>
               {theirTags.map((tag) => {
@@ -129,14 +133,12 @@ export default function UserDetailScreen({ route, navigation }) {
             </Text>
           )}
 
-          {/* Status */}
           {profile.matched && (
             <View style={styles.matchedBadge}>
               <Text style={styles.matchedBadgeText}>Currently Matched</Text>
             </View>
           )}
 
-          {/* Score */}
           {score != null && (
             <View style={[styles.scoreBanner, { backgroundColor: color + '15', borderColor: color }]}>
               <Text style={[styles.scoreValue, { color }]}>{Math.round(score * 100)}%</Text>
@@ -145,7 +147,6 @@ export default function UserDetailScreen({ route, navigation }) {
           )}
         </View>
 
-        {/* Preferences Detail */}
         <Text style={styles.sectionTitle}>Preferences</Text>
         {CATEGORIES.map((cat) => {
           const pref = profile[cat.key];
@@ -170,7 +171,6 @@ export default function UserDetailScreen({ route, navigation }) {
                 </View>
               </View>
 
-              {/* Comparison with your score */}
               {myPref && (
                 <View style={styles.compRow}>
                   <Text style={styles.compLabel}>You: {cat.formatValue(myPref.value)}</Text>
@@ -183,7 +183,6 @@ export default function UserDetailScreen({ route, navigation }) {
           );
         })}
 
-        {/* Like Button */}
         {!profile.matched && profile.id !== user?.id && !user?.matched && (
           <TouchableOpacity
             style={styles.likeBtn}
@@ -206,80 +205,31 @@ export default function UserDetailScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   centered: { flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 8,
-  },
+  header: { paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 40, paddingBottom: 8 },
   backBtn: { fontSize: 16, color: Colors.accent, fontWeight: '600' },
   scroll: { paddingHorizontal: 24, paddingBottom: 60 },
   profileHeader: { alignItems: 'center', marginBottom: 28 },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: Colors.bgCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    marginBottom: 14,
-  },
-  avatarImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 3,
-    marginBottom: 14,
-    backgroundColor: Colors.bgCard,
-  },
+  avatar: { width: 96, height: 96, borderRadius: 48, backgroundColor: Colors.bgCard, alignItems: 'center', justifyContent: 'center', borderWidth: 3, marginBottom: 14 },
+  avatarImage: { width: 96, height: 96, borderRadius: 48, borderWidth: 3, marginBottom: 14, backgroundColor: Colors.bgCard },
   avatarText: { fontSize: 40, fontWeight: '800' },
   username: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary },
   userId: { fontSize: 13, color: Colors.textMuted, marginTop: 4 },
+  genderBadge: { marginTop: 8, backgroundColor: Colors.infoDim, paddingHorizontal: 14, paddingVertical: 5, borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.info },
+  genderBadgeText: { fontSize: 13, fontWeight: '600', color: Colors.info },
   bioText: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 20, paddingHorizontal: 8 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 12 },
-  tagPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bgCard,
-  },
-  tagPillShared: {
-    borderColor: Colors.success,
-    backgroundColor: Colors.successDim,
-  },
+  tagPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.bgCard },
+  tagPillShared: { borderColor: Colors.success, backgroundColor: Colors.successDim },
   tagPillText: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary },
   tagPillTextShared: { color: Colors.success },
   sharedTagNote: { fontSize: 13, fontWeight: '600', color: Colors.success, marginTop: 8 },
-  matchedBadge: {
-    marginTop: 10,
-    backgroundColor: Colors.infoDim,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
-  },
+  matchedBadge: { marginTop: 10, backgroundColor: Colors.infoDim, paddingHorizontal: 14, paddingVertical: 5, borderRadius: Radius.full },
   matchedBadgeText: { fontSize: 12, fontWeight: '600', color: Colors.info },
-  scoreBanner: {
-    marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    alignItems: 'center',
-    width: '100%',
-  },
+  scoreBanner: { marginTop: 16, paddingHorizontal: 24, paddingVertical: 12, borderRadius: Radius.lg, borderWidth: 1, alignItems: 'center', width: '100%' },
   scoreValue: { fontSize: 36, fontWeight: '800' },
   scoreDesc: { fontSize: 14, fontWeight: '600', marginTop: 2 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginBottom: 14 },
-  prefCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.md,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
+  prefCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.md, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: Colors.border },
   prefHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   prefLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   dbBadge: { backgroundColor: Colors.dangerDim, paddingHorizontal: 8, paddingVertical: 2, borderRadius: Radius.full },
@@ -291,12 +241,6 @@ const styles = StyleSheet.create({
   compRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   compLabel: { fontSize: 12, color: Colors.textMuted },
   compDiff: { fontSize: 12, color: Colors.textSecondary, fontWeight: '600' },
-  likeBtn: {
-    backgroundColor: Colors.accent,
-    borderRadius: Radius.md,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 20,
-  },
+  likeBtn: { backgroundColor: Colors.accent, borderRadius: Radius.md, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
   likeBtnText: { fontSize: 16, fontWeight: '700', color: Colors.black },
 });

@@ -8,16 +8,15 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  Image,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
-import { getLikesReceived, sendLike, getUser, getPhotoUrl } from '../services/api';
+import { getLikesReceived, sendLike, getUser } from '../services/api';
+import NotificationBell from '../components/NotificationBell';
 
-export default function LikesScreen({ navigation }) {
-  const insets = useSafeAreaInsets();
+export default function LikesScreen() {
+  const navigation = useNavigation();
   const { user, refreshUser } = useAuth();
   const [likes, setLikes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +66,7 @@ export default function LikesScreen({ navigation }) {
     try {
       const result = await sendLike(user.id, fromUserId);
       if (result.status === 'matched') {
-        Alert.alert('It\'s a Match!', `You and User #${fromUserId} are now roommate matches!`);
+        Alert.alert('🎉 Match!', `You and User #${fromUserId} are now roommate matches!`);
         await refreshUser();
       } else {
         Alert.alert('Liked!', 'Your like has been sent.');
@@ -83,7 +82,7 @@ export default function LikesScreen({ navigation }) {
 
   if (loading) {
     return (
-      <View style={[styles.centered, { paddingTop: insets.top }]}>
+      <View style={styles.centered}>
         <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
@@ -99,13 +98,9 @@ export default function LikesScreen({ navigation }) {
           activeOpacity={0.8}
         >
           <View style={styles.avatar}>
-            {getPhotoUrl(p.photoUrl) ? (
-              <Image source={{ uri: getPhotoUrl(p.photoUrl) }} style={styles.avatarImg} />
-            ) : (
-              <Text style={styles.avatarText}>
-                {(p.username || '?')[0].toUpperCase()}
-              </Text>
-            )}
+            <Text style={styles.avatarText}>
+              {(p.username || '?')[0].toUpperCase()}
+            </Text>
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.cardName}>{p.username || `User #${p.id}`}</Text>
@@ -123,7 +118,7 @@ export default function LikesScreen({ navigation }) {
             {actionId === p.id ? (
               <ActivityIndicator size="small" color={Colors.black} />
             ) : (
-              <Text style={styles.likeBackText}>Like Back</Text>
+              <Text style={styles.likeBackText}>♥ Like Back</Text>
             )}
           </TouchableOpacity>
           <TouchableOpacity
@@ -140,15 +135,18 @@ export default function LikesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.headerTitle}>Likes</Text>
-        <Text style={styles.headerSub}>
-          {likes.length} {likes.length === 1 ? 'person likes' : 'people like'} you
-        </Text>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Likes</Text>
+          <Text style={styles.headerSub}>
+            {likes.length} {likes.length === 1 ? 'person likes' : 'people like'} you
+          </Text>
+        </View>
+        <NotificationBell onPress={() => navigation.navigate('Notifications')} />
       </View>
 
       {likes.length === 0 ? (
-        <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <View style={styles.centered}>
           <Text style={styles.emoji}>💌</Text>
           <Text style={styles.emptyTitle}>No Likes Yet</Text>
           <Text style={styles.emptySubtitle}>
@@ -173,7 +171,14 @@ export default function LikesScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  header: { paddingHorizontal: 24, paddingBottom: 8 },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   headerTitle: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary },
   headerSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
   list: { paddingHorizontal: 20, paddingBottom: 30 },
@@ -198,7 +203,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.danger,
   },
   avatarText: { fontSize: 22, fontWeight: '800', color: Colors.danger },
-  avatarImg: { width: 48, height: 48, borderRadius: 24 },
   cardInfo: { flex: 1 },
   cardName: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
   cardSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },

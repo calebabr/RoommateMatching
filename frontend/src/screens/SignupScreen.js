@@ -15,18 +15,19 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
-import { createUser, uploadPhoto, setApiBase } from '../services/api';
+import { createUser, uploadPhoto, getPhotoUrl, setApiBase } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import SliderPicker from '../components/SliderPicker';
 
 export default function SignupScreen({ navigation }) {
   const { signup } = useAuth();
   const [username, setUsername] = useState('');
+  const [gender, setGender] = useState(''); // 'male' or 'female'
   const [bio, setBio] = useState('');
   const [photoUri, setPhotoUri] = useState(null); // local image URI from picker
   const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(0); // 0 = profile, 1 = preferences, 2 = tags
+  const [step, setStep] = useState(0); // 0 = profile+gender, 1 = preferences, 2 = tags
 
   const [preferences, setPreferences] = useState(
     CATEGORIES.reduce((acc, cat) => {
@@ -49,6 +50,7 @@ export default function SignupScreen({ navigation }) {
   };
 
   const pickImage = async () => {
+    // Ask for permission
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission Needed', 'Please allow photo library access to upload a profile picture.');
@@ -67,43 +69,59 @@ export default function SignupScreen({ navigation }) {
     }
   };
 
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Needed', 'Please allow camera access to take a profile picture.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
   const handleCreate = async () => {
     if (!username.trim()) {
       Alert.alert('Missing Name', 'Please enter a username.');
+      return;
+    }
+    if (!gender) {
+      Alert.alert('Missing Gender', 'Please select your gender.');
       return;
     }
     setLoading(true);
     try {
       const payload = {
         username: username.trim(),
+        gender: gender,
         bio: bio.trim(),
-        photoUrl: '', // Will be set after photo upload
         lifestyleTags: selectedTags,
         ...preferences,
       };
-      const user = await createUser(payload);
+      const createdUser = await createUser(payload);
 
-      // Upload photo if one was picked
+      // Upload photo if selected
       if (photoUri) {
         try {
-          await uploadPhoto(user.id, photoUri);
+          const photoResult = await uploadPhoto(createdUser.id, photoUri);
+          createdUser.photoUrl = photoResult.photoUrl;
         } catch (photoErr) {
           console.warn('Photo upload failed:', photoErr);
-          // Account still created — just no photo
+          // Account still created, just no photo
         }
       }
 
-      // Re-fetch user to get updated photoUrl
-      const { getUser } = require('../services/api');
-      let finalUser = user;
-      try {
-        finalUser = await getUser(user.id);
-      } catch {}
-
       Alert.alert(
         'Account Created!',
-        `Welcome ${finalUser.username}! Your ID is ${finalUser.id}. Remember this for logging in.`,
-        [{ text: 'OK', onPress: () => signup(finalUser) }]
+        `Welcome ${createdUser.username}! Your ID is ${createdUser.id}. Remember this for logging in.`,
+        [{ text: 'OK', onPress: () => signup(createdUser) }]
       );
     } catch (err) {
       const msg = err?.response?.data?.detail || 'Could not create account.';
@@ -114,6 +132,8 @@ export default function SignupScreen({ navigation }) {
   };
 
   const totalSteps = 3;
+
+  const canProceedStep0 = username.trim() && gender;
 
   return (
     <View style={styles.container}>
@@ -138,7 +158,7 @@ export default function SignupScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         {step === 0 ? (
-          /* ─── Step 1: Profile Info ─── */
+          /* ─── Step 1: Profile Info + Gender ─── */
           <View>
             <Text style={styles.title}>Create Your Profile</Text>
             <Text style={styles.subtitle}>Tell potential roommates about yourself</Text>
@@ -157,6 +177,52 @@ export default function SignupScreen({ navigation }) {
               />
             </View>
 
+            {/* Gender Selection */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Gender</Text>
+              <Text style={styles.genderHint}>
+                You'll only be matched with roommates of the same gender
+              </Text>
+              <View style={styles.genderRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.genderBtn,
+                    gender === 'male' && styles.genderBtnSelected,
+                  ]}
+                  onPress={() => setGender('male')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.genderEmoji}>👨</Text>
+                  <Text
+                    style={[
+                      styles.genderBtnText,
+                      gender === 'male' && styles.genderBtnTextSelected,
+                    ]}
+                  >
+                    Male
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.genderBtn,
+                    gender === 'female' && styles.genderBtnSelected,
+                  ]}
+                  onPress={() => setGender('female')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.genderEmoji}>👩</Text>
+                  <Text
+                    style={[
+                      styles.genderBtnText,
+                      gender === 'female' && styles.genderBtnTextSelected,
+                    ]}
+                  >
+                    Female
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Bio</Text>
               <TextInput
@@ -173,36 +239,55 @@ export default function SignupScreen({ navigation }) {
               <Text style={styles.charCount}>{bio.length}/200</Text>
             </View>
 
-            {/* Photo Picker */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Profile Photo (optional)</Text>
-              <TouchableOpacity style={styles.photoPicker} onPress={pickImage} activeOpacity={0.7}>
-                {photoUri ? (
+              {photoUri ? (
+                <View style={styles.photoPreviewWrap}>
                   <Image source={{ uri: photoUri }} style={styles.photoPreview} />
-                ) : (
-                  <View style={styles.photoPlaceholder}>
-                    <Text style={styles.photoPlaceholderIcon}>📷</Text>
-                    <Text style={styles.photoPlaceholderText}>Tap to add a photo</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              {photoUri && (
-                <TouchableOpacity onPress={() => setPhotoUri(null)} style={styles.removePhotoBtn}>
-                  <Text style={styles.removePhotoText}>Remove photo</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.photoRemoveBtn}
+                    onPress={() => setPhotoUri(null)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.photoRemoveText}>✕ Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.photoPickerRow}>
+                  <TouchableOpacity
+                    style={styles.photoPickerBtn}
+                    onPress={pickImage}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.photoPickerEmoji}>🖼️</Text>
+                    <Text style={styles.photoPickerBtnText}>Choose Photo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.photoPickerBtn}
+                    onPress={takePhoto}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.photoPickerEmoji}>📷</Text>
+                    <Text style={styles.photoPickerBtnText}>Take Photo</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
 
             <TouchableOpacity
-              style={[styles.button, !username.trim() && styles.buttonDisabled]}
+              style={[styles.button, !canProceedStep0 && styles.buttonDisabled]}
               onPress={() => {
                 if (!username.trim()) {
                   Alert.alert('Missing Name', 'Please enter a username.');
                   return;
                 }
+                if (!gender) {
+                  Alert.alert('Missing Gender', 'Please select your gender.');
+                  return;
+                }
                 setStep(1);
               }}
-              disabled={!username.trim()}
+              disabled={!canProceedStep0}
               activeOpacity={0.8}
             >
               <Text style={styles.buttonText}>Next — Set Preferences</Text>
@@ -329,30 +414,42 @@ const styles = StyleSheet.create({
   },
   textArea: { minHeight: 80, paddingTop: 14 },
   charCount: { fontSize: 11, color: Colors.textMuted, textAlign: 'right', marginTop: 4 },
-  photoPicker: { alignItems: 'center', marginTop: 4 },
-  photoPreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  photoPreviewWrap: { alignItems: 'center', marginTop: 12 },
+  photoPreview: { width: 100, height: 100, borderRadius: 50, backgroundColor: Colors.bgCard, borderWidth: 3, borderColor: Colors.accent },
+  photoRemoveBtn: { marginTop: 10, paddingHorizontal: 16, paddingVertical: 6, borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.danger },
+  photoRemoveText: { fontSize: 13, fontWeight: '600', color: Colors.danger },
+  photoPickerRow: { flexDirection: 'row', gap: 12 },
+  photoPickerBtn: {
+    flex: 1,
     backgroundColor: Colors.bgCard,
-    borderWidth: 3,
-    borderColor: Colors.accent,
-  },
-  photoPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.bgCard,
-    borderWidth: 2,
+    borderRadius: Radius.md,
+    paddingVertical: 18,
+    alignItems: 'center',
+    borderWidth: 1.5,
     borderColor: Colors.border,
     borderStyle: 'dashed',
+  },
+  photoPickerEmoji: { fontSize: 28, marginBottom: 6 },
+  photoPickerBtnText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
+  genderHint: { fontSize: 12, color: Colors.textMuted, marginBottom: 12, fontStyle: 'italic' },
+  genderRow: { flexDirection: 'row', gap: 12 },
+  genderBtn: {
+    flex: 1,
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.lg,
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.border,
   },
-  photoPlaceholderIcon: { fontSize: 28, marginBottom: 4 },
-  photoPlaceholderText: { fontSize: 11, color: Colors.textMuted, textAlign: 'center' },
-  removePhotoBtn: { alignItems: 'center', marginTop: 8 },
-  removePhotoText: { fontSize: 13, color: Colors.danger, fontWeight: '600' },
+  genderBtnSelected: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accentGlow,
+  },
+  genderEmoji: { fontSize: 36, marginBottom: 8 },
+  genderBtnText: { fontSize: 16, fontWeight: '700', color: Colors.textSecondary },
+  genderBtnTextSelected: { color: Colors.accent },
   button: {
     backgroundColor: Colors.accent,
     borderRadius: Radius.md,

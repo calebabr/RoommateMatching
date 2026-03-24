@@ -13,22 +13,22 @@ import {
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { updateUser, deleteUser, uploadPhoto, deletePhoto, getPhotoUrl } from '../services/api';
+import { updateUser, deleteUser, uploadPhoto, getPhotoUrl } from '../services/api';
 import SliderPicker from '../components/SliderPicker';
+import NotificationBell from '../components/NotificationBell';
 
 export default function ProfileScreen() {
-  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const { user, refreshUser, logout } = useAuth();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [bio, setBio] = useState(user?.bio || '');
-  const [pendingPhotoUri, setPendingPhotoUri] = useState(null); // local URI for preview before save
+  const [newPhotoUri, setNewPhotoUri] = useState(null); // local URI from picker during edit
   const [selectedTags, setSelectedTags] = useState(user?.lifestyleTags || []);
 
   const [preferences, setPreferences] = useState(
@@ -60,16 +60,30 @@ export default function ProfileScreen() {
       Alert.alert('Permission Needed', 'Please allow photo library access to upload a profile picture.');
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
     });
-
     if (!result.canceled && result.assets?.[0]?.uri) {
-      setPendingPhotoUri(result.assets[0].uri);
+      setNewPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Needed', 'Please allow camera access to take a profile picture.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setNewPhotoUri(result.assets[0].uri);
     }
   };
 
@@ -78,29 +92,25 @@ export default function ProfileScreen() {
     try {
       const payload = {
         username: user.username,
+        gender: user.gender || 'male',
         bio: bio.trim(),
-        photoUrl: user.photoUrl || '', // keep existing; upload handles the update
         lifestyleTags: selectedTags,
         ...preferences,
       };
       await updateUser(user.id, payload);
 
-      // Upload new photo if one was picked
-      if (pendingPhotoUri) {
-        setUploadingPhoto(true);
+      // Upload new photo if selected
+      if (newPhotoUri) {
         try {
-          await uploadPhoto(user.id, pendingPhotoUri);
+          await uploadPhoto(user.id, newPhotoUri);
         } catch (photoErr) {
           console.warn('Photo upload failed:', photoErr);
-          Alert.alert('Photo Error', 'Profile saved but photo upload failed. Try again from edit mode.');
-        } finally {
-          setUploadingPhoto(false);
         }
       }
 
       await refreshUser();
-      setPendingPhotoUri(null);
       setEditing(false);
+      setNewPhotoUri(null);
       Alert.alert('Saved', 'Your profile has been updated.');
     } catch (err) {
       const msg = err?.response?.data?.detail || 'Could not update profile.';
@@ -110,27 +120,9 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleRemovePhoto = async () => {
-    // If there's only a pending local photo, just clear it
-    if (pendingPhotoUri) {
-      setPendingPhotoUri(null);
-      return;
-    }
-    // Otherwise delete from server
-    if (user?.photoUrl) {
-      try {
-        await deletePhoto(user.id);
-        await refreshUser();
-        Alert.alert('Removed', 'Your profile photo has been removed.');
-      } catch {
-        Alert.alert('Error', 'Could not remove photo.');
-      }
-    }
-  };
-
   const handleCancel = () => {
     setEditing(false);
-    setPendingPhotoUri(null);
+    setNewPhotoUri(null);
     setBio(user?.bio || '');
     setSelectedTags(user?.lifestyleTags || []);
     setPreferences(
@@ -170,59 +162,62 @@ export default function ProfileScreen() {
 
   const displayTags = editing ? selectedTags : (user.lifestyleTags || []);
   const displayBio = editing ? bio : (user.bio || '');
+  const genderLabel = user.gender === 'female' ? '♀ Female' : user.gender === 'male' ? '♂ Male' : '';
 
-  // For the avatar: show pending local pick, then server photo, then initial letter
-  const resolvedPhotoUrl = getPhotoUrl(user.photoUrl);
-  const displayPhotoSource = pendingPhotoUri
-    ? { uri: pendingPhotoUri }
-    : resolvedPhotoUrl
-    ? { uri: resolvedPhotoUrl }
-    : null;
+  // For display: if editing and a new photo was picked, show that; otherwise show existing
+  const displayPhotoUri = editing && newPhotoUri
+    ? newPhotoUri
+    : getPhotoUrl(user.photoUrl);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12 }]} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      {/* Top bar with notification bell */}
+      <View style={styles.topBar}>
+        <Text style={styles.topBarTitle}>Profile</Text>
+        <NotificationBell onPress={() => navigation.navigate('Notifications')} />
+      </View>
+
       {/* Profile Header */}
       <View style={styles.profileHeader}>
-        {editing ? (
-          <TouchableOpacity onPress={pickImage} activeOpacity={0.7}>
-            {displayPhotoSource ? (
-              <View>
-                <Image source={displayPhotoSource} style={styles.avatarImage} />
-                <View style={styles.editPhotoOverlay}>
-                  <Text style={styles.editPhotoOverlayText}>Change</Text>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.avatarLarge}>
-                <Text style={styles.avatarLargeText}>
-                  {(user.username || '?')[0].toUpperCase()}
-                </Text>
-                <View style={styles.editPhotoOverlay}>
-                  <Text style={styles.editPhotoOverlayText}>Add</Text>
-                </View>
-              </View>
-            )}
-          </TouchableOpacity>
+        {displayPhotoUri ? (
+          <Image source={{ uri: displayPhotoUri }} style={styles.avatarImage} />
         ) : (
-          displayPhotoSource ? (
-            <Image source={displayPhotoSource} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatarLarge}>
-              <Text style={styles.avatarLargeText}>
-                {(user.username || '?')[0].toUpperCase()}
-              </Text>
-            </View>
-          )
+          <View style={styles.avatarLarge}>
+            <Text style={styles.avatarLargeText}>
+              {(user.username || '?')[0].toUpperCase()}
+            </Text>
+          </View>
         )}
 
-        {editing && (displayPhotoSource) && (
-          <TouchableOpacity onPress={handleRemovePhoto} style={styles.removePhotoBtn}>
-            <Text style={styles.removePhotoText}>Remove photo</Text>
-          </TouchableOpacity>
+        {/* Photo change buttons when editing */}
+        {editing && (
+          <View style={styles.photoEditRow}>
+            <TouchableOpacity style={styles.photoEditBtn} onPress={pickImage} activeOpacity={0.7}>
+              <Text style={styles.photoEditBtnText}>🖼️ Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.photoEditBtn} onPress={takePhoto} activeOpacity={0.7}>
+              <Text style={styles.photoEditBtnText}>📷 Camera</Text>
+            </TouchableOpacity>
+            {(newPhotoUri || user.photoUrl) && (
+              <TouchableOpacity
+                style={styles.photoRemoveBtn}
+                onPress={() => setNewPhotoUri(null)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.photoRemoveText}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
 
         <Text style={styles.username}>{user.username}</Text>
         <Text style={styles.userId}>ID: {user.id}</Text>
+
+        {genderLabel !== '' && (
+          <View style={styles.genderBadge}>
+            <Text style={styles.genderBadgeText}>{genderLabel}</Text>
+          </View>
+        )}
 
         {displayBio !== '' && (
           <Text style={styles.bioText}>{displayBio}</Text>
@@ -295,7 +290,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Preferences</Text>
-          {!editing && (
+          {!editing && !user.matched && (
             <TouchableOpacity onPress={() => setEditing(true)}>
               <Text style={styles.editBtn}>Edit</Text>
             </TouchableOpacity>
@@ -359,9 +354,7 @@ export default function ProfileScreen() {
               {saving ? (
                 <ActivityIndicator color={Colors.black} />
               ) : (
-                <Text style={styles.saveBtnText}>
-                  {uploadingPhoto ? 'Uploading photo...' : 'Save Changes'}
-                </Text>
+                <Text style={styles.saveBtnText}>Save Changes</Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel} activeOpacity={0.7}>
@@ -387,7 +380,14 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  scroll: { paddingHorizontal: 24, paddingBottom: 60 },
+  scroll: { paddingHorizontal: 24, paddingBottom: 60, paddingTop: 16 },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  topBarTitle: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary },
   profileHeader: { alignItems: 'center', marginBottom: 32 },
   avatarLarge: {
     width: 88,
@@ -399,7 +399,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: Colors.accent,
     marginBottom: 16,
-    overflow: 'hidden',
   },
   avatarLargeText: { fontSize: 36, fontWeight: '800', color: Colors.accent },
   avatarImage: {
@@ -411,20 +410,38 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: Colors.bgCard,
   },
-  editPhotoOverlay: {
-    position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingVertical: 4,
-    alignItems: 'center',
+  photoEditRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  photoEditBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accentGlow,
   },
-  editPhotoOverlayText: { fontSize: 11, fontWeight: '700', color: '#fff' },
-  removePhotoBtn: { marginTop: -8, marginBottom: 8 },
-  removePhotoText: { fontSize: 13, color: Colors.danger, fontWeight: '600' },
+  photoEditBtnText: { fontSize: 13, fontWeight: '600', color: Colors.accent },
+  photoRemoveBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: Colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoRemoveText: { fontSize: 14, fontWeight: '700', color: Colors.danger },
   username: { fontSize: 26, fontWeight: '800', color: Colors.textPrimary },
   userId: { fontSize: 14, color: Colors.textMuted, marginTop: 4 },
+  genderBadge: {
+    marginTop: 8,
+    backgroundColor: Colors.infoDim,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.info,
+  },
+  genderBadgeText: { fontSize: 13, fontWeight: '600', color: Colors.info },
   bioText: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 20, paddingHorizontal: 12 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 12 },
   tagPill: {

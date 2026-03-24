@@ -1,9 +1,12 @@
 import os
 import uuid
+import shutil
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from app.services.userProfileService import UserProfileService
 from app.services.recommendationService import RecommendationService
 from app.services.likeService import LikeService
+from app.services.chatService import ChatService
+from app.services.notificationService import NotificationService
 from app.models import (
     UserCreate,
     UserResponse,
@@ -11,6 +14,7 @@ from app.models import (
     TopMatchesResponse,
     LikeRequest,
     LikeResponse,
+    ChatMessageCreate,
 )
 
 router = APIRouter()
@@ -18,8 +22,8 @@ router = APIRouter()
 userProfileService = UserProfileService()
 recommendationService = RecommendationService()
 likeService = LikeService()
-
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "photos")
+chatService = ChatService()
+notificationService = NotificationService()
 
 # --- User CRUD ---
 
@@ -36,6 +40,10 @@ async def get_all_users():
 async def create_user(user: UserCreate):
     try:
         user_data = user.model_dump()
+        # Validate gender
+        if user_data.get("gender", "").lower() not in ("male", "female"):
+            raise ValueError("Gender must be 'male' or 'female'")
+        user_data["gender"] = user_data["gender"].lower()
         result = await userProfileService.create_user(user_data)
 
         # Auto-recompute for this user
@@ -79,87 +87,10 @@ async def update_profile(user_id: int, user: UserCreate):
 
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: int):
-    # Clean up photo file if it exists
-    try:
-        user = await userProfileService.get_user(user_id)
-        photo_url = user.get("photoUrl", "")
-        if photo_url and photo_url.startswith("/uploads/photos/"):
-            filename = photo_url.split("/")[-1]
-            filepath = os.path.join(UPLOAD_DIR, filename)
-            if os.path.exists(filepath):
-                os.remove(filepath)
-    except Exception:
-        pass
-
     deleted = await userProfileService.delete_user(user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted"}
-
-# --- Photo Upload ---
-
-@router.post("/users/{user_id}/photo")
-async def upload_photo(user_id: int, file: UploadFile = File(...)):
-    # Validate user exists
-    try:
-        user = await userProfileService.get_user(user_id)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Validate file type
-    allowed = {"image/jpeg", "image/png", "image/webp", "image/heic"}
-    if file.content_type not in allowed:
-        raise HTTPException(status_code=400, detail=f"File type {file.content_type} not allowed. Use JPEG, PNG, or WebP.")
-
-    # Limit file size (5MB)
-    contents = await file.read()
-    if len(contents) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
-
-    # Delete old photo if exists
-    old_url = user.get("photoUrl", "")
-    if old_url and old_url.startswith("/uploads/photos/"):
-        old_file = os.path.join(UPLOAD_DIR, old_url.split("/")[-1])
-        if os.path.exists(old_file):
-            os.remove(old_file)
-
-    # Save new photo
-    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"{user_id}_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
-
-    with open(filepath, "wb") as f:
-        f.write(contents)
-
-    # Update user record with the photo path
-    photo_path = f"/uploads/photos/{filename}"
-    await userProfileService.collection.find_one_and_update(
-        {"id": user_id},
-        {"$set": {"photoUrl": photo_path}}
-    )
-
-    return {"photoUrl": photo_path}
-
-@router.delete("/users/{user_id}/photo")
-async def delete_photo(user_id: int):
-    try:
-        user = await userProfileService.get_user(user_id)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    photo_url = user.get("photoUrl", "")
-    if photo_url and photo_url.startswith("/uploads/photos/"):
-        filename = photo_url.split("/")[-1]
-        filepath = os.path.join(UPLOAD_DIR, filename)
-        if os.path.exists(filepath):
-            os.remove(filepath)
-
-    await userProfileService.collection.find_one_and_update(
-        {"id": user_id},
-        {"$set": {"photoUrl": ""}}
-    )
-
-    return {"message": "Photo removed"}
 
 # --- Recommendations ---
 
@@ -193,7 +124,6 @@ async def unmatch_user(user_id: int):
     try:
         result = await likeService.unmatch(user_id)
 
-        # Recompute recommendations for both users
         users = await userProfileService.get_all_active_users()
         if len(users) >= 2:
             user_dicts = [UserInDB(**u).toMatchDict() for u in users]
@@ -204,6 +134,89 @@ async def unmatch_user(user_id: int):
         return {"message": "Unmatched successfully"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# --- Chat ---
+
+@router.post("/users/{user_id}/chat")
+async def send_chat_message(user_id: int, message: ChatMessageCreate):
+    try:
+        result = await chatService.send_message(user_id, message.content)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/users/{user_id}/chat")
+async def get_chat_messages(user_id: int, limit: int = 100):
+    try:
+        return await chatService.get_messages(user_id, limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# --- Notifications ---
+
+@router.get("/users/{user_id}/notifications")
+async def get_notifications(user_id: int):
+    return await notificationService.get_notifications(user_id)
+
+@router.get("/users/{user_id}/notifications/unread-count")
+async def get_unread_count(user_id: int):
+    count = await notificationService.get_unread_count(user_id)
+    return {"count": count}
+
+@router.post("/users/{user_id}/notifications/mark-read")
+async def mark_all_notifications_read(user_id: int):
+    count = await notificationService.mark_all_read(user_id)
+    return {"marked": count}
+
+# --- Photo Upload ---
+
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@router.post("/users/{user_id}/upload-photo")
+async def upload_photo(user_id: int, file: UploadFile = File(...)):
+    """Upload a profile photo. Saves to disk, stores URL in user profile."""
+    # Validate user exists
+    try:
+        user = await userProfileService.get_user(user_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Validate file type
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="File must be an image (JPEG, PNG, WebP, or GIF)")
+
+    # Limit file size (5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
+
+    # Generate unique filename
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    filename = f"user_{user_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    # Delete old photo if exists
+    old_url = user.get("photoUrl", "")
+    if old_url and "/uploads/" in old_url:
+        old_filename = old_url.split("/uploads/")[-1]
+        old_path = os.path.join(UPLOAD_DIR, old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    # Save new file
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    # Store the relative URL in user profile
+    photo_url = f"/uploads/{filename}"
+    await userProfileService.collection.update_one(
+        {"id": user_id},
+        {"$set": {"photoUrl": photo_url}}
+    )
+
+    return {"photoUrl": photo_url, "filename": filename}
 
 # --- Admin ---
 
