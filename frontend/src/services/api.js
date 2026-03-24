@@ -80,6 +80,11 @@ export const getLikesReceived = async (userId) => {
   return res.data;
 };
 
+export const getLikesSent = async (userId) => {
+  const res = await api.get(`/users/${userId}/likes-sent`);
+  return res.data;
+};
+
 export const getMatches = async (userId) => {
   const res = await api.get(`/users/${userId}/matches`);
   return res.data;

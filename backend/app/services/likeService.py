@@ -46,66 +46,66 @@ class LikeService:
             raise ValueError("Target user not found")
 
         # Gender check
-        from_gender = from_user.get("gender", "").lower()
-        to_gender = to_user.get("gender", "").lower()
+        from_gender = (from_user.get("gender") or "").lower()
+        to_gender = (to_user.get("gender") or "").lower()
         if from_gender and to_gender and from_gender != to_gender:
             raise ValueError("Cannot like a user of a different gender.")
 
         from_matched_with = _normalize_matched_with(from_user)
         to_matched_with = _normalize_matched_with(to_user)
 
-        from_count = len(from_matched_with)
-        to_count = len(to_matched_with)
-
-        if from_count >= MAX_MATCHES:
+        if len(from_matched_with) >= MAX_MATCHES:
             raise ValueError(f"You already have {MAX_MATCHES} matches")
-        if to_count >= MAX_MATCHES:
+        if len(to_matched_with) >= MAX_MATCHES:
             raise ValueError(f"That user already has {MAX_MATCHES} matches")
-
         if to_id in from_matched_with:
             raise ValueError("Already matched with this user")
 
-        existing = await self.likes.find_one({"fromUser": from_id, "toUser": to_id})
-        if existing:
+        # Check both like directions upfront
+        already_liked = await self.likes.find_one({"fromUser": from_id, "toUser": to_id})
+        mutual_like = await self.likes.find_one({"fromUser": to_id, "toUser": from_id})
+
+        # If already liked and no mutual yet — nothing new to do
+        if already_liked and not mutual_like:
             raise ValueError("Already liked this user")
 
-        await self.likes.insert_one({
-            "fromUser": from_id,
-            "toUser": to_id,
-            "createdAt": datetime.utcnow()
-        })
+        if not already_liked:
+            await self.likes.insert_one({
+                "fromUser": from_id,
+                "toUser": to_id,
+                "createdAt": datetime.utcnow()
+            })
+            from_username = from_user.get("username", f"User #{from_id}")
+            await self._create_notification(
+                "like_received", from_id, to_id,
+                f"{from_username} liked you!"
+            )
 
-        from_username = from_user.get("username", f"User #{from_id}")
-        await self._create_notification(
-            "like_received", from_id, to_id,
-            f"{from_username} liked you!"
-        )
-
-        # Check for mutual like
-        mutual = await self.likes.find_one({"fromUser": to_id, "toUser": from_id})
-        if mutual:
-            # Re-fetch to avoid race conditions
+        # If mutual (normal or stale recovery), create the match
+        if mutual_like:
+            # Re-fetch for fresh data
             from_user = await self.users.find_one({"id": from_id})
             to_user = await self.users.find_one({"id": to_id})
             from_matched_with = _normalize_matched_with(from_user)
             to_matched_with = _normalize_matched_with(to_user)
 
             if len(from_matched_with) >= MAX_MATCHES or len(to_matched_with) >= MAX_MATCHES:
-                await self.likes.delete_one({"fromUser": from_id, "toUser": to_id})
+                if not already_liked:
+                    await self.likes.delete_one({"fromUser": from_id, "toUser": to_id})
                 raise ValueError("One of the users reached max matches during processing")
 
-            new_from_count = len(from_matched_with) + 1
-            new_to_count = len(to_matched_with) + 1
+            new_from_matched = from_matched_with + [to_id]
+            new_to_matched = to_matched_with + [from_id]
+            new_from_count = len(new_from_matched)
+            new_to_count = len(new_to_matched)
 
             await self.users.update_one(
                 {"id": from_id},
-                {"$push": {"matchedWith": to_id},
-                 "$set": {"matched": True, "matchCount": new_from_count}}
+                {"$set": {"matchedWith": new_from_matched, "matched": True, "matchCount": new_from_count}}
             )
             await self.users.update_one(
                 {"id": to_id},
-                {"$push": {"matchedWith": from_id},
-                 "$set": {"matched": True, "matchCount": new_to_count}}
+                {"$set": {"matchedWith": new_to_matched, "matched": True, "matchCount": new_to_count}}
             )
 
             await self.matches.insert_one({
@@ -114,6 +114,7 @@ class LikeService:
                 "confirmedAt": datetime.utcnow()
             })
 
+            from_username = from_user.get("username", f"User #{from_id}")
             to_username = to_user.get("username", f"User #{to_id}")
             await self._create_notification(
                 "match_created", to_id, from_id,
@@ -123,6 +124,14 @@ class LikeService:
                 "match_created", from_id, to_id,
                 f"You matched with {from_username}! Start chatting now."
             )
+
+            # Clean up like records — no longer needed after match
+            await self.likes.delete_many({
+                "$or": [
+                    {"fromUser": from_id, "toUser": to_id},
+                    {"fromUser": to_id, "toUser": from_id},
+                ]
+            })
 
             # Remove each other from recommendations
             await self.recommendations.update_one(
@@ -134,7 +143,6 @@ class LikeService:
                 {"$pull": {"matches": {"user_id": from_id}}}
             )
 
-            # If either user is now full, remove them from all other recommendations
             if new_from_count >= MAX_MATCHES:
                 await self.recommendations.update_many(
                     {}, {"$pull": {"matches": {"user_id": from_id}}}
@@ -152,43 +160,41 @@ class LikeService:
         return {"status": "liked", "likedUser": to_id}
 
     async def get_likes_received(self, user_id: int) -> list[dict]:
-        """Return pending likes for user, only if user has room for more matches."""
+        """Return pending likes received by user (excludes already-matched users)."""
         user = await self.users.find_one({"id": user_id})
         if not user:
             return []
 
         matched_with = _normalize_matched_with(user)
-        match_count = len(matched_with)
 
-        # If user is at max matches, don't show any likes
-        if match_count >= MAX_MATCHES:
+        # If user is at max matches, no point showing likes
+        if len(matched_with) >= MAX_MATCHES:
             return []
 
         cursor = self.likes.find({"toUser": user_id})
         likes = []
         async for like in cursor:
-            sender = await self.users.find_one({"id": like["fromUser"]})
-            if not sender:
-                continue
-
-            sender_matched_with = _normalize_matched_with(sender)
-            # Skip if sender is already at max matches
-            if len(sender_matched_with) >= MAX_MATCHES:
-                continue
-            # Skip if already matched with this person
+            # Skip if already matched with this sender
             if like["fromUser"] in matched_with:
                 continue
-            # Skip if user already liked back
-            already_responded = await self.likes.find_one({
-                "fromUser": user_id,
-                "toUser": like["fromUser"]
-            })
-            if already_responded:
-                continue
-
             like["_id"] = str(like["_id"])
             likes.append(like)
         return likes
+
+    async def get_likes_sent(self, user_id: int) -> list[int]:
+        """Return IDs of users that user_id has liked but not yet matched with."""
+        user = await self.users.find_one({"id": user_id})
+        matched_with = _normalize_matched_with(user) if user else []
+
+        cursor = self.likes.find({"fromUser": user_id})
+        sent = []
+        async for like in cursor:
+            to_id = like["toUser"]
+            # Skip if already matched (mutual like became a match)
+            if to_id in matched_with:
+                continue
+            sent.append(to_id)
+        return sent
 
     async def get_matches(self, user_id: int) -> list[dict]:
         cursor = self.matches.find({
@@ -212,10 +218,10 @@ class LikeService:
         new_user_matches = [x for x in matched_with if x != partner_id]
         new_user_count = len(new_user_matches)
 
+        # Use $set instead of $pull to safely handle legacy null/int matchedWith fields
         await self.users.update_one(
             {"id": user_id},
-            {"$pull": {"matchedWith": partner_id},
-             "$set": {"matchCount": new_user_count, "matched": new_user_count > 0}}
+            {"$set": {"matchedWith": new_user_matches, "matchCount": new_user_count, "matched": new_user_count > 0}}
         )
 
         partner = await self.users.find_one({"id": partner_id})
@@ -226,8 +232,7 @@ class LikeService:
 
             await self.users.update_one(
                 {"id": partner_id},
-                {"$pull": {"matchedWith": user_id},
-                 "$set": {"matchCount": new_partner_count, "matched": new_partner_count > 0}}
+                {"$set": {"matchedWith": new_partner_matches, "matchCount": new_partner_count, "matched": new_partner_count > 0}}
             )
 
             username = user.get("username", f"User #{user_id}")

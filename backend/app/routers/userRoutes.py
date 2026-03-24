@@ -110,10 +110,18 @@ async def like_user(user_id: int, request: LikeRequest):
         return LikeResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/users/{user_id}/likes-received")
 async def get_likes_received(user_id: int):
     return await likeService.get_likes_received(user_id)
+
+@router.get("/users/{user_id}/likes-sent")
+async def get_likes_sent(user_id: int):
+    return await likeService.get_likes_sent(user_id)
 
 @router.get("/users/{user_id}/matches")
 async def get_matches(user_id: int):

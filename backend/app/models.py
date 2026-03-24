@@ -35,6 +35,24 @@ class UserResponse(BaseModel):
     matched: bool
     matchCount: int = 0
     matchedWith: List[int] = []
+
+    @field_validator('matchedWith', mode='before')
+    @classmethod
+    def normalize_matched_with(cls, v):
+        if v is None:
+            return []
+        if isinstance(v, int):
+            return [v]
+        if isinstance(v, list):
+            return [x for x in v if x is not None]
+        return []
+
+    @field_validator('matchCount', mode='before')
+    @classmethod
+    def normalize_match_count(cls, v):
+        if v is None:
+            return 0
+        return v
     bio: Optional[str] = ""
     photoUrl: Optional[str] = ""
     lifestyleTags: Optional[List[str]] = []
@@ -55,6 +73,24 @@ class UserInDB(BaseModel):
     matched: bool = False
     matchCount: int = 0
     matchedWith: List[int] = []
+
+    @field_validator('matchedWith', mode='before')
+    @classmethod
+    def normalize_matched_with(cls, v):
+        if v is None:
+            return []
+        if isinstance(v, int):
+            return [v]
+        if isinstance(v, list):
+            return [x for x in v if x is not None]
+        return []
+
+    @field_validator('matchCount', mode='before')
+    @classmethod
+    def normalize_match_count(cls, v):
+        if v is None:
+            return 0
+        return v
     bio: Optional[str] = ""
     photoUrl: Optional[str] = ""
     lifestyleTags: Optional[List[str]] = []

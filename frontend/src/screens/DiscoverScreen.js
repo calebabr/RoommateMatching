@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getTopMatches, sendLike, getUser, getPhotoUrl } from '../services/api';
+import { getTopMatches, sendLike, getLikesSent, getUser, getPhotoUrl } from '../services/api';
 import NotificationBell from '../components/NotificationBell';
 
 export default function DiscoverScreen() {
@@ -24,6 +24,7 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const [matches, setMatches] = useState([]);
   const [matchProfiles, setMatchProfiles] = useState([]);
+  const [likedIds, setLikedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [likingId, setLikingId] = useState(null);
@@ -31,9 +32,13 @@ export default function DiscoverScreen() {
   const loadMatches = async () => {
     if (!user?.id) return;
     try {
-      const data = await getTopMatches(user.id);
+      const [data, sentIds] = await Promise.all([
+        getTopMatches(user.id),
+        getLikesSent(user.id),
+      ]);
       const topList = data.matches || [];
       setMatches(topList);
+      setLikedIds(new Set(sentIds));
 
       const profiles = await Promise.all(
         topList.map(async (m) => {
@@ -79,8 +84,8 @@ export default function DiscoverScreen() {
         await refreshUser();
         await loadMatches();
       } else {
-        Alert.alert('Like Sent!', 'They\'ll see your interest. Fingers crossed!');
-        setMatchProfiles((prev) => prev.filter((p) => p.id !== targetId));
+        // Mark as pending locally — keep card visible but show Pending state
+        setLikedIds((prev) => new Set([...prev, targetId]));
       }
     } catch (err) {
       const msg = err?.response?.data?.detail || 'Could not send like.';
@@ -209,18 +214,24 @@ export default function DiscoverScreen() {
           })}
         </View>
 
-        <TouchableOpacity
-          style={styles.likeBtn}
-          onPress={() => handleLike(item.id)}
-          disabled={likingId === item.id}
-          activeOpacity={0.7}
-        >
-          {likingId === item.id ? (
-            <ActivityIndicator size="small" color={Colors.black} />
-          ) : (
-            <Text style={styles.likeBtnText}>♥ Like</Text>
-          )}
-        </TouchableOpacity>
+        {likedIds.has(item.id) ? (
+          <View style={styles.pendingBtn}>
+            <Text style={styles.pendingBtnText}>✓ Pending</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.likeBtn}
+            onPress={() => handleLike(item.id)}
+            disabled={likingId === item.id}
+            activeOpacity={0.7}
+          >
+            {likingId === item.id ? (
+              <ActivityIndicator size="small" color={Colors.black} />
+            ) : (
+              <Text style={styles.likeBtnText}>♥ Like</Text>
+            )}
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
@@ -282,6 +293,8 @@ const styles = StyleSheet.create({
   miniBarVal: { fontSize: 11, color: Colors.textSecondary, width: 20, textAlign: 'right' },
   likeBtn: { backgroundColor: Colors.accent, borderRadius: Radius.md, paddingVertical: 12, alignItems: 'center' },
   likeBtnText: { fontSize: 15, fontWeight: '700', color: Colors.black },
+  pendingBtn: { borderWidth: 1.5, borderColor: Colors.border, borderRadius: Radius.md, paddingVertical: 12, alignItems: 'center' },
+  pendingBtnText: { fontSize: 15, fontWeight: '600', color: Colors.textMuted },
   centered: { flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center', padding: 40 },
   emoji: { fontSize: 56, marginBottom: 16 },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
