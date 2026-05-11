@@ -1,0 +1,104 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Colors, Radius } from '../utils/theme';
+import { useAuth } from '../context/AuthContext';
+import { getChatConversations, getUser, getPhotoUrl } from '../services/api';
+import NotificationBell from '../components/NotificationBell';
+import Spinner from '../components/Spinner';
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+  if (diff < 1)  return 'just now';
+  if (diff < 60) return `${diff}m ago`;
+  const h = Math.floor(diff / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+export default function ChatListPage() {
+  const navigate = useNavigate();
+  const { user, refreshUser } = useAuth();
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setLoading(true);
+      await refreshUser();
+      try {
+        const convos = await getChatConversations(user.id);
+        const enriched = await Promise.all(
+          convos.map(async (c) => {
+            try { const p = await getUser(c.partnerId); return { ...c, profile: p }; }
+            catch { return { ...c, profile: { id: c.partnerId, username: `User #${c.partnerId}` } }; }
+          })
+        );
+        if (active) setConversations(enriched);
+      } catch { if (active) setConversations([]); }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [user?.id]);
+
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}><Spinner size={40} /></div>;
+
+  return (
+    <div style={{ backgroundColor: Colors.bg, minHeight: '100%' }}>
+      <div style={S.header}>
+        <div>
+          <p style={S.headerTitle}>Chat</p>
+          <p style={S.headerSub}>{conversations.length} {conversations.length === 1 ? 'conversation' : 'conversations'}</p>
+        </div>
+        <NotificationBell />
+      </div>
+
+      {conversations.length === 0 ? (
+        <div style={S.centered}>
+          <span style={{ fontSize: 56 }}>💬</span>
+          <p style={S.emptyTitle}>No Chats Yet</p>
+          <p style={S.emptySub}>Match with someone to start chatting!</p>
+        </div>
+      ) : (
+        <div style={{ padding: '8px 16px 30px' }}>
+          {conversations.map(item => {
+            const p = item.profile;
+            const photoSrc = getPhotoUrl(p?.photoUrl);
+            const lastMsg = item.lastMessage;
+            return (
+              <div key={item.partnerId} style={S.card} onClick={() => navigate(`/chat/${p.id}`, { state: { partnerName: p.username } })}>
+                {photoSrc ? (
+                  <img src={photoSrc} alt="" style={S.avatar} />
+                ) : (
+                  <div style={S.avatarFallback}><span style={{ fontSize: 22, fontWeight: 800, color: Colors.success }}>{(p?.username || '?')[0].toUpperCase()}</span></div>
+                )}
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: Colors.textPrimary }}>{p?.username || `User #${p?.id}`}</span>
+                    {lastMsg && <span style={{ fontSize: 11, color: Colors.textMuted }}>{timeAgo(lastMsg.createdAt)}</span>}
+                  </div>
+                  <p style={{ fontSize: 13, color: Colors.textSecondary, margin: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                    {lastMsg ? (lastMsg.fromUser === user.id ? `You: ${lastMsg.content}` : lastMsg.content) : 'No messages yet — say hello!'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const S = {
+  header:       { padding: '20px 24px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  headerTitle:  { fontSize: 28, fontWeight: 800, color: Colors.textPrimary, margin: 0 },
+  headerSub:    { fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' },
+  card:         { display: 'flex', alignItems: 'center', backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, marginBottom: 10, border: `1px solid ${Colors.border}`, cursor: 'pointer' },
+  avatar:       { width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', marginRight: 14, border: `2px solid ${Colors.success}`, flexShrink: 0 },
+  avatarFallback:{ width: 52, height: 52, borderRadius: '50%', backgroundColor: Colors.successDim, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 14, border: `2px solid ${Colors.success}`, flexShrink: 0 },
+  centered:     { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, minHeight: '60vh' },
+  emptyTitle:   { fontSize: 22, fontWeight: 700, color: Colors.textPrimary, margin: '16px 0 8px' },
+  emptySub:     { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: '20px', margin: 0 },
+};
