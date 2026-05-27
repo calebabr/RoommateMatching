@@ -53,69 +53,75 @@ export default function LikesPage() {
     }
   };
 
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}><Spinner size={40} /></div>;
+  if (loading) return (
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+      <Spinner size={40} />
+      <p style={{ color: Colors.textSecondary, fontSize: 14, margin: 0 }}>Loading likes...</p>
+    </div>
+  );
 
   return (
-    <div style={{ backgroundColor: Colors.bg, minHeight: '100%' }}>
+    <div style={{ height: '100%', overflowY: 'auto', backgroundColor: Colors.bg }}>
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} />}
 
-      <div style={S.header}>
-        <div>
-          <p style={S.headerTitle}>Likes</p>
-          <p style={S.headerSub}>{likes.length} {likes.length === 1 ? 'person likes' : 'people like'} you</p>
+      <div style={S.page}>
+        <div style={S.header}>
+          <div>
+            <p style={S.headerTitle}>Likes</p>
+            <p style={S.headerSub}>{likes.length} {likes.length === 1 ? 'person likes' : 'people like'} you</p>
+          </div>
+          <NotificationBell />
         </div>
-        <NotificationBell />
-      </div>
 
-      {likes.length === 0 ? (
-        <div style={S.centered}>
-          <span style={{ fontSize: 56 }}>💌</span>
-          <p style={S.emptyTitle}>No Likes Yet</p>
-          <p style={S.emptySub}>When someone likes you, they'll appear here.</p>
-        </div>
-      ) : (
-        <div style={{ padding: '0 20px 30px' }}>
-          {likes.map((item, i) => {
-            const p = item.profile;
-            const photoSrc = getPhotoUrl(p?.photoUrl);
-            return (
-              <div key={`${item.fromUser}-${i}`} style={S.card}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, cursor: 'pointer' }} onClick={() => navigate(`/user/${p.id}`)}>
-                  {photoSrc ? (
-                    <img src={photoSrc} alt="" style={S.avatarImg} />
-                  ) : (
-                    <div style={S.avatar}><span style={{ fontSize: 22, fontWeight: 800, color: Colors.danger }}>{(p.username || '?')[0].toUpperCase()}</span></div>
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>{p.username || `User #${p.id}`}</p>
-                    <p style={{ fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' }}>Wants to be your roommate!</p>
+        {likes.length === 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 }}>
+            <span style={{ fontSize: 56 }}>💌</span>
+            <p style={{ fontSize: 22, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>No Likes Yet</p>
+            <p style={{ fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: '20px', margin: 0 }}>When someone likes you, they'll appear here.</p>
+          </div>
+        ) : (
+          <div style={S.grid}>
+            {likes.map((item, i) => {
+              const p = item.profile;
+              const photoSrc = getPhotoUrl(p?.photoUrl);
+              return (
+                <div key={`${item.fromUser}-${i}`} style={S.card}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, cursor: 'pointer' }} onClick={() => navigate(`/user/${p.id}`)}>
+                    {photoSrc ? (
+                      <img src={photoSrc} alt="" style={S.avatarImg} />
+                    ) : (
+                      <div style={S.avatar}><span style={{ fontSize: 22, fontWeight: 800, color: Colors.danger }}>{(p.username || '?')[0].toUpperCase()}</span></div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 18, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>{p.username || `User #${p.id}`}</p>
+                      <p style={{ fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' }}>Wants to be your roommate!</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button style={S.likeBackBtn} onClick={() => handleLikeBack(p.id)} disabled={actionId === p.id}>
+                      {actionId === p.id ? <Spinner size={16} color={Colors.black} /> : '♥ Like Back'}
+                    </button>
+                    <button style={S.viewBtn} onClick={() => navigate(`/user/${p.id}`)}>View Profile</button>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button style={S.likeBackBtn} onClick={() => handleLikeBack(p.id)} disabled={actionId === p.id}>
-                    {actionId === p.id ? <Spinner size={16} color={Colors.black} /> : '♥ Like Back'}
-                  </button>
-                  <button style={S.viewBtn} onClick={() => navigate(`/user/${p.id}`)}>View Profile</button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 const S = {
-  header:     { padding: '20px 24px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle:{ fontSize: 28, fontWeight: 800, color: Colors.textPrimary, margin: 0 },
+  page:       { padding: '28px 32px 40px' },
+  header:     { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  headerTitle:{ fontSize: 24, fontWeight: 800, color: Colors.textPrimary, margin: 0 },
   headerSub:  { fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' },
-  card:       { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 20, marginTop: 16, border: `1px solid ${Colors.border}` },
+  grid:       { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 },
+  card:       { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 20, border: `1px solid ${Colors.border}`, display: 'flex', flexDirection: 'column' },
   avatar:     { width: 52, height: 52, borderRadius: '50%', backgroundColor: Colors.dangerDim, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 14, border: `2px solid ${Colors.danger}`, flexShrink: 0 },
   avatarImg:  { width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', marginRight: 14, border: `2px solid ${Colors.danger}`, flexShrink: 0 },
   likeBackBtn:{ flex: 1, backgroundColor: Colors.accent, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 700, color: Colors.black, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   viewBtn:    { flex: 1, backgroundColor: 'transparent', border: `1.5px solid ${Colors.border}`, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 600, color: Colors.textSecondary, cursor: 'pointer' },
-  centered:   { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, minHeight: '60vh' },
-  emptyTitle: { fontSize: 22, fontWeight: 700, color: Colors.textPrimary, margin: '16px 0 8px' },
-  emptySub:   { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: '20px', margin: 0 },
 };

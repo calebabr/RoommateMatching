@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DEFAULT_BASE = 'http://172.17.202.174:8000/api';
+const DEFAULT_BASE = 'http://192.168.1.243:8000/api';
 
 const api = axios.create({
   baseURL: localStorage.getItem('roommatch_api_base') || DEFAULT_BASE,

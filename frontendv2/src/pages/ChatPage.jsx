@@ -88,7 +88,7 @@ export default function ChatPage() {
   const partnerPhoto = getPhotoUrl(partner?.photoUrl);
 
   return (
-    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', backgroundColor: Colors.bg, maxWidth: 600, margin: '0 auto' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: Colors.bg }}>
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} onConfirm={modal.onConfirm} confirmText={modal.confirmText} danger={modal.danger} />}
 
       {/* Header */}
@@ -111,7 +111,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 8px' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}><Spinner size={32} /></div>
         ) : messages.length === 0 ? (
@@ -126,7 +126,7 @@ export default function ChatPage() {
             return (
               <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
                 <div style={{
-                  maxWidth: '78%', padding: '10px 16px', borderRadius: 20,
+                  maxWidth: '60%', padding: '10px 16px', borderRadius: 20,
                   borderBottomRightRadius: isMe ? 4 : 20,
                   borderBottomLeftRadius:  isMe ? 20 : 4,
                   backgroundColor: isMe ? Colors.accent : Colors.bgCard,
@@ -162,13 +162,13 @@ export default function ChatPage() {
 }
 
 const S = {
-  header:        { display: 'flex', alignItems: 'center', padding: '12px 16px', backgroundColor: Colors.bgCard, borderBottom: `1px solid ${Colors.border}`, flexShrink: 0 },
+  header:        { display: 'flex', alignItems: 'center', padding: '12px 20px', backgroundColor: Colors.bgCard, borderBottom: `1px solid ${Colors.border}`, flexShrink: 0 },
   backBtn:       { background: 'none', border: 'none', fontSize: 22, color: Colors.accent, fontWeight: 700, cursor: 'pointer', paddingRight: 12 },
   partnerAvatar: { width: 38, height: 38, borderRadius: '50%', backgroundColor: Colors.successDim, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 10, border: `2px solid ${Colors.success}`, flexShrink: 0 },
   partnerAvatarImg: { width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', marginRight: 10, border: `2px solid ${Colors.success}`, flexShrink: 0 },
-  unmatchBtn:    { padding: '6px 10px', borderRadius: Radius.full, border: `1.5px solid ${Colors.danger}`, background: 'none', fontSize: 11, fontWeight: 600, color: Colors.danger, cursor: 'pointer' },
-  inputBar:      { display: 'flex', alignItems: 'flex-end', gap: 8, padding: '10px 12px 16px', backgroundColor: Colors.bgCard, borderTop: `1px solid ${Colors.border}`, flexShrink: 0 },
-  chatInput:     { flex: 1, backgroundColor: Colors.bgInput, borderRadius: 22, padding: '10px 18px', fontSize: 15, color: Colors.textPrimary, border: `1px solid ${Colors.border}`, outline: 'none', resize: 'none', maxHeight: 100, lineHeight: '21px', fontFamily: 'inherit' },
-  sendBtn:       { width: 40, height: 40, borderRadius: '50%', backgroundColor: Colors.accent, border: 'none', fontSize: 20, fontWeight: 800, color: Colors.black, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  unmatchBtn:    { padding: '6px 12px', borderRadius: Radius.full, border: `1.5px solid ${Colors.danger}`, background: 'none', fontSize: 12, fontWeight: 600, color: Colors.danger, cursor: 'pointer' },
+  inputBar:      { display: 'flex', alignItems: 'flex-end', gap: 10, padding: '12px 20px 16px', backgroundColor: Colors.bgCard, borderTop: `1px solid ${Colors.border}`, flexShrink: 0 },
+  chatInput:     { flex: 1, backgroundColor: Colors.bgInput, borderRadius: 22, padding: '10px 18px', fontSize: 15, color: Colors.textPrimary, border: `1px solid ${Colors.border}`, outline: 'none', resize: 'none', maxHeight: 120, lineHeight: '21px', fontFamily: 'inherit' },
+  sendBtn:       { width: 42, height: 42, borderRadius: '50%', backgroundColor: Colors.accent, border: 'none', fontSize: 20, fontWeight: 800, color: Colors.black, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   sendBtnDisabled: { opacity: 0.4 },
 };
