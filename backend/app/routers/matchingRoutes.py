@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 import json
 
+from app.auth.dependencies import get_current_user
 from app.services.matchScore import matchScore
 from app.services.matchingUsers import matchingUsers
 from app.services.userProfileService import UserProfileService
@@ -20,7 +21,7 @@ userProfileService = UserProfileService()
 recommendationService = RecommendationService()
 
 @router.post("/matchScore", response_model=MatchResult)
-async def calculateMatchScore(request: MatchScoreRequest):
+async def calculateMatchScore(request: MatchScoreRequest, _: dict = Depends(get_current_user)):
     try:
         user1 = await userProfileService.get_user(request.user1_id)
         user2 = await userProfileService.get_user(request.user2_id)
@@ -34,7 +35,7 @@ async def calculateMatchScore(request: MatchScoreRequest):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/uploadUsers")
-async def upload_users(file: UploadFile = File(...)):
+async def upload_users(file: UploadFile = File(...), _: dict = Depends(get_current_user)):
     contents = await file.read()
     data = json.loads(contents)
 
@@ -59,7 +60,7 @@ async def upload_users(file: UploadFile = File(...)):
     return {"message": f"Created {created} users, skipped {skipped} duplicates. Recommendations computed."}
 
 @router.post("/match", response_model=MatchListResult)
-async def find_all_matches():
+async def find_all_matches(_: dict = Depends(get_current_user)):
     users = await userProfileService.get_all_active_users()
     if len(users) < 2:
         raise HTTPException(status_code=400, detail="Need at least 2 active users")

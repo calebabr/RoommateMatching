@@ -9,22 +9,22 @@ import Spinner from '../components/Spinner';
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [userId,    setUserId]    = useState('');
-  const [serverUrl, setServerUrl] = useState(localStorage.getItem('roommatch_api_base') || 'http://172.17.202.174:8000/api');
+  const [email,     setEmail]     = useState('');
+  const [password,  setPassword]  = useState('');
+  const [serverUrl, setServerUrl] = useState(localStorage.getItem('roommatch_api_base') || 'http://localhost:8000/api');
   const [loading,   setLoading]   = useState(false);
   const [showServer, setShowServer] = useState(false);
   const [modal, setModal] = useState(null);
 
   const handleLogin = async (e) => {
     e?.preventDefault();
-    const id = parseInt(userId.trim(), 10);
-    if (isNaN(id)) { setModal({ title: 'Invalid ID', message: 'Please enter a valid numeric User ID.' }); return; }
+    if (!email.trim() || !password) { setModal({ title: 'Missing Fields', message: 'Please enter your email and password.' }); return; }
     setLoading(true);
     try {
       setApiBase(serverUrl);
-      await login(id);
+      await login(email.trim(), password);
     } catch (err) {
-      const msg = err?.response?.data?.detail || 'Could not find user. Check ID and server URL.';
+      const msg = err?.response?.data?.detail || 'Invalid email or password.';
       setModal({ title: 'Login Failed', message: msg });
     } finally {
       setLoading(false);
@@ -43,17 +43,28 @@ export default function LoginPage() {
 
         <form style={S.card} onSubmit={handleLogin}>
           <p style={S.cardTitle}>Welcome Back</p>
-          <p style={S.cardDesc}>Enter your User ID to sign in</p>
+          <p style={S.cardDesc}>Sign in to your account</p>
 
           <div style={S.inputGroup}>
-            <label style={S.label}>User ID</label>
+            <label style={S.label}>Email</label>
             <input
               style={S.input}
-              placeholder="e.g. 42"
-              type="number"
-              value={userId}
-              onChange={e => setUserId(e.target.value)}
+              placeholder="you@example.com"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               autoFocus
+            />
+          </div>
+
+          <div style={S.inputGroup}>
+            <label style={S.label}>Password</label>
+            <input
+              style={S.input}
+              placeholder="Enter your password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
             />
           </div>
 

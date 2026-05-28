@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
-import { createUser, uploadPhoto, setApiBase } from '../services/api';
+import { uploadPhoto, setApiBase } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import SliderPicker from '../components/SliderPicker';
 import Toggle from '../components/Toggle';
@@ -13,6 +13,8 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const { signup } = useAuth();
   const [step, setStep]   = useState(0);
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [gender,   setGender]   = useState('');
   const [bio,      setBio]      = useState('');
@@ -43,21 +45,18 @@ export default function SignupPage() {
   };
 
   const handleCreate = async () => {
+    if (!email.trim())    { setModal({ title: 'Missing Email', message: 'Please enter your email address.' }); return; }
+    if (!password)        { setModal({ title: 'Missing Password', message: 'Please enter a password.' }); return; }
     if (!username.trim()) { setModal({ title: 'Missing Name', message: 'Please enter a username.' }); return; }
     if (!gender)          { setModal({ title: 'Missing Gender', message: 'Please select your gender.' }); return; }
     setLoading(true);
     try {
-      const payload = { username: username.trim(), gender, bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
-      const created = await createUser(payload);
+      const profileData = { username: username.trim(), gender, bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
+      const created = await signup(email.trim(), password, profileData);
       if (photoFile) {
         try { const r = await uploadPhoto(created.id, photoFile); created.photoUrl = r.photoUrl; }
         catch {}
       }
-      setModal({
-        title: 'Account Created!',
-        message: `Welcome ${created.username}! Your ID is ${created.id}. Remember this for logging in.`,
-        onConfirm: () => signup(created),
-      });
     } catch (err) {
       setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not create account.' });
     } finally {
@@ -96,6 +95,16 @@ export default function SignupPage() {
           <>
             <h2 style={S.title}>Create Your Profile</h2>
             <p style={S.subtitle}>Tell potential roommates about yourself</p>
+
+            <div style={S.inputGroup}>
+              <label style={S.label}>Email</label>
+              <input style={S.input} placeholder="you@example.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+
+            <div style={S.inputGroup}>
+              <label style={S.label}>Password</label>
+              <input style={S.input} placeholder="Choose a password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
 
             <div style={S.inputGroup}>
               <label style={S.label}>Username</label>
@@ -162,8 +171,10 @@ export default function SignupPage() {
             </div>
 
             <button
-              style={{ ...S.button, ...(!username.trim() || !gender ? S.buttonDisabled : {}) }}
+              style={{ ...S.button, ...(!email.trim() || !password || !username.trim() || !gender ? S.buttonDisabled : {}) }}
               onClick={() => {
+                if (!email.trim())    { setModal({ title: 'Missing Email', message: 'Please enter your email address.' }); return; }
+                if (!password)        { setModal({ title: 'Missing Password', message: 'Please enter a password.' }); return; }
                 if (!username.trim()) { setModal({ title: 'Missing Name', message: 'Please enter a username.' }); return; }
                 if (!gender)          { setModal({ title: 'Missing Gender', message: 'Please select your gender.' }); return; }
                 setStep(1);

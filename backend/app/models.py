@@ -14,6 +14,8 @@ class Preference(BaseModel):
 
 class UserCreate(BaseModel):
     username: str
+    email: Optional[str] = None
+    password: Optional[str] = None
     gender: str  # "male" or "female"
     bio: Optional[str] = ""
     photoUrl: Optional[str] = ""
@@ -31,6 +33,7 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
+    email: Optional[str] = ""
     gender: str
     matched: bool
     matchCount: int = 0
@@ -69,6 +72,8 @@ class UserResponse(BaseModel):
 class UserInDB(BaseModel):
     id: int
     username: str
+    email: Optional[str] = ""
+    hashed_password: Optional[str] = ""
     gender: str = "male"
     matched: bool = False
     matchCount: int = 0

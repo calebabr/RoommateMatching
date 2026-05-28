@@ -1,45 +1,58 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loadSession, saveSession, clearSession, getUser } from '../services/api';
+import {
+  authLogin, authRegister, authMe,
+  saveToken, loadToken, clearToken,
+  saveSession, clearSession,
+} from '../services/api';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null);
+  const [user,    setUser]    = useState(null);
+  const [token,   setToken]   = useState(() => loadToken());
   const [loading, setLoading] = useState(true);
 
+  // Rehydrate user state on app load using stored JWT
   useEffect(() => {
     (async () => {
-      try {
-        const saved = loadSession();
-        if (saved?.id) {
-          const fresh = await getUser(saved.id);
-          setUser(fresh);
-          saveSession(fresh);
+      const stored = loadToken();
+      if (stored) {
+        try {
+          const me = await authMe();
+          setUser(me);
+          saveSession(me);
+        } catch {
+          clearToken();
+          clearSession();
+          setToken(null);
         }
-      } catch {
-        clearSession();
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     })();
   }, []);
 
-  const login = async (userId) => {
-    const userData = await getUser(userId);
+  const login = async (email, password) => {
+    const { access_token, user: userData } = await authLogin(email, password);
+    saveToken(access_token);
+    setToken(access_token);
     setUser(userData);
     saveSession(userData);
     return userData;
   };
 
-  const signup = (createdUser) => {
-    setUser(createdUser);
-    saveSession(createdUser);
+  const signup = async (email, password, profileData) => {
+    const { access_token, user: userData } = await authRegister(email, password, profileData);
+    saveToken(access_token);
+    setToken(access_token);
+    setUser(userData);
+    saveSession(userData);
+    return userData;
   };
 
   const refreshUser = async () => {
-    if (!user?.id) return user;
+    if (!token) return user;
     try {
-      const fresh = await getUser(user.id);
+      const fresh = await authMe();
       setUser(fresh);
       saveSession(fresh);
       return fresh;
@@ -50,11 +63,13 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null);
+    setToken(null);
+    clearToken();
     clearSession();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshUser, setUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, refreshUser, setUser }}>
       {children}
     </AuthContext.Provider>
   );

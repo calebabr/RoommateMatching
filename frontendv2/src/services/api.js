@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DEFAULT_BASE = 'http://192.168.1.243:8000/api';
+const DEFAULT_BASE = 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: localStorage.getItem('roommatch_api_base') || DEFAULT_BASE,
@@ -12,6 +12,36 @@ export const setApiBase = (url) => {
   api.defaults.baseURL = url;
   localStorage.setItem('roommatch_api_base', url);
 };
+
+// ── Token helpers ──────────────────────────────────────────────────────────
+export const saveToken  = (token) => localStorage.setItem('token', token);
+export const loadToken  = ()      => localStorage.getItem('token');
+export const clearToken = ()      => localStorage.removeItem('token');
+
+// Attach JWT on every request
+api.interceptors.request.use((config) => {
+  const token = loadToken();
+  if (token) config.headers['Authorization'] = `Bearer ${token}`;
+  return config;
+});
+
+// On 401, clear token and redirect to login
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err?.response?.status === 401) {
+      clearToken();
+      clearSession();
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+export const authLogin    = (email, password)         => api.post('/auth/login', { email, password }).then(r => r.data);
+export const authRegister = (email, password, data)   => api.post('/auth/register', { email, password, ...data }).then(r => r.data);
+export const authMe       = ()                         => api.get('/auth/me').then(r => r.data);
 
 // ── User CRUD ──────────────────────────────────────────────────────────────
 export const createUser   = (data)          => api.post('/users', data).then(r => r.data);

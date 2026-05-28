@@ -69,6 +69,8 @@ def make_user(username, overrides=None):
     """Create a user with all 9 preference fields + profile fields."""
     payload = {
         "username": username,
+        "email": f"{username}@test.roommatch",
+        "password": "testpassword123",
         "sleepScoreWD": {"value": 22, "isDealBreaker": False},
         "sleepScoreWE": {"value": 23, "isDealBreaker": False},
         "cleanlinessScore": {"value": 7, "isDealBreaker": False},
@@ -112,6 +114,8 @@ def test_create_duplicate_fails():
     make_user(name)
     r = requests.post(f"{BASE}/users", json={
         "username": name,
+        "email": f"{name}@test.roommatch",
+        "password": "testpassword123",
         "sleepScoreWD": {"value": 1, "isDealBreaker": False},
         "sleepScoreWE": {"value": 1, "isDealBreaker": False},
         "cleanlinessScore": {"value": 5, "isDealBreaker": False},

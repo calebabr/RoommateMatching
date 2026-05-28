@@ -38,6 +38,11 @@ class UserProfileService:
         if existing:
             raise ValueError("Username already exists")
 
+        if user_data.get("email"):
+            email_taken = await self.collection.find_one({"email": user_data["email"]})
+            if email_taken:
+                raise ValueError("Email already registered")
+
         user_data["id"] = await self.get_next_id()
         user_data["matched"] = False
         user_data["matchCount"] = 0
@@ -49,6 +54,7 @@ class UserProfileService:
         user_data.setdefault("photoUrl", "")
         user_data.setdefault("lifestyleTags", [])
 
+        user_data.pop("password", None)  # never persist plaintext password
         await self.collection.insert_one(user_data)
         user_data.pop("_id", None)
         return user_data
@@ -70,6 +76,7 @@ class UserProfileService:
         if not user:
             raise ValueError("User not found")
         user.pop("_id", None)
+        user.pop("hashed_password", None)
         return user
 
     async def update_profile(self, user_id: int, preferences: dict) -> dict:
@@ -178,6 +185,7 @@ class UserProfileService:
         users = []
         async for user in cursor:
             user.pop("_id", None)
+            user.pop("hashed_password", None)
             users.append(user)
         return users
 
