@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from app.database import users_collection
 from app.auth.utils import hash_password, verify_password, create_access_token
 from app.auth.dependencies import get_current_user
+from app.limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -43,7 +44,8 @@ async def _get_next_id() -> int:
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(body: RegisterRequest):
+@limiter.limit("3/hour")
+async def register(request: Request, body: RegisterRequest):
     existing = await users_collection.find_one({"email": body.email.lower()})
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
@@ -81,7 +83,8 @@ async def register(body: RegisterRequest):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(body: LoginRequest):
+@limiter.limit("5/15minutes")
+async def login(request: Request, body: LoginRequest):
     user = await users_collection.find_one({"email": body.email.lower()})
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")

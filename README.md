@@ -35,6 +35,12 @@ A roommate matching web application for Auburn University students. Users create
 ### Notifications
 - In-app notification system for new likes, matches, and messages
 
+### Rate Limiting
+- Public auth endpoints (register, login) are rate-limited by IP address using [slowapi](https://github.com/laurents/slowapi)
+- Authenticated endpoints (like, chat, admin) are rate-limited by user ID
+- State stored in Upstash Redis in production; falls back to in-memory for local development
+- Rate-limit hits are logged to Sentry for monitoring
+
 ---
 
 ## Tech Stack
@@ -46,6 +52,8 @@ A roommate matching web application for Auburn University students. Users create
 | Auth | JWT (python-jose, HS256), bcrypt |
 | Frontend | React 18 (Vite), plain JSX, Axios |
 | Testing | pytest, FastAPI TestClient, httpx |
+| Rate Limiting | slowapi, Upstash Redis (in-memory fallback) |
+| Monitoring | Sentry |
 
 ---
 
@@ -114,6 +122,9 @@ The frontend will be available at `http://localhost:3000`.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SECRET_KEY` | `"dev-secret-key"` | JWT signing secret — change in production |
+| `UPSTASH_REDIS_REST_URL` | _(none — uses in-memory)_ | Upstash Redis REST endpoint for rate limit state |
+| `UPSTASH_REDIS_REST_TOKEN` | _(none)_ | Upstash Redis read/write token |
+| `SENTRY_DSN` | _(none — Sentry disabled)_ | Sentry project DSN for rate-limit hit logging |
 
 ---
 
@@ -255,3 +266,4 @@ pytest tests/test_auth.py -v
 - JWT tokens expire after 24 hours
 - All routes except `/api/auth/register` and `/api/auth/login` require a valid token
 - Set a strong `SECRET_KEY` environment variable before deploying to production
+- Public endpoints are rate-limited to prevent brute-force and credential stuffing — see [docs/rate-limiting.md](docs/rate-limiting.md) for limits, Redis/Upstash setup, and Sentry monitoring
