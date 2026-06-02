@@ -45,6 +45,16 @@ You are a security and authentication specialist for the RoomMatch application. 
 - Don't break existing user creation data — migrate existing user docs to include hashed_password field
 - Frontend token storage via the existing localStorage pattern in `services/api.js`
 
+## After Every Session
+
+At the end of each working session, provide the Docs agent with a structured update covering:
+- **Changed**: auth logic, token handling, password policies, or security config modified
+- **Added**: new endpoints, middleware, validators, or dependencies introduced
+- **Removed**: anything deprecated or replaced
+- **Gaps closed / new gaps**: security TODOs resolved or new risks identified
+
+This update is used by the Docs agent to keep `docs/summaries/auth_summary.md` and the session summary in `docs/session-summaries/` accurate and current.
+
 ## Do Not
 
 - Store plaintext passwords

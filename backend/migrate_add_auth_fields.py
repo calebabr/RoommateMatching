@@ -10,10 +10,11 @@ Usage:
     python migrate_add_auth_fields.py
 """
 import asyncio
+import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
-MONGO_URL = "mongodb://localhost:27017/"
-DB_NAME = "roommatch"
+MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017/")
+DB_NAME = os.environ.get("MONGO_DB_NAME", "roommatch")
 
 
 async def migrate():

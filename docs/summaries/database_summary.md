@@ -14,7 +14,7 @@ Motor (`AsyncIOMotorClient`) connects to `mongodb://localhost:27017/` using data
 | `chat_collection` | `chat_messages` |
 | `notifications_collection` | `notifications` |
 
-No indexes are declared anywhere in the codebase — all collection access is via the raw Motor client with no index setup on startup.
+One index is declared: `main.py` lifespan creates a unique sparse index on `users.email` at startup via `users_collection.create_index("email", unique=True, sparse=True)`. All other collections remain unindexed.
 
 ## 2. Schema Overview
 
@@ -43,7 +43,7 @@ No indexes are declared anywhere in the codebase — all collection access is vi
 
 ## 4. Gaps / TODOs
 
-- **No indexes declared.** Queries on `users.id`, `likes.fromUser/toUser`, `matches.user1_id/user2_id`, `notifications.toUser`, and `recommendations.userId` all do full collection scans.
+- **Only one index declared (`users.email`, unique+sparse).** Queries on `users.id`, `likes.fromUser/toUser`, `matches.user1_id/user2_id`, `notifications.toUser`, `recommendations.userId`, and `chat_messages` all still do full collection scans.
 - **Non-atomic ID generation.** `get_next_id()` races under concurrent registrations; should use a counter collection or MongoDB `$inc` with `findAndModify`.
 - **`matchedWith` legacy type drift.** Three separate services contain `_normalize_matched_with` to handle old `int`/`null` values — indicates a past schema migration was never enforced.
 - **`matches` missing `compatibilityScore`.** The `ConfirmedMatch` model has it; `likeService` never writes it.
@@ -56,3 +56,5 @@ No indexes are declared anywhere in the codebase — all collection access is vi
 - **Async-only access.** Every DB call uses `await`; no synchronous fallbacks exist.
 - **Like records are ephemeral.** Mutual likes are immediately deleted after a match forms, so `likes` only holds pending one-way likes.
 - **Gender-gated matching is enforced at service layer**, not at the DB level — two places (likeService, recommendationService) each enforce it independently.
+- **`users.email` unique sparse index** means duplicate-email attempts raise a Motor `DuplicateKeyError` at the DB layer, in addition to the application-level 409 check.
+- **`migrate_add_auth_fields.py`** exists at the backend root — a one-off migration script that also creates the `users.email` index, evidencing a past auth schema migration that added the `hashed_password` field.

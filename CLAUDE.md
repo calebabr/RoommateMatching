@@ -7,18 +7,18 @@ A roommate matching web application for Auburn University students. Users create
 - **Backend**: Python FastAPI app in `/backend`, async with Motor (MongoDB driver)
 - **Frontend**: React (Vite) SPA in `/frontendv2`, using Axios for API calls
 - **Database**: MongoDB (`roommatch` database on `localhost:27017`)
-- **Auth**: localStorage-based sessions (no JWT/OAuth yet)
+- **Auth**: JWT (HS256) via `python-jose`; tokens issued at login/register, stored in localStorage, sent as `Authorization: Bearer <token>`; `SECRET_KEY` env var required in production
 
 ## Key Technical Details
 
 - Backend runs on port 8000, frontend on port 3000
-- API routes are prefixed with `/api` — two routers: `matchRoutes` (batch operations) and `userRoutes` (CRUD, likes, chat, notifications)
+- API routes are prefixed with `/api` — three routers: `authRoutes` (register, login, change-password), `matchingRoutes` (batch operations), `userRoutes` (CRUD, likes, chat, notifications)
 - Match scoring uses weighted preference comparison with deal-breaker logic in `matchScore.py`
 - Gender-gated matching: users only match with same gender
 - Max 5 matches per user (`MAX_MATCHES = 5`)
 - MongoDB collections: `users`, `likes`, `matches`, `recommendations`, `clusters`, `chat_messages`, `notifications`
 - Frontend uses React Context (`AuthContext`) for user state, persisted to localStorage
-- Photo uploads saved to `/backend/uploads/`, served as static files
+- Photo uploads stored on Cloudinary (credentials via `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` env vars); legacy `/backend/uploads/` static serving retained for existing users
 
 ## Running
 

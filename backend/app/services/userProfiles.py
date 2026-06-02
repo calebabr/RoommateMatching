@@ -52,7 +52,6 @@ class userProfile():
         newUser = {
             "id": self.i,
             "username": name,
-            "password": passW,
             "sleepScheduleWeekdays": sleep[0],
             "sleepScheduleWeekends": sleep[1],
             "cleanliness": cleanliness,

@@ -103,6 +103,7 @@ class UserProfileService:
             return_document=True
         )
         result.pop("_id", None)
+        result.pop("hashed_password", None)
         return result
 
     async def delete_user(self, user_id: int) -> bool:
@@ -211,6 +212,7 @@ class UserProfileService:
         if not result:
             raise ValueError(f"User {user_id} not found")
         result.pop("_id", None)
+        result.pop("hashed_password", None)
         return result
 
     async def unmatch_user(self, user_id: int) -> dict:
@@ -234,4 +236,5 @@ class UserProfileService:
         if not result:
             raise ValueError(f"User {user_id} not found")
         result.pop("_id", None)
+        result.pop("hashed_password", None)
         return result

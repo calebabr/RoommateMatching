@@ -1,25 +1,31 @@
-from pydantic import BaseModel, field_validator
-from typing import Optional, List
+from pydantic import BaseModel, field_validator, Field
+from typing import Optional, List, Literal
 from datetime import datetime
 
 MAX_MATCHES = 5
 
+ALLOWED_LIFESTYLE_TAGS = frozenset({
+    "Early Bird", "Night Owl", "Fitness", "Studying", "Gaming",
+    "Greek Life", "Homebody", "Outdoors", "Music", "Pet Lover",
+    "Sports", "Art", "Reading", "Party/Going Out", "Film/TV",
+})
+
 # --- Preference ---
 
 class Preference(BaseModel):
-    value: float
+    value: float = Field(..., ge=0.0, le=24.0)  # sleep scores go 0-24; other scores 0-10
     isDealBreaker: bool
 
 # --- User Models ---
 
 class UserCreate(BaseModel):
-    username: str
+    username: str = Field(..., min_length=1, max_length=30, pattern=r'^[A-Za-z0-9_-]+$')
     email: Optional[str] = None
     password: Optional[str] = None
-    gender: str  # "male" or "female"
-    bio: Optional[str] = ""
+    gender: Literal["male", "female"]
+    bio: Optional[str] = Field("", max_length=500)
     photoUrl: Optional[str] = ""
-    lifestyleTags: Optional[List[str]] = []
+    lifestyleTags: Optional[List[str]] = Field(default_factory=list, max_length=10)
     sleepScoreWD: Preference
     sleepScoreWE: Preference
     cleanlinessScore: Preference
@@ -30,9 +36,31 @@ class UserCreate(BaseModel):
     sharedSpaceScore: Preference
     communicationScore: Preference
 
+    @field_validator("bio", mode="before")
+    @classmethod
+    def strip_bio_html(cls, v):
+        if v is None:
+            return ""
+        import nh3
+        return nh3.clean(str(v), tags=set())
+
+    @field_validator("lifestyleTags", mode="before")
+    @classmethod
+    def validate_lifestyle_tags(cls, v):
+        if v is None:
+            return []
+        import nh3
+        cleaned = []
+        for tag in v:
+            tag = nh3.clean(str(tag), tags=set()).strip()
+            if tag not in ALLOWED_LIFESTYLE_TAGS:
+                raise ValueError(f"Invalid lifestyle tag: {tag}")
+            cleaned.append(tag)
+        return cleaned
+
 class UserResponse(BaseModel):
     id: int
-    username: str
+    username: str = Field(..., max_length=30)
     email: Optional[str] = ""
     gender: str
     matched: bool
@@ -56,7 +84,7 @@ class UserResponse(BaseModel):
         if v is None:
             return 0
         return v
-    bio: Optional[str] = ""
+    bio: Optional[str] = Field("", max_length=500)
     photoUrl: Optional[str] = ""
     lifestyleTags: Optional[List[str]] = []
     sleepScoreWD: Preference
@@ -71,7 +99,7 @@ class UserResponse(BaseModel):
 
 class UserInDB(BaseModel):
     id: int
-    username: str
+    username: str = Field(..., max_length=30)
     email: Optional[str] = ""
     hashed_password: Optional[str] = ""
     gender: str = "male"
@@ -96,7 +124,7 @@ class UserInDB(BaseModel):
         if v is None:
             return 0
         return v
-    bio: Optional[str] = ""
+    bio: Optional[str] = Field("", max_length=500)
     photoUrl: Optional[str] = ""
     lifestyleTags: Optional[List[str]] = []
     sleepScoreWD: Preference
@@ -192,7 +220,13 @@ class TopMatchesResponse(BaseModel):
 # --- Chat Models ---
 
 class ChatMessageCreate(BaseModel):
-    content: str
+    content: str = Field(..., min_length=1, max_length=1000)
+
+    @field_validator("content", mode="before")
+    @classmethod
+    def strip_content_html(cls, v):
+        import nh3
+        return nh3.clean(str(v), tags=set())
 
 class ChatMessageResponse(BaseModel):
     id: str

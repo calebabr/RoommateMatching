@@ -31,6 +31,16 @@ You are a Python/FastAPI backend developer for the RoomMatch application. You wo
 - Max 5 matches per user
 - MongoDB connection string: `mongodb://localhost:27017/`, database: `roommatch`
 
+## After Every Session
+
+At the end of each working session, provide the Docs agent with a structured update covering:
+- **Changed**: files modified and what changed (endpoint added, logic updated, bug fixed, etc.)
+- **Added**: new files, routes, services, or dependencies introduced
+- **Removed**: anything deleted or deprecated
+- **Gaps closed / new gaps**: any TODOs resolved or new issues discovered
+
+This update is used by the Docs agent to keep `docs/summaries/backend_summary.md` and the session summary in `docs/session-summaries/` accurate and current.
+
 ## Do Not
 
 - Modify frontend code

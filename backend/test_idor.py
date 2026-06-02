@@ -11,6 +11,7 @@ Run with:
   pytest test_idor.py -v
 """
 
+import os
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI, Depends, HTTPException, Request, status
@@ -19,7 +20,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from httpx import AsyncClient, ASGITransport
 
-SECRET_KEY = "roommatch-dev-secret-change-in-prod"
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-not-for-production")
 ALGORITHM = "HS256"
 
 USER_A = {"id": 1, "username": "alice"}

@@ -43,10 +43,52 @@ RoomMatch is a roommate matching app for Auburn University students. Users creat
 - Database collection schemas
 - Coding conventions for both backend and frontend
 
+### Session Summaries
+
+- After each working session, create or update a session summary file in `docs/session-summaries/`
+- After each working session, create or update agent summary files in `docs/summaries/`
+- Filename format: `YYYY-MM-DD-<short-slug>.md` (e.g., `2026-05-29-auth-integration.md`)
+- Each session summary covers: what was done, why, key decisions made, files changed, and any open issues or next steps
+- Each agent summary covers documentation of the features they are in charge of.
+- If multiple sessions touch the same feature, append to the existing summary rather than creating a new file
+- Keep summaries factual and concise — they serve as a changelog for future developers
+- Follow the current formats of existing files in `/docs` for consistency.
+
+### Task Tracking
+
+Maintain a single living file at `docs/TASKS.md`. Update it at the end of every session. This file is the source of truth for what has been done and what remains — it must be complete enough that a new session can pick up exactly where the last one left off without missing anything.
+
+**Structure of `docs/TASKS.md`:**
+
+```markdown
+# RoomMatch Task Tracker
+
+_Last updated: YYYY-MM-DD by [session slug]_
+
+## In Progress
+- [ ] Short description — **Owner: [agent]** — started YYYY-MM-DD
+  - Context: what's been done so far, what's blocking
+
+## Completed
+- [x] Short description — **Owner: [agent]** — completed YYYY-MM-DD
+  - Outcome: one-line summary of what was delivered
+
+## Backlog
+- [ ] Short description — **Owner: [agent]** — added YYYY-MM-DD
+  - Context: why it's needed, any relevant constraints or dependencies
+```
+
+**Rules:**
+- Move items from Backlog → In Progress → Completed as work advances; never delete completed items
+- Every task must have an owner (the agent responsible) and a date
+- In Progress items must include enough context for a new session to resume without re-reading the full conversation
+- Backlog items collected from agent Gaps/TODOs sections should be added here so nothing is lost between sessions
+- At session start, the orchestrator should read `docs/TASKS.md` first to understand current state before delegating any work
 ## Conventions
 
 - Write docs in Markdown
 - Place documentation in a `/docs` directory (create if needed)
+- Session summaries go in `docs/summaries/` (create directory if needed)
 - Use clear headings and code examples
 - Keep API docs in sync with actual endpoints
 - Include example curl commands for API endpoints

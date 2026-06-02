@@ -1,11 +1,16 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 from app.limiter import limiter
 from app.auth.utils import decode_token
 from app.routers.matchingRoutes import router as matchingRouter
@@ -51,6 +56,26 @@ async def _rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONR
     )
 
 
+_UPLOAD_PATHS = {"/upload-photo"}  # substring match
+
+
+class BodySizeLimitMiddleware(BaseHTTPMiddleware):
+    MAX_BODY = 1 * 1024 * 1024  # 1 MB
+
+    async def dispatch(self, request: Request, call_next):
+        # Skip size check for photo upload endpoints
+        if any(p in request.url.path for p in _UPLOAD_PATHS):
+            return await call_next(request)
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > self.MAX_BODY:
+            return Response(
+                content='{"detail": "Request body too large"}',
+                status_code=413,
+                media_type="application/json",
+            )
+        return await call_next(request)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await users_collection.create_index("email", unique=True, sparse=True)
@@ -69,6 +94,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(BodySizeLimitMiddleware)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    errors = []
+    for error in exc.errors():
+        # loc is a tuple like ("body", "username") — expose field name only
+        loc = error.get("loc", [])
+        field = loc[-1] if loc else "unknown"
+        errors.append({"field": field, "message": error["msg"]})
+    return JSONResponse(status_code=422, content={"detail": errors})
+
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")

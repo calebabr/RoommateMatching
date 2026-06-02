@@ -35,6 +35,16 @@ You are a React frontend developer for the RoomMatch application. You work exclu
 - Chat is only available between matched users
 - Notifications for likes received, matches created, unmatches
 
+## After Every Session
+
+At the end of each working session, provide the Docs agent with a structured update covering:
+- **Changed**: components, pages, or services modified and what changed
+- **Added**: new pages, components, routes, or API functions introduced
+- **Removed**: anything deleted or deprecated
+- **Gaps closed / new gaps**: any TODOs resolved or new issues discovered
+
+This update is used by the Docs agent to keep `docs/summaries/frontend_summary.md` and the session summary in `docs/session-summaries/` accurate and current.
+
 ## Do Not
 
 - Modify backend code

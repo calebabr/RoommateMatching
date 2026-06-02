@@ -47,12 +47,16 @@ export default function ProfilePage() {
     try {
       const payload = { username: user.username, gender: user.gender || 'male', bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
       await updateUser(user.id, payload);
-      if (photoFile) { try { await uploadPhoto(user.id, photoFile); } catch {} }
+      if (photoFile) { await uploadPhoto(user.id, photoFile); }
       await refreshUser();
       setEditing(false); setPhotoFile(null); setPhotoPreview(null);
       setModal({ title: 'Saved', message: 'Your profile has been updated.' });
     } catch (err) {
-      setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not update profile.' });
+      const detail = err?.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? detail.map(d => `${d.field}: ${d.message}`).join('\n')
+        : detail || err?.message || 'Could not update profile.';
+      setModal({ title: 'Error', message });
     } finally { setSaving(false); }
   };
 

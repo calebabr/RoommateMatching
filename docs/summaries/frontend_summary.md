@@ -9,8 +9,8 @@ A fully functional React SPA. All core features are implemented: auth (login/sig
 | Path | Role |
 |------|------|
 | `src/App.jsx` | Router setup, `SidebarLayout` (nav + responsive shell), `AppRoutes` (auth guard) |
-| `src/context/AuthContext.jsx` | Global auth state; JWT stored in localStorage; exposes `login`, `signup`, `logout`, `refreshUser` |
-| `src/services/api.js` | Centralized Axios client; attaches JWT on every request; redirects to `/login` on 401; all exported API functions |
+| `src/context/AuthContext.jsx` | Global auth state; JWT stored in localStorage under `token`; user object cached under `roommatch_user`; exposes `user`, `token`, `loading`, `login`, `signup`, `logout`, `refreshUser`, `setUser` |
+| `src/services/api.js` | Centralized Axios client; configurable base URL (default `http://localhost:8000/api`, overridable via `localStorage.getItem('roommatch_api_base')` or `setApiBase(url)`); attaches JWT on every request; clears `token` and `roommatch_user` then redirects to `/login` on 401; all exported API functions |
 | `src/utils/theme.js` | `Colors` and `Radius` constants used for all styling |
 | `src/utils/categories.js` | 9 preference categories (sleep, cleanliness, noise, etc.), 15 lifestyle tags, compatibility color/label helpers |
 | `src/pages/` | 10 page components (see routes below) |
@@ -31,11 +31,11 @@ A fully functional React SPA. All core features are implemented: auth (login/sig
 | `/user/:userId` | `UserDetailPage` | Public profile view with compatibility score and like button |
 | `/notifications` | `NotificationsPage` | Activity feed (likes, matches, unmatches); marks read on open |
 
-Unauthenticated users are redirected to `/login`. When a user hits max matches (5), Discover and Likes tabs are hidden from the sidebar.
+Unauthenticated users (where `user` is null and loading is false) are redirected to `/login` by `AppRoutes`. When a user reaches max matches (5), Discover and Likes tabs are hidden from the sidebar.
 
 ## 4. API Integration
 
-All calls go through `src/services/api.js` via a single Axios instance pointing to `http://localhost:8000/api` (overridable from the login screen).
+All calls go through `src/services/api.js` via a single Axios instance. The base URL defaults to `http://localhost:8000/api` but reads `localStorage.getItem('roommatch_api_base')` first; the exported `setApiBase(url)` function allows runtime override.
 
 | Category | Functions | Called From |
 |----------|-----------|-------------|
@@ -63,6 +63,8 @@ All calls go through `src/services/api.js` via a single Axios instance pointing 
 - **Styling**: All inline styles using shared `Colors`/`Radius` constants from `utils/theme.js`; local `const S = {...}` style objects defined at the bottom of each file.
 - **State**: React Context for auth only; all page-level state is local `useState`. No Redux or Zustand.
 - **Routing**: React Router v6 nested routes; `SidebarLayout` renders `<Outlet />` for child pages.
-- **Auth guard**: Implemented directly in `AppRoutes` — if `user` is null, only `/login` and `/signup` are rendered.
+- **Auth guard**: Implemented directly in `AppRoutes` — if `user` is null (and not loading), only `/login` and `/signup` are rendered.
 - **Data enrichment pattern**: API returns IDs; pages resolve them to full profiles via parallel `Promise.all(getUser(...))` calls (Discover, Likes, Matches, ChatList).
-- **Config**: Backend base URL is runtime-configurable and persisted to `localStorage` (`roommatch_api_base`), useful for testing on physical devices.
+- **Config**: Backend base URL is runtime-configurable via `setApiBase(url)` and persisted to localStorage under `roommatch_api_base`, useful for testing on physical devices.
+- **Mobile-responsive sidebar**: hamburger menu and backdrop overlay on mobile; slide-in drawer on small screens; collapse toggle on desktop.
+- **Auth session storage**: `saveSession`/`clearSession` in `AuthContext` manage two localStorage keys — `token` (JWT) and `roommatch_user` (cached user object). On 401, both are cleared before redirect.

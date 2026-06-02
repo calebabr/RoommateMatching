@@ -1,7 +1,11 @@
 import os
 import uuid
+import io
 import shutil
+from PIL import Image
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+import cloudinary
+import cloudinary.uploader
 from app.auth.dependencies import get_current_user, get_current_user_or_403, verify_match_exists
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
@@ -20,6 +24,11 @@ from app.models import (
 )
 
 router = APIRouter()
+
+_IMMUTABLE_FIELDS = frozenset({
+    "password", "hashed_password", "id", "matched",
+    "matchCount", "matchedWith", "createdAt", "email",
+})
 
 userProfileService = UserProfileService()
 recommendationService = RecommendationService()
@@ -62,13 +71,12 @@ async def create_user(request: Request, user: UserCreate, _: dict = Depends(get_
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        pass
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/users/{user_id}", response_model=UserResponse)
 @limiter.limit("60/minute")
-async def get_user(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+async def get_user(request: Request, user_id: int, _: dict = Depends(get_current_user)):
     try:
         return await userProfileService.get_user(user_id)
     except ValueError as e:
@@ -78,7 +86,8 @@ async def get_user(request: Request, user_id: int, _: dict = Depends(get_current
 @limiter.limit("60/minute")
 async def update_profile(request: Request, user_id: int, user: UserCreate, _: dict = Depends(get_current_user_or_403)):
     try:
-        preferences = user.model_dump(exclude_none=True)
+        preferences = {k: v for k, v in user.model_dump(exclude_none=True).items()
+                       if k not in _IMMUTABLE_FIELDS}
         result = await userProfileService.update_profile(user_id, preferences)
 
         # Recompute recommendations with new preferences
@@ -121,8 +130,7 @@ async def like_user(request: Request, user_id: int, body: LikeRequest, _: dict =
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        pass
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/users/{user_id}/likes-received")
@@ -207,45 +215,105 @@ async def mark_all_notifications_read(request: Request, user_id: int, _: dict = 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# Configure Cloudinary at module load time from environment variables
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME", ""),
+    api_key=os.environ.get("CLOUDINARY_API_KEY", ""),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET", ""),
+)
+
+
+def _detect_image_type(data: bytes) -> str | None:
+    """Inspect raw bytes to identify image format. Returns 'jpeg', 'png', 'webp', or None."""
+    if data[:3] == b"\xff\xd8\xff":
+        return "jpeg"
+    if data[:8] == b"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a":
+        return "png"
+    if data[:4] == b"\x52\x49\x46\x46" and data[8:12] == b"\x57\x45\x42\x50":
+        return "webp"
+    return None
+
+
+def _reencode_image(data: bytes, fmt: str) -> bytes:
+    """Re-encode image via Pillow to strip EXIF/metadata and neutralize payloads."""
+    img = Image.open(io.BytesIO(data))
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGB")
+    buf = io.BytesIO()
+    pil_format = {"jpeg": "JPEG", "png": "PNG", "webp": "WEBP"}[fmt]
+    img.save(buf, format=pil_format)
+    return buf.getvalue()
+
+
 @router.post("/users/{user_id}/upload-photo")
 @limiter.limit("10/hour")
 async def upload_photo(request: Request, user_id: int, file: UploadFile = File(...), _: dict = Depends(get_current_user_or_403)):
-    """Upload a profile photo. Saves to disk, stores URL in user profile."""
+    """Upload a profile photo. Validates, re-encodes, uploads to Cloudinary, stores URL in user profile."""
     # Validate user exists
     try:
         user = await userProfileService.get_user(user_id)
     except ValueError:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Validate file type
-    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-    if file.content_type not in allowed:
-        raise HTTPException(status_code=400, detail="File must be an image (JPEG, PNG, WebP, or GIF)")
-
-    # Limit file size (5MB)
+    # Read file contents
     contents = await file.read()
+
+    # Enforce 5MB size limit (413 Request Entity Too Large)
     if len(contents) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
+        raise HTTPException(status_code=413, detail="File too large. Max 5MB.")
 
-    # Generate unique filename
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
-    filename = f"user_{user_id}_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
+    # Validate format via magic bytes — never trust Content-Type header
+    fmt = _detect_image_type(contents)
+    if fmt is None:
+        raise HTTPException(status_code=400, detail="File must be an image (JPEG, PNG, or WebP)")
 
-    # Delete old photo if exists
+    # Dimension validation — do this before re-encoding to avoid processing huge images
+    try:
+        img_check = Image.open(io.BytesIO(contents))
+        width, height = img_check.size
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not read image dimensions")
+
+    if width < 100 or height < 100:
+        raise HTTPException(status_code=400, detail="Image too small (min 100x100)")
+    if width > 4000 or height > 4000:
+        raise HTTPException(status_code=400, detail="Image too large (max 4000x4000)")
+
+    # Re-encode via Pillow: strips EXIF (GPS, etc.) and neutralizes embedded payloads
+    reencoded_bytes = _reencode_image(contents, fmt)
+
+    # Generate UUID-based filename — never use user-provided extension
+    ext_map = {"jpeg": ".jpg", "png": ".png", "webp": ".webp"}
+    uuid_stem = str(uuid.uuid4())
+    filename = uuid_stem + ext_map[fmt]
+
+    # Delete old photo if it exists
     old_url = user.get("photoUrl", "")
-    if old_url and "/uploads/" in old_url:
-        old_filename = old_url.split("/uploads/")[-1]
-        old_path = os.path.join(UPLOAD_DIR, old_filename)
-        if os.path.exists(old_path):
-            os.remove(old_path)
+    if old_url:
+        if "cloudinary.com" in old_url:
+            # Extract public_id from Cloudinary URL (everything after last '/' minus extension)
+            try:
+                old_public_id = old_url.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+                cloudinary.uploader.destroy(old_public_id)
+            except Exception:
+                pass  # Non-fatal: old photo deletion failure should not block new upload
+        elif "/uploads/" in old_url:
+            # Legacy local file — backwards compat for existing users
+            old_filename = old_url.split("/uploads/")[-1]
+            old_path = os.path.join(UPLOAD_DIR, old_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
 
-    # Save new file
-    with open(filepath, "wb") as f:
-        f.write(contents)
+    # Upload re-encoded bytes to Cloudinary
+    result = cloudinary.uploader.upload(
+        reencoded_bytes,
+        public_id=uuid_stem,
+        resource_type="image",
+        overwrite=True,
+    )
+    photo_url = result["secure_url"]
 
-    # Store the relative URL in user profile
-    photo_url = f"/uploads/{filename}"
+    # Persist Cloudinary URL in the user's profile
     await userProfileService.collection.update_one(
         {"id": user_id},
         {"$set": {"photoUrl": photo_url}}

@@ -36,6 +36,16 @@ Each preference is stored as `{value: float, isDealBreaker: bool}`. Categories: 
 - Collection references are centralized in `database.py`
 - Always strip `_id` from MongoDB documents before returning to API
 
+## After Every Session
+
+At the end of each working session, provide the Docs agent with a structured update covering:
+- **Changed**: schema fields, indexes, or query patterns modified
+- **Added**: new collections, indexes, migrations, or seed scripts introduced
+- **Removed**: anything dropped or deprecated
+- **Gaps closed / new gaps**: any TODOs resolved or new issues discovered
+
+This update is used by the Docs agent to keep `docs/summaries/database_summary.md` and the session summary in `docs/session-summaries/` accurate and current.
+
 ## Do Not
 
 - Change the database name or connection string without coordinating
