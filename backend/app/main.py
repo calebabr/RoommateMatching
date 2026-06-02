@@ -19,9 +19,35 @@ from app.routers.authRoutes import router as authRouter
 from app.database import users_collection
 
 _SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+_ENV = os.getenv("ROOMMATCH_ENV", "production")
+
+
+def _before_send(event, hint):
+    if "exc_info" in hint:
+        exc = hint["exc_info"][1]
+        from fastapi import HTTPException
+        if isinstance(exc, HTTPException) and exc.status_code in (401, 403, 404, 429):
+            return None
+    if "request" in event:
+        event["request"].pop("cookies", None)
+        headers = event.get("request", {}).get("headers", {})
+        if "authorization" in headers:
+            headers["authorization"] = "[Filtered]"
+    return event
+
+
 if _SENTRY_DSN:
     import sentry_sdk
-    sentry_sdk.init(dsn=_SENTRY_DSN, traces_sample_rate=0.0)
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+    sentry_sdk.init(
+        dsn=_SENTRY_DSN,
+        environment=_ENV,
+        traces_sample_rate=0.1 if _ENV == "production" else 0.0,
+        send_default_pii=False,
+        before_send=_before_send,
+        integrations=[StarletteIntegration(), FastApiIntegration()],
+    )
 
 
 def _user_id_from_request(request: Request):
@@ -89,13 +115,34 @@ app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:3000")],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # unsafe-inline for style-src is temporary until inline styles are extracted to CSS files
+        # img-src includes cloudinary for profile photo uploads
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "img-src 'self' data: https://res.cloudinary.com; "
+            "connect-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self'"
+        )
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        return response
+
+
 app.add_middleware(BodySizeLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.exception_handler(RequestValidationError)
@@ -127,3 +174,8 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+if os.getenv("ROOMMATCH_ENV", "production") != "production":
+    @app.get("/debug/sentry-test")
+    def trigger_sentry_error():
+        raise RuntimeError("Sentry test error — intentional")

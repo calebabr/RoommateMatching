@@ -10,7 +10,7 @@ A fully functional React SPA. All core features are implemented: auth (login/sig
 |------|------|
 | `src/App.jsx` | Router setup, `SidebarLayout` (nav + responsive shell), `AppRoutes` (auth guard) |
 | `src/context/AuthContext.jsx` | Global auth state; JWT stored in localStorage under `token`; user object cached under `roommatch_user`; exposes `user`, `token`, `loading`, `login`, `signup`, `logout`, `refreshUser`, `setUser` |
-| `src/services/api.js` | Centralized Axios client; configurable base URL (default `http://localhost:8000/api`, overridable via `localStorage.getItem('roommatch_api_base')` or `setApiBase(url)`); attaches JWT on every request; clears `token` and `roommatch_user` then redirects to `/login` on 401; all exported API functions |
+| `src/services/api.js` | Centralized Axios client; configurable base URL — reads `VITE_API_BASE_URL` at build time via `import.meta.env` (falls back to `http://localhost:8000/api`), further overridable at runtime via `localStorage.getItem('roommatch_api_base')` or `setApiBase(url)`; attaches JWT on every request; clears `token` and `roommatch_user` then redirects to `/login` on 401; all exported API functions |
 | `src/utils/theme.js` | `Colors` and `Radius` constants used for all styling |
 | `src/utils/categories.js` | 9 preference categories (sleep, cleanliness, noise, etc.), 15 lifestyle tags, compatibility color/label helpers |
 | `src/pages/` | 10 page components (see routes below) |
@@ -65,6 +65,7 @@ All calls go through `src/services/api.js` via a single Axios instance. The base
 - **Routing**: React Router v6 nested routes; `SidebarLayout` renders `<Outlet />` for child pages.
 - **Auth guard**: Implemented directly in `AppRoutes` — if `user` is null (and not loading), only `/login` and `/signup` are rendered.
 - **Data enrichment pattern**: API returns IDs; pages resolve them to full profiles via parallel `Promise.all(getUser(...))` calls (Discover, Likes, Matches, ChatList).
-- **Config**: Backend base URL is runtime-configurable via `setApiBase(url)` and persisted to localStorage under `roommatch_api_base`, useful for testing on physical devices.
+- **Config**: Backend base URL resolves in priority order: (1) `localStorage.getItem('roommatch_api_base')`, (2) `import.meta.env.VITE_API_BASE_URL` (set at Vite build time), (3) hard-coded fallback `http://localhost:8000/api`. The `setApiBase(url)` function writes to localStorage for runtime override, useful for testing on physical devices.
+- **Sentry error monitoring**: `@sentry/react` initialized in `main.jsx` when `VITE_SENTRY_DSN` is set. Uses `VITE_ENV` for the environment tag; `tracesSampleRate` is 0.1 in production and 0.0 otherwise. A `beforeSend` hook replaces any captured `Authorization` header value with `"[Filtered]"` before the event is sent. No-op if `VITE_SENTRY_DSN` is unset.
 - **Mobile-responsive sidebar**: hamburger menu and backdrop overlay on mobile; slide-in drawer on small screens; collapse toggle on desktop.
 - **Auth session storage**: `saveSession`/`clearSession` in `AuthContext` manage two localStorage keys — `token` (JWT) and `roommatch_user` (cached user object). On 401, both are cleared before redirect.

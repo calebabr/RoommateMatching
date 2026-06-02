@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-05-29 by Documentation Agent (B2 validation hardening complete)_
+_Last updated: 2026-06-01 by Documentation Agent (H2 Sentry integration complete)_
 
 ---
 
@@ -55,6 +55,10 @@ _Nothing currently in progress._
 | Secrets audit (B1) — full repo + git history scan; FINDING-H1 (historical JWT default), FINDING-M1 (IP in dist), FINDING-M2 (MONGO_URL hardcoded); moved MONGO_URL to env var, created root .gitignore, created backend/.env.example + frontendv2/.env.example, removed dist/ from git tracking; report at backend/SECURITY_SECRETS_AUDIT.md | Backend Agent | 2026-05-29 |
 | Task B2: Pydantic validation hardening — `Preference.value` 0–10 bounds, `username` 30-char alphanumeric pattern, `bio` 500-char max + HTML strip via `nh3`, `gender` Literal enum, `lifestyleTags` 10-item max + 20-tag whitelist, `ChatMessageCreate.content` 1000-char max + HTML strip, 1 MB body-size middleware (skips upload), clean 422 error format. 41 new tests all passing. | Backend Agent + Tests Agent | 2026-05-29 |
 | Add root-level `backend/conftest.py` with `reset_rate_limiter` autouse fixture — prevents slowapi in-memory state from bleeding across test files in the same pytest session | Tests Agent | 2026-05-29 |
+| Tighten CORS configuration — replace `allow_origins=["*"]` with env-driven `FRONTEND_URL`, scope methods/headers, add CORS rejection test | Backend Agent + Tests Agent | 2026-06-01 |
+| Task C2: Security headers middleware — HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, CSP, Permissions-Policy added via SecurityHeadersMiddleware; 1 test file | Backend Agent + Tests Agent | 2026-06-01 |
+| Task H1: Env var sweep — VITE_API_BASE_URL in api.js, JWT_ALGORITHM/JWT_EXPIRATION_HOURS in auth/utils.py, .env.example completeness (Sentry, Redis, JWT sections added). Most items already done in B1/C1/C2. | Backend Agent + Frontend Agent | 2026-06-01 |
+| Task H2: Sentry integration — backend FastAPI (sentry-sdk[fastapi]==2.19.2, FastApiIntegration + StarletteIntegration, _before_send filter suppresses 401/403/404/429 and strips Authorization header + cookies, traces_sample_rate=0.1 in prod, send_default_pii=False, /debug/sentry-test endpoint in dev only), frontend @sentry/react (VITE_SENTRY_DSN, VITE_ENV, tracesSampleRate 0.1 in prod, beforeSend strips Authorization), 7 filter unit tests in test_sentry_filter.py. Manual test: set SENTRY_DSN env var, restart backend, hit GET /debug/sentry-test, confirm event in Sentry dashboard. | Backend Agent + Frontend Agent + Tests Agent | 2026-06-01 |
 
 ---
 
@@ -72,7 +76,6 @@ _Nothing currently in progress._
 | Task | Owner | Priority | Added |
 |------|-------|----------|-------|
 | Implement token refresh mechanism (current expiry forces full re-login) | Auth Agent | Medium | 2026-05-29 |
-| Lock down CORS — replace `allow_origins=["*"]` with explicit origin list for production | Auth Agent | High | 2026-05-29 |
 | Add email verification on registration | Auth Agent | Medium | 2026-05-29 |
 | Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
 

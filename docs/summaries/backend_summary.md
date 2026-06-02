@@ -8,7 +8,7 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 
 | File | Role |
 |------|------|
-| `app/main.py` | App entry point — registers routers, CORS (allow-all), static file mount for `/uploads`, SlowAPIMiddleware, `BodySizeLimitMiddleware` (1 MB cap), clean 422 error handler, startup index creation |
+| `app/main.py` | App entry point — registers routers, CORS (origin-scoped via `FRONTEND_URL`), static file mount for `/uploads`, SlowAPIMiddleware, `BodySizeLimitMiddleware` (1 MB cap), clean 422 error handler, startup index creation |
 | `app/database.py` | Motor client — defines all 7 MongoDB collections |
 | `app/models.py` | All Pydantic models: users, likes, matches, recommendations, chat, notifications. Includes `ALLOWED_LIFESTYLE_TAGS` frozenset and all field-level validation constraints (see Section 5). |
 | `app/auth/utils.py` | JWT creation/decoding, bcrypt password hashing (`rounds=12`), `validate_password_strength()` |
@@ -104,23 +104,59 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 
 - `MONGO_URL` and `MONGO_DB_NAME` were hardcoded in `app/database.py` and `migrate_add_auth_fields.py`; both are now read from environment variables with safe defaults (`mongodb://localhost:27017/` and `roommatch`).
 - A root-level `.gitignore` was created covering `.env*`, `frontendv2/dist/`, `__pycache__/`, `node_modules/`, and `backend/uploads/`.
-- `backend/.env.example` documents all required/optional env vars: `SECRET_KEY`, `MONGO_URL`, `MONGO_DB_NAME`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `MIN_PASSWORD_LENGTH`, `ROOMMATCH_ENV`.
+- `backend/.env.example` documents all required/optional env vars: `SECRET_KEY`, `MONGO_URL`, `MONGO_DB_NAME`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `MIN_PASSWORD_LENGTH`, `ROOMMATCH_ENV`, `JWT_ALGORITHM`, `JWT_EXPIRATION_HOURS`, `SENTRY_DSN`, `UPSTASH_REDIS_URL`.
 - `frontendv2/.env.example` documents `VITE_API_BASE_URL`.
 - `frontendv2/dist/` was removed from git tracking (`git rm --cached`).
 - The default JWT `SECRET_KEY` (`"roommatch-dev-secret-change-in-prod"`) was present in 14 historical commits. It was removed in commit `530dcf5b`. **Key rotation is required before any production deployment.**
 - Full audit findings are in `backend/SECURITY_SECRETS_AUDIT.md`.
 
-## 6. Gaps / TODOs (pre-production)
+**Session 2026-06-01 (Task H1):** JWT algorithm and expiration are now configurable via environment variables in `app/auth/utils.py`.
+
+- `JWT_ALGORITHM` — defaults to `"HS256"` if unset.
+- `JWT_EXPIRATION_HOURS` — defaults to `24` if unset.
+- Both added to `backend/.env.example`.
+
+## 6. CORS Configuration
+
+**Session 2026-06-01 (Task C1):** CORS was hardened from a wildcard allow-all to an environment-driven allow-list.
+
+- `allow_origins=["*"]` replaced with `[os.getenv("FRONTEND_URL", "http://localhost:3000")]` in `app/main.py`.
+- `allow_methods` scoped to `["GET", "POST", "PUT", "DELETE", "OPTIONS"]`.
+- `allow_headers` scoped to `["Content-Type", "Authorization"]`.
+- `allow_credentials=True` retained for JWT cookie support.
+- `FRONTEND_URL` added to `backend/.env.example` and `backend/.env` (development default: `http://localhost:3000`).
+- `backend/test_cors.py` added: verifies that requests from allowed origin receive the correct CORS response headers, and that requests from a disallowed origin are rejected (no `Access-Control-Allow-Origin` header returned).
+
+**Required before production:** Set `FRONTEND_URL` to the exact deployed frontend origin (e.g. `https://roommatch.auburn.edu`).
+
+## 7. Security Headers
+
+**Session 2026-06-01 (Task C2):** `SecurityHeadersMiddleware` was added to `app/main.py`, registered after `BodySizeLimitMiddleware`. It injects six HTTP security headers on every response.
+
+| Header | Value |
+|--------|-------|
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Content-Security-Policy` | `default-src 'self'; img-src 'self' res.cloudinary.com data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self'` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
+
+**CSP note:** `style-src` includes `'unsafe-inline'` because the frontend uses inline styles via `utils/theme.js`. To remove it, inline styles must be migrated to CSS files first.
+
+Test coverage: `backend/test_security_headers.py` (1 test, passing).
+
+## 8. Gaps / TODOs (pre-production)
 
 - **`chatRoutes.py` not mounted** — a second chat router exists with `after` timestamp pagination but is not registered in `main.py`, so that feature is unreachable.
 - **`matchRoutes.py` not mounted** — the legacy in-memory router is dead code.
 - **`clusterService.py` not wired** — cluster logic exists but has no router or caller.
 - **`userProfiles.py` likely stale** — appears to be an older version of `userProfileService.py`; should be audited or deleted.
 - **`userProfileService.mark_matched` / `unmatch_user`** — these methods use the old single-int `matchedWith` format (not the list format) and are no longer called; they are stale.
-- **CORS is open** — `allow_origins=["*"]` is fine for dev but needs tightening for production.
+- **CORS is scoped** — `allow_origins` is now driven by the `FRONTEND_URL` env var (defaults to `http://localhost:3000` for development). Set `FRONTEND_URL` to the production origin before deploying.
 - **No per-notification mark-read route exposed** — `NotificationService.mark_read()` exists but has no endpoint.
 
-## 7. Notable Patterns
+## 8. Notable Patterns
 
 - All routes require `get_current_user` (JWT Bearer) except `/auth/register` and `/auth/login`.
 - Rate limiting is enforced on auth endpoints via slowapi (`app/limiter.py`): register 3/hour, login 5/15min, change-password 5/hour. 429 responses include `Retry-After: 60`.
@@ -129,5 +165,5 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - Recommendation recompute is triggered reactively on user create, update, and unmatch — no background job needed.
 - `_normalize_matched_with()` is duplicated across `likeService.py`, `chatService.py`, and `userProfileService.py`; should be consolidated into a shared utility.
 - Password strength validation (`validate_password_strength()`) uses zxcvbn (min 8 chars + score ≥ 2, configurable via `MIN_PASSWORD_LENGTH` env var) and is applied at both register and change-password.
-- Optional Sentry integration: if `SENTRY_DSN` env var is set, rate limit violations are reported as warnings with route, IP, and user ID.
+- Sentry integration: if `SENTRY_DSN` env var is set, `sentry_sdk.init` is called with `FastApiIntegration` + `StarletteIntegration`, `traces_sample_rate=0.1` in production (0.0 otherwise), `send_default_pii=False`, and a `_before_send` hook that drops 401/403/404/429 `HTTPException` events, replaces `Authorization` header values with `"[Filtered]"`, and strips cookies. A `GET /debug/sentry-test` endpoint is registered in non-production environments to trigger a test event.
 - `main.py` lifespan creates a unique sparse index on `users.email` at startup.

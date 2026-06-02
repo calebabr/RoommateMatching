@@ -12,8 +12,8 @@ elif _roommatch_env in ("test", "development"):
     SECRET_KEY = "dev-only-secret-not-for-production"
 else:
     raise RuntimeError("SECRET_KEY environment variable must be set")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
+ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_HOURS = int(os.environ.get("JWT_EXPIRATION_HOURS", "24"))
 
 
 def hash_password(plain: str) -> str:

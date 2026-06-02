@@ -20,7 +20,7 @@ Full JWT-based authentication is implemented end-to-end:
 | `backend/app/auth/utils.py` | bcrypt hashing (`rounds=12`), JWT create/decode, `validate_password_strength()` |
 | `backend/app/auth/dependencies.py` | `get_current_user`, `get_current_user_or_403`, `verify_match_exists` dependencies |
 | `backend/app/routers/authRoutes.py` | register, login, me, change-password endpoints |
-| `backend/app/main.py` | Router registration, CORS config, SlowAPIMiddleware, startup index creation |
+| `backend/app/main.py` | Router registration, CORS config (origin-scoped via `FRONTEND_URL`), SlowAPIMiddleware, startup index creation |
 | `backend/app/limiter.py` | slowapi `Limiter` instance; keys by first 32 chars of Bearer token or IP fallback; in-memory by default, Redis via `UPSTASH_REDIS_URL` |
 | `frontendv2/src/services/api.js` | Axios instance, token helpers, interceptors |
 | `frontendv2/src/context/AuthContext.jsx` | React auth state, rehydration, login/logout, localStorage persistence |
@@ -40,7 +40,7 @@ Requires a valid Bearer token. Request body must include `current_password` (val
 ## Gaps / TODOs
 
 - No token refresh mechanism — expiry forces full re-login
-- CORS set to `allow_origins=["*"]` — needs to be locked down for production
+- CORS is now scoped to the `FRONTEND_URL` env var (defaults to `http://localhost:3000`); set this to the production frontend origin before deploying
 - No email verification on registration
 - Sequential integer user IDs are more enumerable than UUIDs
 
