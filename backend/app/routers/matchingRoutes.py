@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 import json
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, get_admin_user
 from app.services.matchScore import matchScore
 from app.services.matchingUsers import matchingUsers
 from app.services.userProfileService import UserProfileService
@@ -35,7 +35,7 @@ async def calculateMatchScore(request: MatchScoreRequest, _: dict = Depends(get_
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/uploadUsers")
-async def upload_users(file: UploadFile = File(...), _: dict = Depends(get_current_user)):
+async def upload_users(file: UploadFile = File(...), _: dict = Depends(get_admin_user)):
     contents = await file.read()
     data = json.loads(contents)
 

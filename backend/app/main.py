@@ -16,7 +16,7 @@ from app.auth.utils import decode_token
 from app.routers.matchingRoutes import router as matchingRouter
 from app.routers.userRoutes import router as userRouter
 from app.routers.authRoutes import router as authRouter
-from app.database import users_collection
+from app.database import users_collection, counters_collection
 
 _SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 _ENV = os.getenv("ROOMMATCH_ENV", "production")
@@ -105,6 +105,13 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await users_collection.create_index("email", unique=True, sparse=True)
+    current_max = await users_collection.find_one(sort=[("id", -1)])
+    max_id = current_max["id"] if current_max else 0
+    await counters_collection.update_one(
+        {"_id": "user_id"},
+        {"$setOnInsert": {"seq": max_id}},
+        upsert=True,
+    )
     yield
 
 app = FastAPI(title="RoomMatch API", lifespan=lifespan)

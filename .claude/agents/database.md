@@ -38,13 +38,15 @@ Each preference is stored as `{value: float, isDealBreaker: bool}`. Categories: 
 
 ## After Every Session
 
-At the end of each working session, provide the Docs agent with a structured update covering:
+When your tasks are complete, send a message to the **docs-agent** teammate using SendMessage. The message must cover:
+
 - **Changed**: schema fields, indexes, or query patterns modified
 - **Added**: new collections, indexes, migrations, or seed scripts introduced
 - **Removed**: anything dropped or deprecated
 - **Gaps closed / new gaps**: any TODOs resolved or new issues discovered
+- **Files changed**: list every file you touched with a one-line description of what changed
 
-This update is used by the Docs agent to keep `docs/summaries/database_summary.md` and the session summary in `docs/session-summaries/` accurate and current.
+The docs-agent uses this to update `docs/summaries/database_summary.md`, the session summary in `docs/session-summaries/`, and `docs/TASKS.md`. Do not shut down until you have sent this message.
 
 ## Do Not
 

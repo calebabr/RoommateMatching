@@ -12,7 +12,9 @@ import MatchesPage        from './pages/MatchesPage';
 import ChatListPage       from './pages/ChatListPage';
 import ChatPage           from './pages/ChatPage';
 import UserDetailPage     from './pages/UserDetailPage';
-import NotificationsPage  from './pages/NotificationsPage';
+import NotificationsPage   from './pages/NotificationsPage';
+import ForgotPasswordPage  from './pages/ForgotPasswordPage';
+import ResetPasswordPage   from './pages/ResetPasswordPage';
 
 const MAX_MATCHES = 5;
 const MOBILE_BP   = 768;
@@ -204,9 +206,11 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/login"  element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="*"       element={<Navigate to="/login" replace />} />
+        <Route path="/login"           element={<LoginPage />} />
+        <Route path="/signup"          element={<SignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password"  element={<ResetPasswordPage />} />
+        <Route path="*"                element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }

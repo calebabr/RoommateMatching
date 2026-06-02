@@ -55,13 +55,15 @@ You are a test engineer for the RoomMatch application. You write and maintain te
 
 ## After Every Session
 
-At the end of each working session, provide the Docs agent with a structured update covering:
+When your tasks are complete, send a message to the **docs-agent** teammate using SendMessage. The message must cover:
+
 - **Changed**: existing test files modified (what scenarios were updated or removed)
 - **Added**: new test files or test cases introduced, and what they cover
 - **Removed**: tests deleted and why
 - **Coverage delta**: areas that now have coverage that didn't before, or new gaps discovered
+- **Files changed**: list every file you touched with a one-line description of what changed
 
-This update is used by the Docs agent to keep `docs/summaries/tests_summary.md` and the session summary in `docs/session-summaries/` accurate and current.
+The docs-agent uses this to update `docs/summaries/tests_summary.md`, the session summary in `docs/session-summaries/`, and `docs/TASKS.md`. Do not shut down until you have sent this message.
 
 ## Do Not
 

@@ -12,9 +12,9 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 | `app/database.py` | Motor client — defines all 7 MongoDB collections |
 | `app/models.py` | All Pydantic models: users, likes, matches, recommendations, chat, notifications. Includes `ALLOWED_LIFESTYLE_TAGS` frozenset and all field-level validation constraints (see Section 5). |
 | `app/auth/utils.py` | JWT creation/decoding, bcrypt password hashing (`rounds=12`), `validate_password_strength()` |
-| `app/auth/dependencies.py` | `get_current_user`, `get_current_user_or_403`, `verify_match_exists` FastAPI dependencies |
+| `app/auth/dependencies.py` | `get_current_user`, `get_current_user_or_403`, `verify_match_exists`, `get_admin_user` FastAPI dependencies; `_admin_ids()` reads `ADMIN_USER_IDS` env var |
 | `app/limiter.py` | slowapi `Limiter` instance; rate-limits by Bearer token prefix or IP; in-memory by default, Redis via `UPSTASH_REDIS_URL` |
-| `app/routers/authRoutes.py` | Register, login, `/auth/me`, and `change-password` endpoints |
+| `app/routers/authRoutes.py` | Register, login, `/auth/me`, `change-password`, `forgot-password`, and `reset-password` endpoints |
 | `app/routers/userRoutes.py` | User CRUD, likes, matches, chat, notifications, photo upload, admin recompute |
 | `app/routers/matchingRoutes.py` | Batch match scoring (`/matchScore`, `/uploadUsers`, `/match`) |
 | `app/routers/chatRoutes.py` | Alternate chat router (not mounted in `main.py`) |
@@ -36,10 +36,12 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - `POST /api/auth/login`
 - `GET  /api/auth/me`
 - `POST /api/auth/change-password` — requires Bearer token; validates `current_password`; enforces password strength on `new_password`; rate-limited 5/hour
+- `POST /api/auth/forgot-password` — accepts `email`; rate-limited 3/hour; always returns HTTP 200 (no email enumeration); returns reset token in response body (no email delivery yet — dev/MVP mode only)
+- `POST /api/auth/reset-password` — accepts `token` + `new_password`; rate-limited 5/hour; validates SHA-256-hashed token + expiry stored on user document; enforces password strength; clears token fields on success
 
 **Matching** (`/api`)
 - `POST /api/matchScore`
-- `POST /api/uploadUsers`
+- `POST /api/uploadUsers` — gated by `get_admin_user`; 403 for non-admin users
 - `POST /api/match`
 
 **Users** (`/api`)
@@ -61,7 +63,7 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - `GET  /api/users/{user_id}/notifications/unread-count`
 - `POST /api/users/{user_id}/notifications/mark-read`
 - `POST /api/users/{user_id}/upload-photo`
-- `POST /api/admin/recompute`
+- `POST /api/admin/recompute` — gated by `get_admin_user`; 403 for non-admin users
 
 **Utility**
 - `GET  /` — health/version
@@ -146,7 +148,44 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 
 Test coverage: `backend/test_security_headers.py` (1 test, passing).
 
-## 8. Gaps / TODOs (pre-production)
+## 8. Admin Gating
+
+**Session 2026-06-02 (Tasks P1.2 + P1.3):** Admin-only endpoints are now protected by a dedicated dependency.
+
+- `_admin_ids()` in `app/auth/dependencies.py` reads `ADMIN_USER_IDS` (comma-separated integers) from the environment.
+- `get_admin_user` dependency wraps `get_current_user` and raises HTTP 403 if the authenticated user's ID is not in the admin list.
+- `POST /api/admin/recompute` (`userRoutes.py`) upgraded from `get_current_user` to `get_admin_user`.
+- `POST /api/uploadUsers` (`matchingRoutes.py`) upgraded from `get_current_user` to `get_admin_user` — endpoint is retained (useful for seeding test data) but locked to admins.
+- `ADMIN_USER_IDS=` added to `backend/.env` and documented in `backend/.env.example`.
+
+**Required before production:** Set `ADMIN_USER_IDS` to a comma-separated list of integer user IDs that should have admin access (e.g. `ADMIN_USER_IDS=1,2`).
+
+## 9. Password Reset
+
+**Session 2026-06-02 (Task P1.4 — backend):** Forgot-password / reset-password flow added to `authRoutes.py`.
+
+### New Pydantic models
+- `ForgotPasswordRequest` — `email: str`
+- `ResetPasswordRequest` — `token: str`, `new_password: str`
+
+### New endpoints
+
+| Endpoint | Rate limit | Behavior |
+|----------|-----------|---------|
+| `POST /api/auth/forgot-password` | 3/hour | Looks up user by email. Generates a random token, stores its SHA-256 hash + expiry on the user document. Always returns HTTP 200 with the plain token in the response body. **No email is sent — token is returned directly (dev/MVP mode).** Constant-time response prevents email enumeration. |
+| `POST /api/auth/reset-password` | 5/hour | Accepts plain token + new password. Hashes token with SHA-256, finds matching user with non-expired token. Enforces password strength via `validate_password_strength()`. Clears token fields on success. Returns 400 for invalid/expired/already-used tokens. |
+
+### Security properties
+- Email enumeration prevention: `forgot-password` always returns 200 regardless of whether the email exists.
+- Tokens are stored as SHA-256 hashes on the user document; the plain token is only held in the response body (transit only).
+- Token expiry is enforced server-side.
+- One-time use: token fields are cleared immediately on successful reset.
+- Password strength is enforced identically to register and change-password (zxcvbn score ≥ 2, min 8 chars).
+
+### Known limitation
+No email is sent. The token is returned in the API response body. This is intentional for the MVP — email delivery (SMTP / SendGrid) must be wired in before production launch.
+
+## 10. Gaps / TODOs (pre-production)
 
 - **`chatRoutes.py` not mounted** — a second chat router exists with `after` timestamp pagination but is not registered in `main.py`, so that feature is unreachable.
 - **`matchRoutes.py` not mounted** — the legacy in-memory router is dead code.
@@ -155,11 +194,12 @@ Test coverage: `backend/test_security_headers.py` (1 test, passing).
 - **`userProfileService.mark_matched` / `unmatch_user`** — these methods use the old single-int `matchedWith` format (not the list format) and are no longer called; they are stale.
 - **CORS is scoped** — `allow_origins` is now driven by the `FRONTEND_URL` env var (defaults to `http://localhost:3000` for development). Set `FRONTEND_URL` to the production origin before deploying.
 - **No per-notification mark-read route exposed** — `NotificationService.mark_read()` exists but has no endpoint.
+- **Password reset has no email delivery** — `POST /api/auth/forgot-password` returns the reset token in the response body (dev/MVP mode). SMTP or a transactional email service (SendGrid, SES, etc.) must be wired in before production launch.
 
-## 8. Notable Patterns
+## 11. Notable Patterns
 
 - All routes require `get_current_user` (JWT Bearer) except `/auth/register` and `/auth/login`.
-- Rate limiting is enforced on auth endpoints via slowapi (`app/limiter.py`): register 3/hour, login 5/15min, change-password 5/hour. 429 responses include `Retry-After: 60`.
+- Rate limiting is enforced on auth endpoints via slowapi (`app/limiter.py`): register 3/hour, login 5/15min, change-password 5/hour, forgot-password 3/hour, reset-password 5/hour. 429 responses include `Retry-After: 60`.
 - Services are instantiated as module-level singletons inside each router file.
 - `UserInDB.toMatchDict()` normalizes Pydantic models to plain dicts for the scoring engine.
 - Recommendation recompute is triggered reactively on user create, update, and unmatch — no background job needed.

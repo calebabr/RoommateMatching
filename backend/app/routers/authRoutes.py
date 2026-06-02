@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
-from app.database import users_collection
+from pymongo import ReturnDocument
+from app.database import users_collection, counters_collection
 from app.auth.utils import hash_password, verify_password, create_access_token, validate_password_strength
 from app.auth.dependencies import get_current_user
 from app.limiter import limiter
@@ -71,8 +72,13 @@ class TokenResponse(BaseModel):
 
 
 async def _get_next_id() -> int:
-    last = await users_collection.find_one(sort=[("id", -1)])
-    return (last["id"] + 1) if last else 1
+    result = await counters_collection.find_one_and_update(
+        {"_id": "user_id"},
+        {"$inc": {"seq": 1}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return result["seq"]
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -147,6 +153,15 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(..., max_length=128)
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(..., max_length=254)
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., max_length=128)
+
+
 @router.post("/change-password", status_code=status.HTTP_200_OK)
 @limiter.limit("5/hour")
 async def change_password(
@@ -166,3 +181,53 @@ async def change_password(
         {"$set": {"hashed_password": hash_password(body.new_password)}},
     )
     return {"message": "Password updated successfully"}
+
+
+@router.post("/forgot-password", status_code=200)
+@limiter.limit("3/hour")
+async def forgot_password(request: Request, body: ForgotPasswordRequest):
+    import secrets, hashlib
+    from datetime import datetime, timedelta, timezone
+    email_lower = body.email.lower()
+    user = await users_collection.find_one({"email": email_lower})
+    # Always return 200 to avoid revealing whether email exists
+    if user:
+        token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        await users_collection.update_one(
+            {"email": email_lower},
+            {"$set": {"reset_token_hash": token_hash, "reset_token_expires": expires}},
+        )
+        return {
+            "reset_token": token,
+            "message": "If that email exists, a reset token has been generated. In production this will be emailed automatically.",
+        }
+    return {"message": "If that email exists, a reset token has been generated."}
+
+
+@router.post("/reset-password", status_code=200)
+@limiter.limit("5/hour")
+async def reset_password(request: Request, body: ResetPasswordRequest):
+    import hashlib
+    from datetime import datetime, timezone
+    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
+    now = datetime.now(timezone.utc)
+    user = await users_collection.find_one({
+        "reset_token_hash": token_hash,
+        "reset_token_expires": {"$gt": now},
+    })
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    try:
+        validate_password_strength(body.new_password)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    await users_collection.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"hashed_password": hash_password(body.new_password)},
+            "$unset": {"reset_token_hash": "", "reset_token_expires": ""},
+        },
+    )
+    return {"message": "Password reset successfully"}

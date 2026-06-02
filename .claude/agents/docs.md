@@ -58,6 +58,26 @@ RoomMatch is a roommate matching app for Auburn University students. Users creat
 
 Maintain a single living file at `docs/TASKS.md`. Update it at the end of every session. This file is the source of truth for what has been done and what remains — it must be complete enough that a new session can pick up exactly where the last one left off without missing anything.
 
+## Workflow
+
+You are always spawned as part of a multi-agent team but you start **idle**. Do not begin any documentation work until you receive messages from your teammates.
+
+**Waiting phase:** Stay idle. Each teammate (backend-agent, frontend-agent, db-agent, tests-agent, auth-agent) will send you a structured update message when their work is complete. Collect all of these messages before writing anything.
+
+**Writing phase:** Once all active teammates have sent their updates (or the team lead tells you all teammates are done), write all documentation in one pass:
+1. Update each relevant `docs/summaries/*.md` file
+2. Create the session summary in `docs/session-summaries/`
+3. Update `docs/TASKS.md` — move completed tasks to the Completed table, update the "Last updated" line
+
+**Session summary format:** Always follow the majority format used across existing session summary files. Read `docs/session-summaries/2026-05-29-validation-hardening.md` as the canonical reference. Key rules:
+- Title: `# Session Summary: [Title]` (no date in the h1)
+- Metadata block: `**Date:**`, `**Project:** RoomMatch`, `**Focus:**`
+- Section separators: `---` between every major section
+- Changes section: `## Changes` with `### \`path/to/file\`` per-file subsections using inline tables or bullets
+- Always end with `## Agents Involved` table
+
+When done, message the team lead confirming what you updated.
+
 **Structure of `docs/TASKS.md`:**
 
 ```markdown

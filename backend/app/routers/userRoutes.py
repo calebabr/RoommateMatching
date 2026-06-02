@@ -6,7 +6,7 @@ from PIL import Image
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 import cloudinary
 import cloudinary.uploader
-from app.auth.dependencies import get_current_user, get_current_user_or_403, verify_match_exists
+from app.auth.dependencies import get_current_user, get_current_user_or_403, verify_match_exists, get_admin_user
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
 from app.services.recommendationService import RecommendationService
@@ -325,7 +325,7 @@ async def upload_photo(request: Request, user_id: int, file: UploadFile = File(.
 
 @router.post("/admin/recompute")
 @limiter.limit("60/minute")
-async def recompute_all(request: Request, _: dict = Depends(get_current_user)):
+async def recompute_all(request: Request, _: dict = Depends(get_admin_user)):
     users = await userProfileService.get_all_active_users()
     if len(users) < 2:
         raise HTTPException(status_code=400, detail="Need at least 2 active users")

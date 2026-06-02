@@ -1,3 +1,4 @@
+import os
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.auth.utils import decode_token
@@ -31,6 +32,22 @@ async def get_current_user_or_403(
 ) -> dict:
     if current_user["id"] != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    return current_user
+
+
+def _admin_ids() -> set:
+    raw = os.environ.get("ADMIN_USER_IDS", "")
+    ids = set()
+    for part in raw.split(","):
+        part = part.strip()
+        if part.isdigit():
+            ids.add(int(part))
+    return ids
+
+
+async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
+    if current_user["id"] not in _admin_ids():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return current_user
 
 

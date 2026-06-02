@@ -2,7 +2,7 @@
 
 ## 1. Current State
 
-Ten backend test files now exist: two legacy scripts and eight pytest modules. Unit tests, pytest fixtures, an isolated test database, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present.
+Thirteen backend test files now exist: two legacy scripts and eleven pytest modules. Unit tests, pytest fixtures, an isolated test database, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present.
 
 ## 2. Test Files
 
@@ -18,6 +18,9 @@ Ten backend test files now exist: two legacy scripts and eight pytest modules. U
 | `backend/tests/test_jwt.py` | pytest unit | 14 | JWT encode/decode, expiry, algorithm enforcement, "none" algorithm rejected, tampered tokens |
 | `backend/tests/test_password.py` | pytest | 17 | Hash rounds, salt randomness, weak/strong password validation, endpoint tests via AsyncClient |
 | `backend/test_validation.py` | pytest | 41 | Username/bio/gender/lifestyle/preference/body-size/HTML-sanitization/error-format negative tests; stub app, no live DB |
+| `backend/test_atomic_id.py` | pytest async | 2 | Concurrent (10 simultaneous registrations → 10 unique IDs) and sequential ID generation; validates `$inc`-based counter approach |
+| `backend/test_admin_gate.py` | pytest async | 4 | Non-admin 403 on recompute and uploadUsers; admin 200 on both; validates `get_admin_user` dependency |
+| `backend/test_password_reset.py` | pytest async | 7 | Valid reset flow, unknown-email no info leak, invalid token 400, expired token 400, reused token 400, weak password 400; tests both forgot-password and reset-password endpoints |
 | `backend/app/test/` | JSON data only | — | `usersTest20.json`, `usersTest250.json`, `usersTest1000.json` — seed data, not automated tests |
 
 ## 3. Test Infrastructure
@@ -47,6 +50,9 @@ Ten backend test files now exist: two legacy scripts and eight pytest modules. U
 - Convert to pytest — substantially done for all new files; legacy scripts remain
 - Validation hardening tests — `test_validation.py` (41 tests) covers all new Pydantic constraints: username pattern, bio length, gender literal, lifestyle tag whitelist, preference bounds, 1 MB body-size middleware, HTML sanitization, and clean 422 error format (2026-05-29)
 - Root-level `conftest.py` — `reset_rate_limiter` autouse fixture prevents rate-limit bleed across test files in a single session (2026-05-29)
+- Atomic ID tests — `test_atomic_id.py` (2 tests) validates concurrent and sequential ID generation via `$inc` counter (2026-06-02)
+- Admin gate tests — `test_admin_gate.py` (4 tests) validates `get_admin_user` 403/200 on recompute and uploadUsers (2026-06-02)
+- Password reset tests — `test_password_reset.py` (7 tests) covers valid flow, enumeration resistance, and all invalid-token cases (2026-06-02)
 
 **Still TODO**
 - Unit-test `matchScore.py` directly without HTTP round-trips

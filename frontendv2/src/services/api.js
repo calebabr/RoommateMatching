@@ -39,9 +39,11 @@ api.interceptors.response.use(
 );
 
 // ── Auth ───────────────────────────────────────────────────────────────────
-export const authLogin    = (email, password)         => api.post('/auth/login', { email, password }).then(r => r.data);
-export const authRegister = (email, password, data)   => api.post('/auth/register', { email, password, ...data }).then(r => r.data);
-export const authMe       = ()                         => api.get('/auth/me').then(r => r.data);
+export const authLogin         = (email, password)            => api.post('/auth/login', { email, password }).then(r => r.data);
+export const authRegister      = (email, password, data)      => api.post('/auth/register', { email, password, ...data }).then(r => r.data);
+export const authMe            = ()                            => api.get('/auth/me').then(r => r.data);
+export const authForgotPassword = (email)                     => api.post('/auth/forgot-password', { email }).then(r => r.data);
+export const authResetPassword  = (token, newPassword)        => api.post('/auth/reset-password', { token, new_password: newPassword }).then(r => r.data);
 
 // ── User CRUD ──────────────────────────────────────────────────────────────
 export const createUser   = (data)          => api.post('/users', data).then(r => r.data);

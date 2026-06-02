@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { setApiBase } from '../services/api';
@@ -71,6 +71,10 @@ export default function LoginPage() {
           <button type="submit" style={{ ...S.button, ...(loading ? S.buttonDisabled : {}) }} disabled={loading}>
             {loading ? <Spinner size={20} color={Colors.black} /> : 'Sign In'}
           </button>
+
+          <div style={{ textAlign: 'right', margin: '8px 0 4px' }}>
+            <Link to="/forgot-password" style={{ fontSize: 13, color: Colors.accent, textDecoration: 'none' }}>Forgot password?</Link>
+          </div>
 
           <div style={S.divider}>
             <div style={S.dividerLine} />
