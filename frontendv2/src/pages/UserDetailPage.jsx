@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getUser, getMatchScore, sendLike, getPhotoUrl } from '../services/api';
+import { getUser, getMatchScore, sendLike, getLikesSent, getPhotoUrl } from '../services/api';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 
@@ -15,8 +15,10 @@ export default function UserDetailPage() {
   const [profile, setProfile] = useState(null);
   const [score,   setScore]   = useState(state?.score ?? null);
   const [loading, setLoading] = useState(true);
-  const [liking,  setLiking]  = useState(false);
-  const [modal,   setModal]   = useState(null);
+  const [liking,        setLiking]        = useState(false);
+  const [modal,         setModal]         = useState(null);
+  const [alreadyLiked,  setAlreadyLiked]  = useState(false);
+  const [alreadyMatched,setAlreadyMatched]= useState(false);
   const userIdNum = parseInt(userId, 10);
 
   useEffect(() => {
@@ -27,6 +29,15 @@ export default function UserDetailPage() {
         if (active) setProfile(p);
         if (score == null && user?.id) {
           try { const s = await getMatchScore(user.id, userIdNum); if (active) setScore(s.compatibilityScore); } catch {}
+        }
+        if (active && user) {
+          const matchedWith = user?.matchedWith || [];
+          setAlreadyMatched(Array.isArray(matchedWith) ? matchedWith.includes(userIdNum) : matchedWith === userIdNum);
+          try {
+            const likes = await getLikesSent(user.id);
+            const likedIds = likes.map(l => l.toUser ?? l.to_user ?? l);
+            setAlreadyLiked(likedIds.includes(userIdNum));
+          } catch {}
         }
       } catch {
         setModal({ title: 'Error', message: 'Could not load user profile.' });
@@ -43,8 +54,10 @@ export default function UserDetailPage() {
     try {
       const result = await sendLike(user.id, userIdNum);
       if (result.status === 'matched') {
+        setAlreadyMatched(true);
         setModal({ title: '🎉 Match!', message: `You and ${profile?.username || 'this user'} are now roommate matches!` });
       } else {
+        setAlreadyLiked(true);
         setModal({ title: 'Like Sent!', message: "They'll see your interest." });
       }
     } catch (err) {
@@ -70,7 +83,7 @@ export default function UserDetailPage() {
   const genderLabel = profile.gender === 'female' ? '♀ Female' : profile.gender === 'male' ? '♂ Male' : '';
   const photoSrc  = getPhotoUrl(profile.photoUrl);
   const matchCount = user?.matchCount ?? (user?.matched ? 1 : 0);
-  const canLike   = !profile.matched && profile.id !== user?.id && matchCount < 5;
+  const canLike   = !alreadyLiked && !alreadyMatched && profile.id !== user?.id && matchCount < 5;
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', backgroundColor: Colors.bg }}>
@@ -143,6 +156,8 @@ export default function UserDetailPage() {
                   {liking ? <Spinner size={20} color={Colors.black} /> : '♥ Send Like'}
                 </button>
               )}
+              {alreadyMatched && <span style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: Colors.success }}>✓ Already matched</span>}
+              {!alreadyMatched && alreadyLiked && <span style={{ marginTop: 12, fontSize: 13, color: Colors.textMuted }}>Like sent</span>}
             </div>
           </div>
 

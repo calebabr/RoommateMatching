@@ -136,6 +136,9 @@ async def login(request: Request, body: LoginRequest):
     if not hashed or not verify_password(body.password, hashed):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
+    if user.get("is_banned"):
+        raise HTTPException(status_code=403, detail="Account has been banned")
+
     user.pop("_id", None)
     user.pop("hashed_password", None)
 

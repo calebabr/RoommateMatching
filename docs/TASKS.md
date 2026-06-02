@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-02 by Documentation Agent (Phase 1 P1.1–P1.4 completed)_
+_Last updated: 2026-06-02 by P2.1 ban-endpoints_
 
 ---
 
@@ -66,9 +66,12 @@ _Nothing currently in progress._
 | Task H1: Env var sweep — VITE_API_BASE_URL in api.js, JWT_ALGORITHM/JWT_EXPIRATION_HOURS in auth/utils.py, .env.example completeness (Sentry, Redis, JWT sections added). Most items already done in B1/C1/C2. | Backend Agent + Frontend Agent | 2026-06-01 |
 | Task H2: Sentry integration — backend FastAPI (sentry-sdk[fastapi]==2.19.2, FastApiIntegration + StarletteIntegration, _before_send filter suppresses 401/403/404/429 and strips Authorization header + cookies, traces_sample_rate=0.1 in prod, send_default_pii=False, /debug/sentry-test endpoint in dev only), frontend @sentry/react (VITE_SENTRY_DSN, VITE_ENV, tracesSampleRate 0.1 in prod, beforeSend strips Authorization), 7 filter unit tests in test_sentry_filter.py. Manual test: set SENTRY_DSN env var, restart backend, hit GET /debug/sentry-test, confirm event in Sentry dashboard. | Backend Agent + Frontend Agent + Tests Agent | 2026-06-01 |
 | P1.1 `[PHASE-1]` Fix non-atomic ID generation — replaced `get_next_id()` max-plus-one with `find_one_and_update` + `$inc` on `counters` collection (`upsert=True`, `ReturnDocument.AFTER`); `main.py` lifespan seeds counter from current max ID via `$setOnInsert` on first startup. 2 tests (concurrent + sequential) all passing. | DB Agent + Tests Agent | 2026-06-02 |
+| P1.5 `[PHASE-1]` Fix `UserDetailPage` like button stale state — `canLike` now uses `alreadyLiked` (from `getLikesSent`) and `alreadyMatched` (from `user.matchedWith`) instead of `profile.matched`; button hides immediately after action; status labels added. 3 tests passing. | Frontend Agent + Tests Agent | 2026-06-02 |
+| P1.6 `[PHASE-1]` MongoDB index migration script — `backend/migrate_indexes.py` (synchronous pymongo, idempotent); creates 14 indexes across 6 collections; catches `IndexOptionsConflict`/`IndexKeySpecsConflict` as skips; reads env for `MONGO_URL`/`MONGO_DB_NAME`. 2 tests passing. | DB Agent + Tests Agent | 2026-06-02 |
 | P1.2 `[PHASE-1]` Gate `POST /api/admin/recompute` to admin users only — added `get_admin_user` dependency (reads `ADMIN_USER_IDS` env var as comma-separated integers; raises 403 if caller not in list); upgraded endpoint from `get_current_user`. | Backend Agent | 2026-06-02 |
 | P1.3 `[PHASE-1]` Gate `POST /api/uploadUsers` as admin-only — upgraded to `get_admin_user`; endpoint retained for seeding test data. 4 tests (non-admin 403, admin 200 on both endpoints) all passing. | Backend Agent + Tests Agent | 2026-06-02 |
 | P1.4 `[PHASE-1]` Password reset / forgot-password flow — backend: `POST /api/auth/forgot-password` (rate-limited 3/hr, SHA-256 token stored on user, always 200) + `POST /api/auth/reset-password` (rate-limited 5/hr, validates hash + expiry, enforces password strength, clears token on success). Frontend: `ForgotPasswordPage`, `ResetPasswordPage`, routes in `App.jsx`, "Forgot password?" link in `LoginPage`, `authForgotPassword`/`authResetPassword` in `api.js`. 7 tests all passing. Note: no email delivery — token returned in API response body (dev/MVP mode). | Backend Agent + Frontend Agent + Tests Agent | 2026-06-02 |
+| P2.1 `[PHASE-2]` Add `POST /api/admin/ban/{user_id}` and `POST /api/admin/unban/{user_id}` endpoints — sets `is_banned: bool` on user document; `authRoutes.py` login handler raises HTTP 403 if `is_banned` is True (checked after password verification, before token issuance); both endpoints gated by `get_admin_user`. 7 tests all passing (`test_ban.py`). | Backend Agent + Tests Agent | 2026-06-02 |
 
 ---
 
@@ -78,12 +81,7 @@ _Nothing currently in progress._
 
 ### 🔨 Phase 1 — Before Render / Vercel / MongoDB Setup `[PHASE-1]`
 
-_Pure code work. Do these locally before touching any deployment infrastructure._
-
-| ID | Task | Owner | Priority | Added |
-|----|------|-------|----------|-------|
-| P1.5 | `[PHASE-1]` Fix `UserDetailPage` like button — uses stale `profile.matched` flag; should reflect current user's actual like/match state | Frontend Agent | High | 2026-06-01 |
-| P1.6 | `[PHASE-1]` Write MongoDB index migration script — script that creates all indexes (`users.id`, `likes.fromUser/toUser`, `matches.user1_id/user2_id`, `notifications.toUser`, `recommendations.userId`, `chat_messages.fromUser/toUser`) ready to run against Atlas once it's set up | DB Agent | **Critical** | 2026-06-01 |
+_All Phase 1 tasks complete. See Completed table above._
 
 ---
 
@@ -93,18 +91,17 @@ _Infrastructure is up. These are deployment config, data, and verification steps
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P2.1 | `[PHASE-2]` Run MongoDB index migration script against Atlas cluster — execute the script from Phase 1 on the production database | DB Agent | **Critical** | 2026-06-01 |
-| P2.2 | `[PHASE-2]` Purge or replace the 500 synthetic test users from production DB — they will appear in real users' discovery feeds if left in | DB Agent | **Critical** | 2026-06-01 |
+| P2.2 | `[PHASE-2]` Add protected `/admin` section to frontend — guarded by `is_admin` flag; pages: user list (search/filter), user detail (ban/unban button); keep all admin API calls in a separate `services/adminApi.js` so it can be extracted to a standalone app later | Frontend Agent | **Critical** | 2026-06-02 |
 | P2.3 | `[PHASE-2]` Set all Render env vars: `SECRET_KEY`, `MONGO_URL`, `MONGO_DB_NAME`, `CLOUDINARY_*`, `FRONTEND_URL`, `SENTRY_DSN`, `ROOMMATCH_ENV=production` | — | **Critical** | 2026-06-01 |
-| P2.4 | `[PHASE-2]` Set all Vercel env vars: `VITE_API_BASE_URL`, `VITE_SENTRY_DSN`, `VITE_ENV=production` | — | **Critical** | 2026-06-01 |
-| P2.5 | `[PHASE-2]` Verify `GET /health` returns 200 on the live Render URL | — | **Critical** | 2026-06-01 |
-| P2.6 | `[PHASE-2]` Verify `securityheaders.com` scan of production URL returns A grade | — | High | 2026-06-01 |
-| P2.7 | `[PHASE-2]` Verify Sentry receives events — hit `GET /debug/sentry-test` on Render, confirm event appears in Sentry dashboard | — | High | 2026-06-01 |
-| P2.8 | `[PHASE-2]` Run `POST /api/admin/recompute` once on production DB to seed the recommendations collection | — | **Critical** | 2026-06-01 |
-| P2.9 | `[PHASE-2]` Smoke-test full user journey on production: register → discover → like → match → chat | — | **Critical** | 2026-06-01 |
-| P2.10 | `[PHASE-2]` Add `POST /api/admin/ban/{user_id}` and `POST /api/admin/unban/{user_id}` endpoints — sets `is_banned: bool` on user document; banned users receive 403 on login; gated by `ADMIN_USER_IDS` env var | Backend Agent | **Critical** | 2026-06-02 |
-| P2.11 | `[PHASE-2]` Add protected `/admin` section to frontend — guarded by `is_admin` flag; pages: user list (search/filter), user detail (ban/unban button); keep all admin API calls in a separate `services/adminApi.js` so it can be extracted to a standalone app later | Frontend Agent | **Critical** | 2026-06-02 |
-| P2.12 | `[PHASE-2]` Add `ADMIN_USER_IDS` env var to Render and document in `.env.example` — comma-separated list of integer user IDs granted admin access | — | **Critical** | 2026-06-02 |
+| P2.4 | `[PHASE-2]` Add `ADMIN_USER_IDS` env var to Render — comma-separated list of integer user IDs granted admin access | — | **Critical** | 2026-06-02 |
+| P2.5 | `[PHASE-2]` Set all Vercel env vars: `VITE_API_BASE_URL`, `VITE_SENTRY_DSN`, `VITE_ENV=production` | — | **Critical** | 2026-06-01 |
+| P2.6 | `[PHASE-2]` Run MongoDB index migration script against Atlas cluster — execute `backend/migrate_indexes.py` pointed at the Atlas `MONGO_URL` | DB Agent | **Critical** | 2026-06-01 |
+| P2.7 | `[PHASE-2]` Purge or replace the 500 synthetic test users from production DB — they will appear in real users' discovery feeds if left in | DB Agent | **Critical** | 2026-06-01 |
+| P2.8 | `[PHASE-2]` Verify `GET /health` returns 200 on the live Render URL | — | **Critical** | 2026-06-01 |
+| P2.9 | `[PHASE-2]` Verify `securityheaders.com` scan of production URL returns A grade | — | High | 2026-06-01 |
+| P2.10 | `[PHASE-2]` Verify Sentry receives events — hit `GET /debug/sentry-test` on Render, confirm event appears in Sentry dashboard | — | High | 2026-06-01 |
+| P2.11 | `[PHASE-2]` Run `POST /api/admin/recompute` once on production DB to seed the recommendations collection | — | **Critical** | 2026-06-01 |
+| P2.12 | `[PHASE-2]` Smoke-test full user journey on production: register → discover → like → match → chat | — | **Critical** | 2026-06-01 |
 
 ---
 

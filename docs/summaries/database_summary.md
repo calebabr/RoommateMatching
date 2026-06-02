@@ -15,7 +15,7 @@ Motor (`AsyncIOMotorClient`) connects to `mongodb://localhost:27017/` using data
 | `notifications_collection` | `notifications` |
 | `counters_collection` | `counters` |
 
-One index is declared: `main.py` lifespan creates a unique sparse index on `users.email` at startup via `users_collection.create_index("email", unique=True, sparse=True)`. All other collections remain unindexed.
+One index is declared at startup: `main.py` lifespan creates a unique sparse index on `users.email` via `users_collection.create_index("email", unique=True, sparse=True)`. Production indexes for all other collections are created by the migration script `backend/migrate_indexes.py` (P1.6).
 
 ## 2. Schema Overview
 
@@ -44,7 +44,7 @@ One index is declared: `main.py` lifespan creates a unique sparse index on `user
 
 ## 4. Gaps / TODOs
 
-- **Only one index declared (`users.email`, unique+sparse).** Queries on `users.id`, `likes.fromUser/toUser`, `matches.user1_id/user2_id`, `notifications.toUser`, `recommendations.userId`, and `chat_messages` all still do full collection scans.
+- **Indexes declared for startup:** only `users.email` (unique+sparse). All production indexes (users.id, likes, matches, recommendations, notifications, chat_messages) are created by `backend/migrate_indexes.py` — must be run against Atlas before beta launch (P2.1).
 - **`matchedWith` legacy type drift.** Three separate services contain `_normalize_matched_with` to handle old `int`/`null` values — indicates a past schema migration was never enforced.
 - **`matches` missing `compatibilityScore`.** The `ConfirmedMatch` model has it; `likeService` never writes it.
 - **`clusters` collection** is written but never read for actual matching — `recommendationService` iterates all users directly.
@@ -58,4 +58,5 @@ One index is declared: `main.py` lifespan creates a unique sparse index on `user
 - **Gender-gated matching is enforced at service layer**, not at the DB level — two places (likeService, recommendationService) each enforce it independently.
 - **`users.email` unique sparse index** means duplicate-email attempts raise a Motor `DuplicateKeyError` at the DB layer, in addition to the application-level 409 check.
 - **`migrate_add_auth_fields.py`** exists at the backend root — a one-off migration script that also creates the `users.email` index, evidencing a past auth schema migration that added the `hashed_password` field.
+- **`migrate_indexes.py`** (P1.6, 2026-06-02) — standalone idempotent script using synchronous pymongo. Creates all production indexes across 6 collections: `users` (id unique, email unique+sparse), `likes` (fromUser, toUser, compound unique fromUser+toUser), `matches` (user1, user2, compound pair), `recommendations` (userId unique), `notifications` (toUser, compound toUser+read), `chat_messages` (fromUser, toUser, compound fromUser+toUser+createdAt). Safe to re-run; `OperationFailure` with `IndexOptionsConflict`/`IndexKeySpecsConflict` is caught and logged as a skip. Usage: `cd backend && python migrate_indexes.py`.
 - **Atomic ID generation (P1.1, 2026-06-02).** The previous max-plus-one `get_next_id()` race condition was resolved. `authRoutes.py` now uses `find_one_and_update` with `$inc` on the `counters` collection (`upsert=True`, `ReturnDocument.AFTER`). On first startup, `main.py` lifespan seeds the counter from the current max user ID via `$setOnInsert` so all existing IDs are preserved.

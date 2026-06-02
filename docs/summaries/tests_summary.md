@@ -2,7 +2,7 @@
 
 ## 1. Current State
 
-Thirteen backend test files now exist: two legacy scripts and eleven pytest modules. Unit tests, pytest fixtures, an isolated test database, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present.
+Fifteen backend test files now exist: two legacy scripts and thirteen pytest modules. Unit tests, pytest fixtures, an isolated test database, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present.
 
 ## 2. Test Files
 
@@ -21,6 +21,9 @@ Thirteen backend test files now exist: two legacy scripts and eleven pytest modu
 | `backend/test_atomic_id.py` | pytest async | 2 | Concurrent (10 simultaneous registrations → 10 unique IDs) and sequential ID generation; validates `$inc`-based counter approach |
 | `backend/test_admin_gate.py` | pytest async | 4 | Non-admin 403 on recompute and uploadUsers; admin 200 on both; validates `get_admin_user` dependency |
 | `backend/test_password_reset.py` | pytest async | 7 | Valid reset flow, unknown-email no info leak, invalid token 400, expired token 400, reused token 400, weak password 400; tests both forgot-password and reset-password endpoints |
+| `backend/test_likes_sent.py` | pytest async | 3 | `getLikesSent` contains target after like, empty for user who sent no likes, unauthenticated returns 401/403; AsyncMock collections (same pattern as test_admin_gate.py) |
+| `backend/test_migrate_indexes.py` | pytest | 2 | `create_indexes()` against `roommatch_migrate_test` DB creates all expected indexes with correct uniqueness; idempotent second run raises no error |
+| `backend/test_ban.py` | pytest async | 7 | Admin ban/unban endpoints and login ban check; AsyncMock collections, no live DB needed |
 | `backend/app/test/` | JSON data only | — | `usersTest20.json`, `usersTest250.json`, `usersTest1000.json` — seed data, not automated tests |
 
 ## 3. Test Infrastructure
@@ -53,6 +56,9 @@ Thirteen backend test files now exist: two legacy scripts and eleven pytest modu
 - Atomic ID tests — `test_atomic_id.py` (2 tests) validates concurrent and sequential ID generation via `$inc` counter (2026-06-02)
 - Admin gate tests — `test_admin_gate.py` (4 tests) validates `get_admin_user` 403/200 on recompute and uploadUsers (2026-06-02)
 - Password reset tests — `test_password_reset.py` (7 tests) covers valid flow, enumeration resistance, and all invalid-token cases (2026-06-02)
+- Like-sent / like button state tests — `test_likes_sent.py` (3 tests) covers `getLikesSent` API correctness and auth enforcement (2026-06-02)
+- Index migration tests — `test_migrate_indexes.py` (2 tests) confirms `create_indexes()` creates correct indexes and is idempotent (2026-06-02)
+- Ban/unban admin endpoint tests — `test_ban.py` (7 tests) covers admin ban/unban 200, non-admin 403, 404 for missing user, banned user login 403, and unbanned user login 200 (2026-06-02)
 
 **Still TODO**
 - Unit-test `matchScore.py` directly without HTTP round-trips

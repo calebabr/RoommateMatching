@@ -323,6 +323,22 @@ async def upload_photo(request: Request, user_id: int, file: UploadFile = File(.
 
 # --- Admin ---
 
+@router.post("/admin/ban/{user_id}")
+async def ban_user(user_id: int, _: dict = Depends(get_admin_user)):
+    result = await userProfileService.collection.update_one({"id": user_id}, {"$set": {"is_banned": True}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User banned"}
+
+
+@router.post("/admin/unban/{user_id}")
+async def unban_user(user_id: int, _: dict = Depends(get_admin_user)):
+    result = await userProfileService.collection.update_one({"id": user_id}, {"$set": {"is_banned": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User unbanned"}
+
+
 @router.post("/admin/recompute")
 @limiter.limit("60/minute")
 async def recompute_all(request: Request, _: dict = Depends(get_admin_user)):

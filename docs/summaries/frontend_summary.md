@@ -30,7 +30,7 @@ A fully functional React SPA. All core features are implemented: auth (login/sig
 | `/matches` | `MatchesPage` | Confirmed matches; preference comparison; navigate to chat |
 | `/chat` | `ChatListPage` | List of active conversations with last message preview |
 | `/chat/:partnerId` | `ChatPage` | Full chat thread; polls every 3s; Enter-to-send; unmatch from here |
-| `/user/:userId` | `UserDetailPage` | Public profile view with compatibility score and like button |
+| `/user/:userId` | `UserDetailPage` | Public profile view with compatibility score and like button; like button reflects current user's actual like/match state (P1.5) |
 | `/notifications` | `NotificationsPage` | Activity feed (likes, matches, unmatches); marks read on open |
 
 Unauthenticated users (where `user` is null and loading is false) are redirected to `/login` by `AppRoutes`. `/forgot-password` and `/reset-password` are outside the auth guard and accessible without a token. When a user reaches max matches (5), Discover and Likes tabs are hidden from the sidebar.
@@ -54,7 +54,7 @@ All calls go through `src/services/api.js` via a single Axios instance. The base
 - **Chat is polling-based** (3s interval in `ChatPage`, 5s in `NotificationBell`). No WebSocket or SSE — will scale poorly.
 - **Password reset token is shown in-browser** — `ForgotPasswordPage` displays the token returned by the API in a monospace box. No email delivery exists yet; users must copy the token manually. This is acceptable for MVP but must be replaced with email delivery before production launch.
 - **Gender is binary** (male/female only) — hardcoded in `SignupPage`.
-- **`UserDetailPage` like button** uses a stale `profile.matched` flag from the fetched profile, not from the current user's match state — can show Like button incorrectly when user is already matched with that person.
+- ~~**`UserDetailPage` like button**~~ Fixed (P1.5, 2026-06-02): `canLike` now checks `alreadyLiked` and `alreadyMatched` state derived from `getLikesSent` and `user.matchedWith`, replacing the stale `profile.matched` flag.
 - **No pagination** on discover, likes, matches, or chat history — all fetched at once.
 - **Notification bell** polls every 5s globally and does not stop when the user is on the Notifications page (redundant API calls).
 - **No email verification** step in signup.

@@ -64,6 +64,8 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - `POST /api/users/{user_id}/notifications/mark-read`
 - `POST /api/users/{user_id}/upload-photo`
 - `POST /api/admin/recompute` — gated by `get_admin_user`; 403 for non-admin users
+- `POST /api/admin/ban/{user_id}` — gated by `get_admin_user`; sets `is_banned: True`; 404 if not found
+- `POST /api/admin/unban/{user_id}` — gated by `get_admin_user`; sets `is_banned: False`; 404 if not found
 
 **Utility**
 - `GET  /` — health/version
@@ -185,7 +187,31 @@ Test coverage: `backend/test_security_headers.py` (1 test, passing).
 ### Known limitation
 No email is sent. The token is returned in the API response body. This is intentional for the MVP — email delivery (SMTP / SendGrid) must be wired in before production launch.
 
-## 10. Gaps / TODOs (pre-production)
+## 10. Ban / Unban Admin Endpoints
+
+**Session 2026-06-02 (Task P2.1):** Two new admin endpoints were added to `userRoutes.py` and the login handler in `authRoutes.py` was updated to gate banned users.
+
+### New endpoints
+
+| Endpoint | Behavior |
+|----------|---------|
+| `POST /api/admin/ban/{user_id}` | Sets `is_banned: True` on the user document; returns 404 if user not found; gated by `get_admin_user` |
+| `POST /api/admin/unban/{user_id}` | Sets `is_banned: False` on the user document; returns 404 if user not found; gated by `get_admin_user` |
+
+### Login ban check
+
+`POST /api/auth/login` now raises HTTP 403 with `"Account has been banned"` if `is_banned` is `True` on the user document. The check occurs after password verification and before JWT issuance, so banned users receive an explicit rejection rather than a valid token.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `app/routers/userRoutes.py` | Added `POST /api/admin/ban/{user_id}` and `POST /api/admin/unban/{user_id}` near the existing `/admin/recompute` endpoint |
+| `app/routers/authRoutes.py` | Login handler checks `is_banned` field after password verification; raises HTTP 403 if true |
+
+---
+
+## 11. Gaps / TODOs (pre-production)
 
 - **`chatRoutes.py` not mounted** — a second chat router exists with `after` timestamp pagination but is not registered in `main.py`, so that feature is unreachable.
 - **`matchRoutes.py` not mounted** — the legacy in-memory router is dead code.
@@ -196,7 +222,7 @@ No email is sent. The token is returned in the API response body. This is intent
 - **No per-notification mark-read route exposed** — `NotificationService.mark_read()` exists but has no endpoint.
 - **Password reset has no email delivery** — `POST /api/auth/forgot-password` returns the reset token in the response body (dev/MVP mode). SMTP or a transactional email service (SendGrid, SES, etc.) must be wired in before production launch.
 
-## 11. Notable Patterns
+## 12. Notable Patterns
 
 - All routes require `get_current_user` (JWT Bearer) except `/auth/register` and `/auth/login`.
 - Rate limiting is enforced on auth endpoints via slowapi (`app/limiter.py`): register 3/hour, login 5/15min, change-password 5/hour, forgot-password 3/hour, reset-password 5/hour. 429 responses include `Retry-After: 60`.
