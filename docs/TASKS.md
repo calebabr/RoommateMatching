@@ -113,54 +113,54 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3.1 | `[PHASE-3]` Implement token refresh mechanism — 24h expiry forces full re-login daily; address once users report it as friction | Auth Agent | Medium | 2026-05-29 |
-| P3.2 | `[PHASE-3]` Add `.edu` email restriction at registration — **will NOT be enforced during beta**; goes in after beta to limit pool to college students | Backend Agent | Medium | 2026-06-01 |
-| P3.3 | `[PHASE-3]` Add email verification on registration — confirm email ownership before activating account | Auth Agent | Medium | 2026-05-29 |
-| P3.4 | `[PHASE-3]` Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
-| P3.5 | `[PHASE-3]` Fix NOTE-1: `limit` parameter on `GET /users/{id}/chat/{partner_id}` is unbounded — clamp to max 200 | Backend Agent | Low | 2026-05-29 |
+| P3A.1 | `[PHASE-3]` Implement token refresh mechanism — 24h expiry forces full re-login daily; address once users report it as friction | Auth Agent | Medium | 2026-05-29 |
+| P3A.2 | `[PHASE-3]` Add `.edu` email restriction at registration — **will NOT be enforced during beta**; goes in after beta to limit pool to college students | Backend Agent | Medium | 2026-06-01 |
+| P3A.3 | `[PHASE-3]` Add email verification on registration — confirm email ownership before activating account | Auth Agent | Medium | 2026-05-29 |
+| P3A.4 | `[PHASE-3]` Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
+| P3A.5 | `[PHASE-3]` Fix NOTE-1: `limit` parameter on `GET /users/{id}/chat/{partner_id}` is unbounded — clamp to max 200 | Backend Agent | Low | 2026-05-29 |
 
 #### Backend Cleanup
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3.6 | `[PHASE-3]` Mount `chatRoutes.py` or remove it — alternate chat router with timestamp pagination is unreachable | Backend Agent | Medium | 2026-05-29 |
-| P3.7 | `[PHASE-3]` Remove or replace `matchRoutes.py` — legacy in-memory router is dead code | Backend Agent | Low | 2026-05-29 |
-| P3.8 | `[PHASE-3]` Wire `clusterService.py` to a router, or remove it — cluster logic is currently unused | Backend Agent | Low | 2026-05-29 |
-| P3.9 | `[PHASE-3]` Audit and delete `userProfiles.py` — likely stale duplicate of `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
-| P3.10 | `[PHASE-3]` Remove or update `userProfileService.mark_matched` / `unmatch_user` — use old single-int `matchedWith` format, no longer called | Backend Agent | Low | 2026-05-29 |
-| P3.11 | `[PHASE-3]` Expose per-notification mark-read endpoint — `NotificationService.mark_read()` exists but has no route | Backend Agent | Low | 2026-05-29 |
-| P3.12 | `[PHASE-3]` Consolidate `_normalize_matched_with()` — duplicated across `likeService.py`, `chatService.py`, `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
+| P3B.1 | `[PHASE-3]` Mount `chatRoutes.py` or remove it — alternate chat router with timestamp pagination is unreachable | Backend Agent | Medium | 2026-05-29 |
+| P3B.2 | `[PHASE-3]` Remove or replace `matchRoutes.py` — legacy in-memory router is dead code | Backend Agent | Low | 2026-05-29 |
+| P3B.3 | `[PHASE-3]` Wire `clusterService.py` to a router, or remove it — cluster logic is currently unused | Backend Agent | Low | 2026-05-29 |
+| P3B.4 | `[PHASE-3]` Audit and delete `userProfiles.py` — likely stale duplicate of `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
+| P3B.5 | `[PHASE-3]` Remove or update `userProfileService.mark_matched` / `unmatch_user` — use old single-int `matchedWith` format, no longer called | Backend Agent | Low | 2026-05-29 |
+| P3B.6 | `[PHASE-3]` Expose per-notification mark-read endpoint — `NotificationService.mark_read()` exists but has no route | Backend Agent | Low | 2026-05-29 |
+| P3B.7 | `[PHASE-3]` Consolidate `_normalize_matched_with()` — duplicated across `likeService.py`, `chatService.py`, `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
 
 #### Database
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3.13 | `[PHASE-3]` Enforce `matchedWith` schema — remove the three `_normalize_matched_with()` workarounds with a proper migration | DB Agent | Medium | 2026-05-29 |
-| P3.14 | `[PHASE-3]` Write `compatibilityScore` into `matches` documents — `ConfirmedMatch` model has the field but `likeService` never populates it | DB Agent | Low | 2026-05-29 |
-| P3.15 | `[PHASE-3]` Add TTL index on `notifications` to auto-expire old records | DB Agent | Low | 2026-05-29 |
-| P3.16 | `[PHASE-3]` Add TTL index on `likes` to expire stale pending likes | DB Agent | Low | 2026-05-29 |
-| P3.17 | `[PHASE-3]` Evaluate `clusters` collection — written by `clusterService` but never read for matching; integrate or remove | DB Agent | Low | 2026-05-29 |
+| P3D.1 | `[PHASE-3]` Enforce `matchedWith` schema — remove the three `_normalize_matched_with()` workarounds with a proper migration | DB Agent | Medium | 2026-05-29 |
+| P3D.2 | `[PHASE-3]` Write `compatibilityScore` into `matches` documents — `ConfirmedMatch` model has the field but `likeService` never populates it | DB Agent | Low | 2026-05-29 |
+| P3D.3 | `[PHASE-3]` Add TTL index on `notifications` to auto-expire old records | DB Agent | Low | 2026-05-29 |
+| P3D.4 | `[PHASE-3]` Add TTL index on `likes` to expire stale pending likes | DB Agent | Low | 2026-05-29 |
+| P3D.5 | `[PHASE-3]` Evaluate `clusters` collection — written by `clusterService` but never read for matching; integrate or remove | DB Agent | Low | 2026-05-29 |
 
 #### Tests
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3.18 | `[PHASE-3]` Write unit tests for `matchScore.py` in isolation (weight calculations, boundary values, simultaneous dealbreakers) | Tests Agent | High | 2026-05-29 |
-| P3.19 | `[PHASE-3]` Add notification creation tests — like-received and match-created events should trigger notifications | Tests Agent | Medium | 2026-05-29 |
-| P3.20 | `[PHASE-3]` Add gender-gate test — users should only see same-gender recommendations | Tests Agent | Medium | 2026-05-29 |
-| P3.21 | `[PHASE-3]` Add MAX_MATCHES cap test — enforce that 5-match limit is respected | Tests Agent | Medium | 2026-05-29 |
-| P3.22 | `[PHASE-3]` Add Vitest + React Testing Library — at minimum test `AuthContext`, `api.js`, and the like/match UI flow | Tests Agent | High | 2026-05-29 |
-| P3.23 | `[PHASE-3]` Add tests for cluster/recommendation algorithm internals | Tests Agent | Low | 2026-05-29 |
-| P3.24 | `[PHASE-3]` Convert `test_api.py` and `test_api_v2.py` from plain Python scripts to proper pytest modules | Tests Agent | Low | 2026-05-29 |
+| P3T.1 | `[PHASE-3]` Write unit tests for `matchScore.py` in isolation (weight calculations, boundary values, simultaneous dealbreakers) | Tests Agent | High | 2026-05-29 |
+| P3T.2 | `[PHASE-3]` Add notification creation tests — like-received and match-created events should trigger notifications | Tests Agent | Medium | 2026-05-29 |
+| P3T.3 | `[PHASE-3]` Add gender-gate test — users should only see same-gender recommendations | Tests Agent | Medium | 2026-05-29 |
+| P3T.4 | `[PHASE-3]` Add MAX_MATCHES cap test — enforce that 5-match limit is respected | Tests Agent | Medium | 2026-05-29 |
+| P3T.5 | `[PHASE-3]` Add Vitest + React Testing Library — at minimum test `AuthContext`, `api.js`, and the like/match UI flow | Tests Agent | High | 2026-05-29 |
+| P3T.6 | `[PHASE-3]` Add tests for cluster/recommendation algorithm internals | Tests Agent | Low | 2026-05-29 |
+| P3T.7 | `[PHASE-3]` Convert `test_api.py` and `test_api_v2.py` from plain Python scripts to proper pytest modules | Tests Agent | Low | 2026-05-29 |
 
 #### Frontend
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3.25 | `[PHASE-3]` Replace polling-based chat with WebSocket or SSE — address if users report chat feeling slow | Frontend Agent | Medium | 2026-05-29 |
-| P3.26 | `[PHASE-3]` Implement password reset / forgot-password UI flow (backend endpoint from Phase 1 required first) | Frontend Agent | Medium | 2026-06-01 |
-| P3.27 | `[PHASE-3]` Add email verification step to signup flow | Frontend Agent | Medium | 2026-05-29 |
-| P3.28 | `[PHASE-3]` Add pagination to discover, likes, matches, and chat history | Frontend Agent | Medium | 2026-05-29 |
-| P3.29 | `[PHASE-3]` Expand gender options beyond binary male/female in `SignupPage` | Frontend Agent | Medium | 2026-05-29 |
-| P3.30 | `[PHASE-3]` Stop `NotificationBell` polling when user is already on the Notifications page | Frontend Agent | Low | 2026-05-29 |
-| P3.31 | `[PHASE-3]` Expose backend URL setting from within the app (not just login screen) | Frontend Agent | Low | 2026-05-29 |
+| P3F.1 | `[PHASE-3]` Replace polling-based chat with WebSocket or SSE — address if users report chat feeling slow | Frontend Agent | Medium | 2026-05-29 |
+| P3F.2 | `[PHASE-3]` Implement password reset / forgot-password UI flow (backend endpoint from Phase 1 required first) | Frontend Agent | Medium | 2026-06-01 |
+| P3F.3 | `[PHASE-3]` Add email verification step to signup flow | Frontend Agent | Medium | 2026-05-29 |
+| P3F.4 | `[PHASE-3]` Add pagination to discover, likes, matches, and chat history | Frontend Agent | Medium | 2026-05-29 |
+| P3F.5 | `[PHASE-3]` Expand gender options beyond binary male/female in `SignupPage` | Frontend Agent | Medium | 2026-05-29 |
+| P3F.6 | `[PHASE-3]` Stop `NotificationBell` polling when user is already on the Notifications page | Frontend Agent | Low | 2026-05-29 |
+| P3F.7 | `[PHASE-3]` Expose backend URL setting from within the app (not just login screen) | Frontend Agent | Low | 2026-05-29 |
