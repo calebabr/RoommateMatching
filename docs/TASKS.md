@@ -70,84 +70,97 @@ _Nothing currently in progress._
 
 ## Backlog
 
-### 🚀 Beta Launch — Pre-Deployment `[PRE-DEPLOY]`
+---
 
-_These must be completed before Render / Vercel / MongoDB Atlas go live._
+### 🔨 Phase 1 — Before Render / Vercel / MongoDB Setup `[PHASE-1]`
 
-| Task | Owner | Priority | Added |
-|------|-------|----------|-------|
-| `[PRE-DEPLOY]` Add MongoDB indexes on high-traffic fields: `users.id`, `likes.fromUser/toUser`, `matches.user1_id/user2_id`, `notifications.toUser`, `recommendations.userId`, `chat_messages.fromUser/toUser` — every query is currently a full scan | DB Agent | **Critical** | 2026-06-01 |
-| `[PRE-DEPLOY]` Fix non-atomic ID generation in `get_next_id()` — race condition under concurrent registrations; replace with `$inc` + `findAndModify` on a counters collection | DB Agent | **Critical** | 2026-06-01 |
-| `[PRE-DEPLOY]` Gate `POST /api/admin/recompute` to admin users only — currently any authenticated user can trigger a full recompute of all 500+ users (expensive) | Backend Agent | **Critical** | 2026-06-01 |
-| `[PRE-DEPLOY]` Gate or remove `POST /api/uploadUsers` — currently any authenticated user can bulk-insert thousands of fake users; should be admin-only or removed before launch | Backend Agent | **Critical** | 2026-06-01 |
-| `[PRE-DEPLOY]` Implement password reset / forgot-password flow — users who forget passwords are permanently locked out; this is a beta support blocker | Frontend Agent + Backend Agent | High | 2026-06-01 |
-| `[PRE-DEPLOY]` Fix `UserDetailPage` like button — uses stale `profile.matched` flag; should reflect current user's actual like/match state | Frontend Agent | High | 2026-06-01 |
-| `[PRE-DEPLOY]` Clean up or replace test dataset — 500 synthetic users are currently in the DB and will appear in real users' discovery feeds; purge or replace with realistic placeholder profiles before beta | DB Agent | High | 2026-06-01 |
-| `[POST-DEPLOY]` Add `.edu` email restriction at registration — reject non-.edu addresses to keep the pool to college students. **Will NOT be enforced during beta** — restriction goes in after beta ends to reduce signup friction for early users | Backend Agent | Medium | 2026-06-01 |
+_Pure code work. Do these locally before touching any deployment infrastructure._
+
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P1.1 | `[PHASE-1]` Fix non-atomic ID generation in `get_next_id()` — race condition under concurrent registrations; replace with `$inc` + `findAndModify` on a counters collection | DB Agent | **Critical** | 2026-06-01 |
+| P1.2 | `[PHASE-1]` Gate `POST /api/admin/recompute` to admin users only — currently any authenticated user can trigger a full recompute of all users (expensive) | Backend Agent | **Critical** | 2026-06-01 |
+| P1.3 | `[PHASE-1]` Gate or remove `POST /api/uploadUsers` — currently any authenticated user can bulk-insert thousands of fake users; should be admin-only or removed before launch | Backend Agent | **Critical** | 2026-06-01 |
+| P1.4 | `[PHASE-1]` Implement password reset / forgot-password flow — users who forget passwords are permanently locked out; this is a beta support blocker | Backend Agent + Frontend Agent | **Critical** | 2026-06-01 |
+| P1.5 | `[PHASE-1]` Fix `UserDetailPage` like button — uses stale `profile.matched` flag; should reflect current user's actual like/match state | Frontend Agent | High | 2026-06-01 |
+| P1.6 | `[PHASE-1]` Write MongoDB index migration script — script that creates all indexes (`users.id`, `likes.fromUser/toUser`, `matches.user1_id/user2_id`, `notifications.toUser`, `recommendations.userId`, `chat_messages.fromUser/toUser`) ready to run against Atlas once it's set up | DB Agent | **Critical** | 2026-06-01 |
 
 ---
 
-### 🔧 Post-Deployment `[POST-DEPLOY]`
+### 🚀 Phase 2 — After Render / Vercel / MongoDB Setup, Before Beta Launch `[PHASE-2]`
 
-_App works without these for beta. Prioritize after launch._
+_Infrastructure is up. These are deployment config, data, and verification steps done before inviting any users._
 
-#### Security
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P2.1 | `[PHASE-2]` Run MongoDB index migration script against Atlas cluster — execute the script from Phase 1 on the production database | DB Agent | **Critical** | 2026-06-01 |
+| P2.2 | `[PHASE-2]` Purge or replace the 500 synthetic test users from production DB — they will appear in real users' discovery feeds if left in | DB Agent | **Critical** | 2026-06-01 |
+| P2.3 | `[PHASE-2]` Set all Render env vars: `SECRET_KEY`, `MONGO_URL`, `MONGO_DB_NAME`, `CLOUDINARY_*`, `FRONTEND_URL`, `SENTRY_DSN`, `ROOMMATCH_ENV=production` | — | **Critical** | 2026-06-01 |
+| P2.4 | `[PHASE-2]` Set all Vercel env vars: `VITE_API_BASE_URL`, `VITE_SENTRY_DSN`, `VITE_ENV=production` | — | **Critical** | 2026-06-01 |
+| P2.5 | `[PHASE-2]` Verify `GET /health` returns 200 on the live Render URL | — | **Critical** | 2026-06-01 |
+| P2.6 | `[PHASE-2]` Verify `securityheaders.com` scan of production URL returns A grade | — | High | 2026-06-01 |
+| P2.7 | `[PHASE-2]` Verify Sentry receives events — hit `GET /debug/sentry-test` on Render, confirm event appears in Sentry dashboard | — | High | 2026-06-01 |
+| P2.8 | `[PHASE-2]` Run `POST /api/admin/recompute` once on production DB to seed the recommendations collection | — | **Critical** | 2026-06-01 |
+| P2.9 | `[PHASE-2]` Smoke-test full user journey on production: register → discover → like → match → chat | — | **Critical** | 2026-06-01 |
 
-| Task | Owner | Priority | Added |
-|------|-------|----------|-------|
-| `[POST-DEPLOY]` Fix NOTE-1: `limit` parameter on `GET /users/{id}/chat/{partner_id}` is user-controlled with no upper bound — clamp to a max (e.g. 200) | Backend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Fix NOTE-2: `/api/uploadUsers` bulk endpoint bypasses Pydantic validation — deserialize through `UserCreate` model (already gated above; this adds validation on top) | Backend Agent | Low | 2026-05-29 |
+---
 
-#### Auth
+### 🐛 Phase 3 — After Beta Launch (During / After Beta) `[PHASE-3]`
 
-| Task | Owner | Priority | Added |
-|------|-------|----------|-------|
-| `[POST-DEPLOY]` Implement token refresh mechanism — 24h expiry forces full re-login daily; annoying but survivable for short beta | Auth Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Add email verification on registration — confirm ownership of the email address before activating account | Auth Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
+_Beta is live with 100–500 users. Fix bugs surfaced by real usage; add features based on feedback._
 
-#### Backend
+#### Auth & Security
 
-| Task | Owner | Priority | Added |
-|------|-------|----------|-------|
-| `[POST-DEPLOY]` Mount `chatRoutes.py` or remove it — alternate chat router with `after` timestamp pagination is currently unreachable | Backend Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Remove or replace `matchRoutes.py` — legacy in-memory router is dead code | Backend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Wire `clusterService.py` to a router, or remove it — cluster logic is currently unused | Backend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Audit and delete `userProfiles.py` — likely stale duplicate of `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Remove or update `userProfileService.mark_matched` / `unmatch_user` — use old single-int `matchedWith` format and are no longer called | Backend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Expose per-notification mark-read endpoint — `NotificationService.mark_read()` exists but has no route | Backend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Consolidate `_normalize_matched_with()` — duplicated across `likeService.py`, `chatService.py`, `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3.1 | `[PHASE-3]` Implement token refresh mechanism — 24h expiry forces full re-login daily; address once users report it as friction | Auth Agent | Medium | 2026-05-29 |
+| P3.2 | `[PHASE-3]` Add `.edu` email restriction at registration — **will NOT be enforced during beta**; goes in after beta to limit pool to college students | Backend Agent | Medium | 2026-06-01 |
+| P3.3 | `[PHASE-3]` Add email verification on registration — confirm email ownership before activating account | Auth Agent | Medium | 2026-05-29 |
+| P3.4 | `[PHASE-3]` Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
+| P3.5 | `[PHASE-3]` Fix NOTE-1: `limit` parameter on `GET /users/{id}/chat/{partner_id}` is unbounded — clamp to max 200 | Backend Agent | Low | 2026-05-29 |
+
+#### Backend Cleanup
+
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3.6 | `[PHASE-3]` Mount `chatRoutes.py` or remove it — alternate chat router with timestamp pagination is unreachable | Backend Agent | Medium | 2026-05-29 |
+| P3.7 | `[PHASE-3]` Remove or replace `matchRoutes.py` — legacy in-memory router is dead code | Backend Agent | Low | 2026-05-29 |
+| P3.8 | `[PHASE-3]` Wire `clusterService.py` to a router, or remove it — cluster logic is currently unused | Backend Agent | Low | 2026-05-29 |
+| P3.9 | `[PHASE-3]` Audit and delete `userProfiles.py` — likely stale duplicate of `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
+| P3.10 | `[PHASE-3]` Remove or update `userProfileService.mark_matched` / `unmatch_user` — use old single-int `matchedWith` format, no longer called | Backend Agent | Low | 2026-05-29 |
+| P3.11 | `[PHASE-3]` Expose per-notification mark-read endpoint — `NotificationService.mark_read()` exists but has no route | Backend Agent | Low | 2026-05-29 |
+| P3.12 | `[PHASE-3]` Consolidate `_normalize_matched_with()` — duplicated across `likeService.py`, `chatService.py`, `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
 
 #### Database
 
-| Task | Owner | Priority | Added |
-|------|-------|----------|-------|
-| `[POST-DEPLOY]` Enforce `matchedWith` schema — remove the three `_normalize_matched_with()` workarounds with a proper migration | DB Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Write `compatibilityScore` into `matches` documents — `ConfirmedMatch` model has the field but `likeService` never populates it | DB Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Add TTL index on `notifications` to auto-expire old records | DB Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Add TTL index on `likes` to expire stale pending likes | DB Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Evaluate `clusters` collection — written by `clusterService` but never read for matching; either integrate or remove | DB Agent | Low | 2026-05-29 |
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3.13 | `[PHASE-3]` Enforce `matchedWith` schema — remove the three `_normalize_matched_with()` workarounds with a proper migration | DB Agent | Medium | 2026-05-29 |
+| P3.14 | `[PHASE-3]` Write `compatibilityScore` into `matches` documents — `ConfirmedMatch` model has the field but `likeService` never populates it | DB Agent | Low | 2026-05-29 |
+| P3.15 | `[PHASE-3]` Add TTL index on `notifications` to auto-expire old records | DB Agent | Low | 2026-05-29 |
+| P3.16 | `[PHASE-3]` Add TTL index on `likes` to expire stale pending likes | DB Agent | Low | 2026-05-29 |
+| P3.17 | `[PHASE-3]` Evaluate `clusters` collection — written by `clusterService` but never read for matching; integrate or remove | DB Agent | Low | 2026-05-29 |
 
 #### Tests
 
-| Task | Owner | Priority | Added |
-|------|-------|----------|-------|
-| `[POST-DEPLOY]` Write unit tests for `matchScore.py` in isolation (weight calculations, boundary values, multiple simultaneous dealbreakers) | Tests Agent | High | 2026-05-29 |
-| `[POST-DEPLOY]` Add notification creation tests — like-received and match-created events should trigger notifications | Tests Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Add gender-gate test — users should only see same-gender recommendations | Tests Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Add MAX_MATCHES cap test — enforce that 5-match limit is respected | Tests Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Add tests for cluster/recommendation algorithm internals | Tests Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Add test for token invalidation behavior on logout (blocked by missing logout endpoint) | Tests Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Convert `test_api.py` and `test_api_v2.py` from plain Python scripts to proper pytest modules | Tests Agent | Low | 2026-05-29 |
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3.18 | `[PHASE-3]` Write unit tests for `matchScore.py` in isolation (weight calculations, boundary values, simultaneous dealbreakers) | Tests Agent | High | 2026-05-29 |
+| P3.19 | `[PHASE-3]` Add notification creation tests — like-received and match-created events should trigger notifications | Tests Agent | Medium | 2026-05-29 |
+| P3.20 | `[PHASE-3]` Add gender-gate test — users should only see same-gender recommendations | Tests Agent | Medium | 2026-05-29 |
+| P3.21 | `[PHASE-3]` Add MAX_MATCHES cap test — enforce that 5-match limit is respected | Tests Agent | Medium | 2026-05-29 |
+| P3.22 | `[PHASE-3]` Add Vitest + React Testing Library — at minimum test `AuthContext`, `api.js`, and the like/match UI flow | Tests Agent | High | 2026-05-29 |
+| P3.23 | `[PHASE-3]` Add tests for cluster/recommendation algorithm internals | Tests Agent | Low | 2026-05-29 |
+| P3.24 | `[PHASE-3]` Convert `test_api.py` and `test_api_v2.py` from plain Python scripts to proper pytest modules | Tests Agent | Low | 2026-05-29 |
 
 #### Frontend
 
-| Task | Owner | Priority | Added |
-|------|-------|----------|-------|
-| `[POST-DEPLOY]` Replace polling-based chat with WebSocket or SSE | Frontend Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Add email verification step to signup flow | Frontend Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Add pagination to discover, likes, matches, and chat history | Frontend Agent | Medium | 2026-05-29 |
-| `[POST-DEPLOY]` Stop `NotificationBell` polling when user is already on the Notifications page | Frontend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Expose backend URL setting from within the app (not just login screen) | Frontend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Expand gender options beyond binary male/female in `SignupPage` | Frontend Agent | Low | 2026-05-29 |
-| `[POST-DEPLOY]` Add Vitest + React Testing Library — at minimum test `AuthContext`, `api.js`, and the like/match UI flow | Frontend Agent | High | 2026-05-29 |
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3.25 | `[PHASE-3]` Replace polling-based chat with WebSocket or SSE — address if users report chat feeling slow | Frontend Agent | Medium | 2026-05-29 |
+| P3.26 | `[PHASE-3]` Implement password reset / forgot-password UI flow (backend endpoint from Phase 1 required first) | Frontend Agent | Medium | 2026-06-01 |
+| P3.27 | `[PHASE-3]` Add email verification step to signup flow | Frontend Agent | Medium | 2026-05-29 |
+| P3.28 | `[PHASE-3]` Add pagination to discover, likes, matches, and chat history | Frontend Agent | Medium | 2026-05-29 |
+| P3.29 | `[PHASE-3]` Expand gender options beyond binary male/female in `SignupPage` | Frontend Agent | Medium | 2026-05-29 |
+| P3.30 | `[PHASE-3]` Stop `NotificationBell` polling when user is already on the Notifications page | Frontend Agent | Low | 2026-05-29 |
+| P3.31 | `[PHASE-3]` Expose backend URL setting from within the app (not just login screen) | Frontend Agent | Low | 2026-05-29 |
