@@ -16,4 +16,5 @@ cloudinary==1.40.0
 piexif==1.1.3
 nh3==0.2.17
 python-dotenv==1.0.1
+networkx
 sentry-sdk[fastapi]==2.19.2
