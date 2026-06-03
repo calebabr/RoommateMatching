@@ -1,9 +1,10 @@
 # Environment variables — NEVER commit real secrets
 .env
 .env.local
-.env.production
 .env.staging
 *.env
+# allow committed production env for frontend (no secrets, just the API URL)
+!frontendv2/.env.production
 
 # Python
 __pycache__/
