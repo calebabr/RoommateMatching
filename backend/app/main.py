@@ -138,14 +138,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        # unsafe-inline for style-src is temporary until inline styles are extracted to CSS files
+        # unsafe-inline for style-src/script-src is temporary until inline styles/scripts are extracted
         # img-src includes cloudinary for profile photo uploads
+        # connect-src includes production API host for cross-origin API calls
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "img-src 'self' data: https://res.cloudinary.com; "
-            "connect-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
             "style-src 'self' 'unsafe-inline'; "
-            "script-src 'self'"
+            "connect-src 'self' https://roommatematching.onrender.com"
         )
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         return response

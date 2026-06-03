@@ -14,5 +14,13 @@ async def test_security_headers_present():
     assert response.headers.get("x-content-type-options") == "nosniff"
     assert response.headers.get("x-frame-options") == "DENY"
     assert response.headers.get("referrer-policy") == "strict-origin-when-cross-origin"
-    assert "default-src 'self'" in response.headers.get("content-security-policy", "")
-    assert "camera=()" in response.headers.get("permissions-policy", "")
+    csp = response.headers.get("content-security-policy", "")
+    assert "default-src 'self'" in csp
+    assert "img-src 'self' data: https://res.cloudinary.com" in csp
+    assert "script-src 'self' 'unsafe-inline'" in csp
+    assert "style-src 'self' 'unsafe-inline'" in csp
+    assert "connect-src 'self' https://roommatematching.onrender.com" in csp
+    permissions = response.headers.get("permissions-policy", "")
+    assert "camera=()" in permissions
+    assert "microphone=()" in permissions
+    assert "geolocation=()" in permissions
