@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.datastructures import MutableHeaders
 from starlette.responses import Response
 from app.limiter import limiter
 from app.auth.utils import decode_token
@@ -131,25 +132,41 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        # unsafe-inline for style-src/script-src is temporary until inline styles/scripts are extracted
-        # img-src includes cloudinary for profile photo uploads
-        # connect-src includes production API host for cross-origin API calls
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "img-src 'self' data: https://res.cloudinary.com; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "connect-src 'self' https://roommatematching.onrender.com"
-        )
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-        return response
+class SecurityHeadersMiddleware:
+    """Pure ASGI middleware that injects security headers at the http.response.start
+    message level, before bytes are ever sent to the client.  This avoids the
+    known Starlette issue where BaseHTTPMiddleware header mutations can be
+    silently dropped on streaming responses."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_security_headers(message):
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+                headers["X-Content-Type-Options"] = "nosniff"
+                headers["X-Frame-Options"] = "DENY"
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+                # unsafe-inline for style-src/script-src is temporary until inline styles/scripts are extracted
+                # img-src includes cloudinary for profile photo uploads
+                # connect-src includes production API host for cross-origin API calls
+                headers["Content-Security-Policy"] = (
+                    "default-src 'self'; "
+                    "img-src 'self' data: https://res.cloudinary.com; "
+                    "script-src 'self' 'unsafe-inline'; "
+                    "style-src 'self' 'unsafe-inline'; "
+                    "connect-src 'self' https://roommatematching.onrender.com"
+                )
+                headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+            await send(message)
+
+        await self.app(scope, receive, send_with_security_headers)
 
 
 app.add_middleware(BodySizeLimitMiddleware)

@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-02 by P3AD.3 user-activity_
+_Last updated: 2026-06-03 by security-headers-asgi-fix_
 
 ---
 
@@ -74,6 +74,12 @@ _Nothing currently in progress._
 | P2.1 `[PHASE-2]` Add `POST /api/admin/ban/{user_id}` and `POST /api/admin/unban/{user_id}` endpoints — sets `is_banned: bool` on user document; `authRoutes.py` login handler raises HTTP 403 if `is_banned` is True (checked after password verification, before token issuance); both endpoints gated by `get_admin_user`. 7 tests all passing (`test_ban.py`). | Backend Agent + Tests Agent | 2026-06-02 |
 | P2.2 `[PHASE-2]` Admin frontend app in `frontendAdmin/` (port 3001) — standalone React app with login (admin check), user list (search + status pills), user detail (ban/unban + ConfirmDialog), Sidebar nav, placeholder pages for Errors (P3AD.1) and Feedback (P3AD.2); `adminApi.js` service layer; `is_admin` added to login + `/me` responses in `authRoutes.py`; `GET /api/admin/users` endpoint added to `userRoutes.py`; 5 tests in `test_admin_response.py` all passing. | Backend Agent + Frontend Agent + Tests Agent | 2026-06-02 |
 | P3AD.3 `[PHASE-3]` Admin user activity view — backend: `GET /api/admin/users/{user_id}/activity` returns `matches`, `likes_sent`, `chat_partners` aggregated from three collections; missing users shown as "Deleted User"; admin-gated, rate-limited 30/min. Frontend: activity card in `UserDetailPage` (matches table, likes pills, chat partners table); `adminGetUserActivity` in `adminApi.js`; parallel fetch with error isolation. 4 tests in `test_user_activity.py` all passing. | Backend Agent + Frontend Agent + Tests Agent | 2026-06-02 |
+| P2.3 `[PHASE-2]` Set all Render env vars: `SECRET_KEY`, `MONGO_URL`, `MONGO_DB_NAME`, `CLOUDINARY_*`, `FRONTEND_URL`, `ADMIN_USER_IDS`, `ROOMMATCH_ENV=production` — all live except `SENTRY_DSN` (pending P2.16) | — | 2026-06-03 |
+| P2.4 `[PHASE-2]` Add `ADMIN_USER_IDS` env var to Render | — | 2026-06-03 |
+| P2.5 `[PHASE-2]` Set Vercel env vars: `VITE_API_BASE_URL`, `VITE_ENV=production` — all live except `VITE_SENTRY_DSN` (pending P2.16) | — | 2026-06-03 |
+| P2.6 `[PHASE-2]` Run MongoDB index migration script against Atlas cluster — 13 indexes created (`users_email_unique` skipped, already existed); all other indexes confirmed `[ok]` | DB Agent | 2026-06-03 |
+| P2.7 `[PHASE-2]` Verified Atlas user count = 2 — synthetic test users never reached prod DB; no action needed | DB Agent | 2026-06-03 |
+| P2.8 `[PHASE-2]` Verified `GET /health` returns `{"status":"ok"}` on live Render URL | — | 2026-06-03 |
 
 ---
 
@@ -93,13 +99,8 @@ _Infrastructure is up. These are deployment config, data, and verification steps
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P2.3 | `[PHASE-2]` Set all Render env vars: `SECRET_KEY`, `MONGO_URL`, `MONGO_DB_NAME`, `CLOUDINARY_*`, `FRONTEND_URL`, `SENTRY_DSN`, `ROOMMATCH_ENV=production` | — | **Critical** | 2026-06-01 |
-| P2.4 | `[PHASE-2]` Add `ADMIN_USER_IDS` env var to Render — comma-separated list of integer user IDs granted admin access | — | **Critical** | 2026-06-02 |
-| P2.5 | `[PHASE-2]` Set all Vercel env vars: `VITE_API_BASE_URL`, `VITE_SENTRY_DSN`, `VITE_ENV=production` | — | **Critical** | 2026-06-01 |
-| P2.6 | `[PHASE-2]` Run MongoDB index migration script against Atlas cluster — execute `backend/migrate_indexes.py` pointed at the Atlas `MONGO_URL` | DB Agent | **Critical** | 2026-06-01 |
-| P2.7 | `[PHASE-2]` Purge or replace the 500 synthetic test users from production DB — they will appear in real users' discovery feeds if left in | DB Agent | **Critical** | 2026-06-01 |
-| P2.8 | `[PHASE-2]` Verify `GET /health` returns 200 on the live Render URL | — | **Critical** | 2026-06-01 |
-| P2.9 | `[PHASE-2]` Verify `securityheaders.com` scan of production URL returns A grade | — | High | 2026-06-01 |
+| P2.16 | `[PHASE-2]` Set `SENTRY_DSN` on Render and `VITE_SENTRY_DSN` on Vercel once Sentry project is created — all other env vars are live | — | **Critical** | 2026-06-03 |
+| P2.9 | `[PHASE-2]` Verify `securityheaders.com` scan of production URL returns A grade — D grade root cause was `BaseHTTPMiddleware` silently dropping header mutations; replaced with pure ASGI middleware + CSP updated (`'unsafe-inline'` in `script-src`, `https://roommatematching.onrender.com` in `connect-src`); fix applied locally, needs push + Render deploy + re-scan | — | High | 2026-06-01 |
 | P2.10 | `[PHASE-2]` Verify Sentry receives events — hit `GET /debug/sentry-test` on Render, confirm event appears in Sentry dashboard | — | High | 2026-06-01 |
 | P2.11 | `[PHASE-2]` Run `POST /api/admin/recompute` once on production DB to seed the recommendations collection | — | **Critical** | 2026-06-01 |
 | P2.12 | `[PHASE-2]` Smoke-test full user journey on production: register → discover → like → match → chat | — | **Critical** | 2026-06-01 |
@@ -117,6 +118,7 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
+| P3A.6 | `[PHASE-3]` Remove `'unsafe-inline'` from `script-src` and `style-src` in CSP — currently blocks an A+ rating on `securityheaders.com`; requires migrating all inline scripts and inline styles (currently via `utils/theme.js`) to external `.js`/`.css` files; coordinate with Frontend Agent | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
 | P3A.1 | `[PHASE-3]` Implement token refresh mechanism — 24h expiry forces full re-login daily; address once users report it as friction | Auth Agent | Medium | 2026-05-29 |
 | P3A.2 | `[PHASE-3]` Add `.edu` email restriction at registration — **will NOT be enforced during beta**; goes in after beta to limit pool to college students | Backend Agent | Medium | 2026-06-01 |
 | P3A.3 | `[PHASE-3]` Add email verification on registration — confirm email ownership before activating account | Auth Agent | Medium | 2026-05-29 |
