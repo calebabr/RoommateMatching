@@ -2,8 +2,10 @@ import axios from 'axios';
 
 const DEFAULT_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
+const storedBase = import.meta.env.DEV ? localStorage.getItem('roommatch_api_base') : null;
+
 const api = axios.create({
-  baseURL: localStorage.getItem('roommatch_api_base') || DEFAULT_BASE,
+  baseURL: storedBase || DEFAULT_BASE,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
