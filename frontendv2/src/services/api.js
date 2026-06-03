@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-const DEFAULT_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-
-const storedBase = import.meta.env.DEV ? localStorage.getItem('roommatch_api_base') : null;
+const DEFAULT_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:8000/api'
+  : 'https://roommatematching.onrender.com/api';
 
 const api = axios.create({
-  baseURL: storedBase || DEFAULT_BASE,
+  baseURL: DEFAULT_BASE,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
