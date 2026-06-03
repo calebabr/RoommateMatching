@@ -53,6 +53,20 @@ export const getUser      = (userId)        => api.get(`/users/${userId}`).then(
 export const updateUser   = (userId, data)  => api.put(`/users/${userId}`, data).then(r => r.data);
 export const deleteUser   = (userId)        => api.delete(`/users/${userId}`).then(r => r.data);
 
+// ── Block system ───────────────────────────────────────────────────────────
+export const blockUser       = (userId)                        => api.post(`/users/${userId}/block`).then(r => r.data);
+export const unblockUser     = (userId)                        => api.post(`/users/${userId}/unblock`).then(r => r.data);
+export const getBlockedUsers = (userId)                        => api.get(`/users/${userId}/blocked`).then(r => r.data);
+
+// ── Report system ──────────────────────────────────────────────────────────
+export const reportUser = (userId, reportedId, reason, description) =>
+  api.post(`/users/${userId}/report/${reportedId}`, { reason, description }).then(r => r.data);
+
+// ── Account deletion / restore / export ───────────────────────────────────
+export const deleteAccount  = (userId, password) => api.delete(`/users/${userId}`, { data: { password } }).then(r => r.data);
+export const restoreAccount = (token)            => api.post('/auth/restore-account', { token }).then(r => r.data);
+export const exportUserData = (userId)           => api.get(`/users/${userId}/export`).then(r => r.data);
+
 export const uploadPhoto = async (userId, file) => {
   const formData = new FormData();
   formData.append('file', file);

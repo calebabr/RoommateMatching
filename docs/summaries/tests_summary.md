@@ -2,7 +2,7 @@
 
 ## 1. Current State
 
-Sixteen backend test files now exist: two legacy scripts and fourteen pytest modules. Unit tests, pytest fixtures, an isolated test database, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present.
+Twenty backend test files now exist: two legacy scripts, fourteen pytest modules in the root `backend/` directory, and four new pytest modules in `backend/tests/`. Unit tests, pytest fixtures, an isolated test database, a shared helpers module, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present. Total: 231 tests, all passing.
 
 ## 2. Test Files
 
@@ -26,12 +26,17 @@ Sixteen backend test files now exist: two legacy scripts and fourteen pytest mod
 | `backend/test_ban.py` | pytest async | 7 | Admin ban/unban endpoints and login ban check; AsyncMock collections, no live DB needed |
 | `backend/test_admin_response.py` | pytest async | 5 | `is_admin` field in login + `/me` responses (true and false cases); `GET /api/admin/users` 200 + list; non-admin 403; AsyncMock collections, monkeypatches `ADMIN_USER_IDS` |
 | `backend/test_user_activity.py` | pytest async | 4 | Admin activity endpoint: admin 200 with populated lists, non-admin 403, missing user 404, empty user returns all-empty lists |
+| `backend/tests/helpers.py` | infrastructure | — | `AsyncMongoWrapper` for sync→async test isolation; patches all three import sites with test DB; shared foundation for test_block/test_report/test_deletion |
+| `backend/tests/test_block.py` | pytest | 9 | Block/unblock, auto-unmatch, bidirectional discover/likes/matches filter, chat blocked 403; uses `helpers.py` test DB |
+| `backend/tests/test_report.py` | pytest | 14 | Create, reason enum validation, rate limit (5/day), auto-block, self-report 400, admin list/filter/resolve, non-admin 403; uses `helpers.py` test DB |
+| `backend/tests/test_deletion.py` | pytest | 15 | Soft-delete, restore (valid/invalid/expired token), export contents, hard-delete cascade, Cloudinary call, cleanup expired/non-expired, end-to-end DELETE endpoint; uses `helpers.py` test DB |
 | `backend/app/test/` | JSON data only | — | `usersTest20.json`, `usersTest250.json`, `usersTest1000.json` — seed data, not automated tests |
 
 ## 3. Test Infrastructure
 
 - `backend/pytest.ini` — exists; sets `asyncio_mode = auto`, session-scoped loops
 - `backend/tests/conftest.py` — exists; session-scoped fixture drops/recreates `roommatch_test` DB; per-test autouse fixture patches all three import sites (`app.database`, `app.routers.authRoutes`, `app.auth.dependencies`) with an `AsyncMongoWrapper` backed by the test DB
+- `backend/tests/helpers.py` (new 2026-06-03) — `AsyncMongoWrapper` shared fixture foundation; used by `test_block.py`, `test_report.py`, `test_deletion.py` for test isolation without duplicating patching logic
 - `backend/conftest.py` (root-level, new 2026-05-29) — provides an `autouse` `reset_rate_limiter` fixture that clears slowapi's in-memory storage before each test; prevents rate-limit state from bleeding across test files in the same pytest session
 - `pytest`, `pytest-asyncio`, and `httpx` — all now actively used (not just installed)
 - `slowapi==0.1.9`, `zxcvbn==4.4.28`, and `nh3==0.2.17` added to `requirements.txt`
@@ -64,6 +69,9 @@ Sixteen backend test files now exist: two legacy scripts and fourteen pytest mod
 - is_admin response + admin users endpoint tests — `test_admin_response.py` (5 tests) covers `is_admin: true/false` in login and `/me` responses, `GET /api/admin/users` 200 + list, and non-admin 403 (2026-06-02)
 
 - Admin user activity tests — `test_user_activity.py` (4 tests) covers admin 200 with populated data, non-admin 403, missing user 404, and empty-activity user returning all-empty lists (2026-06-02)
+- Block system tests — `test_block.py` (9 tests) covers block/unblock, auto-unmatch, bidirectional discover/likes/matches filtering, and chat-blocked 403; shared `helpers.py` infrastructure (2026-06-03)
+- Report system tests — `test_report.py` (14 tests) covers create, enum validation, rate limit enforcement (5/day), auto-block on report, self-report 400, admin list/filter/resolve, and non-admin 403 (2026-06-03)
+- Deletion system tests — `test_deletion.py` (15 tests) covers soft-delete, restore (valid/invalid/expired), data export contents, hard-delete cascade, Cloudinary call, cleanup expired/non-expired accounts, and DELETE endpoint round-trip (2026-06-03)
 
 **Still TODO**
 - Unit-test `matchScore.py` directly without HTTP round-trips

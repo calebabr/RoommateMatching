@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-03 by checklist-sync_
+_Last updated: 2026-06-03 by block-report-deletion_
 
 ---
 
@@ -82,9 +82,18 @@ _Nothing currently in progress._
 | P2.8 `[PHASE-2]` Verified `GET /health` returns `{"status":"ok"}` on live Render URL | — | 2026-06-03 |
 | P2.9 `[PHASE-2]` `securityheaders.com` scan returns A grade — fixed by replacing `BaseHTTPMiddleware` with pure ASGI middleware + CSP updates (`'unsafe-inline'` in `script-src`, production origin in `connect-src`) | Backend Agent | 2026-06-03 |
 | P2.11 `[PHASE-2]` Run `POST /api/admin/recompute` on production DB — recomputed recommendations for 2 users | — | 2026-06-03 |
+| P2.19 `[PHASE-2]` UptimeRobot monitor live and green — pinging `/health` every 5 min; HEAD method added to endpoint to support free tier | — | 2026-06-03 |
+| P2.15 `[PHASE-2]` Deploy `frontendAdmin` to Vercel — live at https://roommatch-admin-hazel.vercel.app; `ADMIN_FRONTEND_URL` added to Render CORS | — | 2026-06-03 |
+| P2.16 `[PHASE-2]` Set `SENTRY_DSN` on Render and `VITE_SENTRY_DSN` on Vercel — both projects created, DSNs live | — | 2026-06-03 |
+| P2.10 `[PHASE-2]` Verified Sentry receives events — `RuntimeError: Sentry test error — intentional` appeared in roommatch-backend dashboard | — | 2026-06-03 |
 | P2.12 `[PHASE-2]` Smoke-test full user journey on production — register → discover → like → match → chat all working | — | 2026-06-03 |
 | P2.13 `[PHASE-2]` Verified profile photo persists after save on production | — | 2026-06-03 |
 | P2.14 `[PHASE-2]` Verified recompute fires on registration — new account appeared in existing user's discover feed automatically | — | 2026-06-03 |
+| P2.20 `[PHASE-2]` Account deletion — soft-delete (`deletedAt` + SHA-256 restore token, 7-day window); restore endpoint (`POST /auth/restore-account`, public); data export (GDPR JSON); hard-delete cascade (all 7 collections + Cloudinary); `cleanup_expired_deletions()` at startup; `DeleteAccountRequest`/`RestoreAccountRequest` models; frontend: Danger Zone in `ProfilePage`, `RestoreAccountPage` at `/restore-account`, `deleteAccount`/`restoreAccount`/`exportUserData` in `api.js`; 15 tests all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-03 |
+| P2.21 `[PHASE-2]` Report user system — `ReportReason` enum (6 values); `POST /users/{id}/report/{reported_id}` rate-limited 5/day; auto-block on report; `reports` collection; admin endpoints `GET /admin/reports` + `POST /admin/reports/{id}/resolve`; frontend: Report modal in `UserDetailPage` with dropdown + description textarea; 14 tests all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-03 |
+| P2.22 `[PHASE-2]` User block system — `blockService.py` (block/unblock/is_blocked/get_blocked_ids/get_blocked_by_user); auto-unmatch on block; all discover/likes/matches/notifications queries filter blocked IDs bidirectionally; `verify_match_exists` checks block before match; frontend: Block/Unblock button with confirmation overlay in `UserDetailPage`, Blocked Users section in `ProfilePage`; `blockUser`/`unblockUser`/`getBlockedUsers` in `api.js`; 9 tests all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-03 |
+| P2.24 `[PHASE-2]` Comprehensive security audit — full OWASP Top 10 (2021) review; report at `backend/SECURITY_AUDIT_FINAL.md`; 2 High findings (VULN-01 unauthenticated matchRoutes, VULN-06 password reset token in response body — both already tracked); 3 Medium, 5 Low; all Critical/High explicitly triaged | Security Audit Agent | 2026-06-03 |
+| Password visibility toggle — eye icon show/hide toggle added to all password fields: `LoginPage` (main app + admin), `SignupPage`, `ResetPasswordPage`, `ProfilePage` delete account modal | Frontend Agent | 2026-06-03 |
 
 ---
 
@@ -104,15 +113,7 @@ _Infrastructure is up. These are deployment config, data, and verification steps
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P2.16 | `[PHASE-2]` Set `SENTRY_DSN` on Render and `VITE_SENTRY_DSN` on Vercel once Sentry project is created — all other env vars are live | — | **Critical** | 2026-06-03 |
-| P2.10 | `[PHASE-2]` Verify Sentry receives events — hit `GET /debug/sentry-test` on Render, confirm event appears in Sentry dashboard | — | High | 2026-06-01 |
-| P2.15 | `[PHASE-2]` Deploy `frontendAdmin` to Vercel — root: `frontendAdmin`, install: `npm install && chmod +x node_modules/.bin/vite`, build: `npx vite build`, env: `VITE_API_BASE_URL=https://roommatematching.onrender.com/api`. Then add `ADMIN_FRONTEND_URL=<vercel-url>` to Render env vars and redeploy to update CORS. | — | **Critical** | 2026-06-03 |
-| P2.19 | `[PHASE-2]` Set up UptimeRobot (free tier) — ping `/health` every 5 minutes, alert on downtime > 5 min; add Render built-in alerts for memory >80%, CPU >80%, elevated error rate | — | Medium | 2026-06-03 |
-| P2.20 | `[PHASE-2]` Account deletion endpoint — soft-delete (set `deletedAt`, hide from all queries); hard-delete cron after 30 days (cascade: remove from matches, delete chat messages, likes, notifications, Cloudinary photos); require password re-entry; 7-day restore window; data export (GDPR right to portability — JSON of all user data) | Backend Agent + Frontend Agent | **Critical** | 2026-06-03 |
-| P2.21 | `[PHASE-2]` Report user system — `POST /users/{userId}/report` (reason enum: harassment/inappropriate_content/fake_profile/spam/underage/other, optional description 1000 chars max); `reports` collection; rate-limit 5/user/day; reporter auto-hidden from reported user; admin endpoints: `GET /admin/reports`, `POST /admin/reports/{id}/resolve` | Backend Agent + Frontend Agent | High | 2026-06-03 |
-| P2.22 | `[PHASE-2]` User block system — `POST /users/{userId}/block`: mutual invisibility (neither user appears in discover/likes/matches/chat/notifications for the other); auto-unmatch on block; `blocks` collection; unblock endpoint exists but does NOT restore matches; all discover/likes/matches queries must filter blocked pairs bidirectionally | Backend Agent + Frontend Agent | High | 2026-06-03 |
 | P2.23 | `[PHASE-2]` Email domain validator at signup — restrict to `.edu` emails (configurable via `ALLOWED_EMAIL_DOMAINS` env var); block disposable email providers using `disposable-email-domains` package; normalize emails (lowercase, strip whitespace); server-side only; return friendly error "Please sign up with your @auburn.edu address." | Backend Agent | **Critical** | 2026-06-03 |
-| P2.24 | `[PHASE-2]` Comprehensive security audit — OWASP Top 10 (2021) review; written report at `backend/SECURITY_AUDIT_FINAL.md` covering each item, remaining vulnerabilities (CVSS-ranked), recommended fixes with effort estimates, items needing business/legal decisions, and residual risk section; all Critical/High items fixed or explicitly accepted with rationale | Backend Agent | High | 2026-06-03 |
 | P2.25 | `[PHASE-2]` PostHog product analytics — install `posthog-js` in frontend; capture key events: signup_started, signup_completed, email_verified, profile_completed, photo_uploaded, swipe_right, swipe_left, match_created, message_sent, login, logout, account_deleted; identify users by user ID after login; pull `POSTHOG_API_KEY` / `VITE_POSTHOG_KEY` from env vars | Frontend Agent | Medium | 2026-06-03 |
 
 ---
@@ -156,6 +157,7 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3B.5 | `[PHASE-3]` Remove or update `userProfileService.mark_matched` / `unmatch_user` — use old single-int `matchedWith` format, no longer called | Backend Agent | Low | 2026-05-29 |
 | P3B.6 | `[PHASE-3]` Expose per-notification mark-read endpoint — `NotificationService.mark_read()` exists but has no route | Backend Agent | Low | 2026-05-29 |
 | P3B.7 | `[PHASE-3]` Consolidate `_normalize_matched_with()` — duplicated across `likeService.py`, `chatService.py`, `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
+| P3B.10 | `[PHASE-3]` Replace startup-only `cleanup_expired_deletions` with a scheduled job — currently runs once at app startup; long-running processes will not hard-delete expired soft-deleted accounts until next restart; replace with APScheduler (daily job) or an OS-level cron on the Render host | Backend Agent | Low | 2026-06-03 |
 | P3B.8 | `[PHASE-3]` Move recommendation recompute to FastAPI BackgroundTasks — `on_new_user` currently runs synchronously, blocking registration and profile-save responses as O(N) DB writes; switching to `background_tasks.add_task(...)` returns the response instantly and runs recompute after; new user's discover feed may lag a few seconds but registration is unblocked. | Backend Agent | Medium | 2026-06-03 |
 | P3B.9 | `[PHASE-3]` Trigger recompute on profile save when preferences change significantly — only recompute if any preference score shifts by ≥ 2 points (on 0–10 scale) OR any deal-breaker status toggles; rate-limit to 1 recompute per user per hour to prevent rapid-save abuse; implement alongside P3B.8 (BackgroundTasks) so profile save response is never blocked | Backend Agent | Medium | 2026-06-03 |
 

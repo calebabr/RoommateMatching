@@ -8,8 +8,8 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 
 | File | Role |
 |------|------|
-| `app/main.py` | App entry point — registers routers, CORS (origin-scoped via `FRONTEND_URL`), static file mount for `/uploads`, SlowAPIMiddleware, `BodySizeLimitMiddleware` (1 MB cap), clean 422 error handler, startup index creation |
-| `app/database.py` | Motor client — defines all 7 MongoDB collections |
+| `app/main.py` | App entry point — registers routers, CORS (origin-scoped via `FRONTEND_URL`), static file mount for `/uploads`, SlowAPIMiddleware, `BodySizeLimitMiddleware` (1 MB cap), clean 422 error handler, startup index creation, `cleanup_expired_deletions()` call in lifespan |
+| `app/database.py` | Motor client — defines all 9 MongoDB collections (includes `blocks_collection`, `reports_collection`) |
 | `app/models.py` | All Pydantic models: users, likes, matches, recommendations, chat, notifications. Includes `ALLOWED_LIFESTYLE_TAGS` frozenset and all field-level validation constraints (see Section 5). |
 | `app/auth/utils.py` | JWT creation/decoding, bcrypt password hashing (`rounds=12`), `validate_password_strength()` |
 | `app/auth/dependencies.py` | `get_current_user`, `get_current_user_or_403`, `verify_match_exists`, `get_admin_user` FastAPI dependencies; `_admin_ids()` reads `ADMIN_USER_IDS` env var |
@@ -25,9 +25,12 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 | `app/services/likeService.py` | Handles likes, mutual match creation, unmatch, and recommendation cleanup |
 | `app/services/chatService.py` | Message send/fetch, conversation list (match-gated) |
 | `app/services/notificationService.py` | Like/match/unmatch notifications with read-state tracking |
-| `app/services/userProfileService.py` | User CRUD with cascade-delete for likes, matches, recommendations |
+| `app/services/userProfileService.py` | User CRUD with cascade-delete for likes, matches, recommendations; all active-user queries filter `deletedAt` users |
 | `app/services/userProfiles.py` | Older service file (likely superseded by `userProfileService.py`) |
 | `app/services/clusterService.py` | Cluster service (present but not wired to any router) |
+| `app/services/blockService.py` | Block/unblock users; auto-unmatch on block; bidirectional visibility filter helpers |
+| `app/services/reportService.py` | Create reports (6 reasons); 5/day rate cap; auto-block on report; admin list/resolve |
+| `app/services/deletionService.py` | Soft-delete with SHA-256 restore token (7-day expiry); restore account; JSON data export; hard-delete cascade + Cloudinary; cleanup expired soft-deletes |
 
 ## 3. API Endpoints
 
@@ -68,6 +71,15 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - `POST /api/admin/unban/{user_id}` — gated by `get_admin_user`; sets `is_banned: False`; 404 if not found
 - `GET  /api/admin/users` — gated by `get_admin_user`; returns all users with `is_banned` visible; strips `hashed_password` and `_id`; rate-limited 30/minute
 - `GET  /api/admin/users/{user_id}/activity` — gated by `get_admin_user`; returns `matches`, `likes_sent`, `chat_partners` lists for the given user; rate-limited 30/minute
+- `POST /api/users/{id}/block/{target_id}` — blocks target; auto-unmatches; 400 if already blocked
+- `DELETE /api/users/{id}/block/{target_id}` — removes block; does NOT restore matches
+- `GET  /api/users/{id}/blocked` — returns list of blocked user objects
+- `POST /api/users/{id}/report/{reported_id}` — rate-limited 5/day; 6-reason enum; auto-blocks reported user
+- `GET  /api/users/{id}/export` — returns full JSON export of the user's data (profile, likes, matches, messages, notifications)
+- `DELETE /api/users/{id}` — soft-delete; requires `password` in request body; returns SHA-256 restore token (7-day expiry)
+- `GET  /api/admin/reports` — admin-gated; optional `?status=open|resolved` filter
+- `POST /api/admin/reports/{report_id}/resolve` — admin-gated; sets `status="resolved"`; accepts optional `resolution_note`
+- `POST /api/auth/restore-account` — public (no Bearer); accepts restore token; clears `deletedAt` on match; 400 for invalid/expired token
 
 **Utility**
 - `GET  /` — health/version
@@ -280,6 +292,10 @@ Missing partner users are surfaced as `"Deleted User"` rather than an error. All
 
 ## 13. Gaps / TODOs (pre-production)
 
+- **`cleanup_expired_deletions` runs only at startup** — if the backend process is long-running, accounts past their 7-day restore window are not hard-deleted until the next restart. APScheduler or an OS-level cron job should trigger this daily (tracked as new Phase 3 backlog item).
+- **Block/unblock endpoints not rate-limited at the router layer** — only the report endpoint has a per-day cap; block endpoints have no rate limit.
+- **`SECURITY_AUDIT_FINAL.md` VULN-02/03/04/08/09/10** — medium/low findings open from the 2026-06-03 OWASP audit (see Section 16).
+
 - **`chatRoutes.py` not mounted** — a second chat router exists with `after` timestamp pagination but is not registered in `main.py`, so that feature is unreachable.
 - **`matchRoutes.py` not mounted** — the legacy in-memory router is dead code.
 - **`clusterService.py` not wired** — cluster logic exists but has no router or caller.
@@ -300,3 +316,59 @@ Missing partner users are surfaced as `"Deleted User"` rather than an error. All
 - Password strength validation (`validate_password_strength()`) uses zxcvbn (min 8 chars + score ≥ 2, configurable via `MIN_PASSWORD_LENGTH` env var) and is applied at both register and change-password.
 - Sentry integration: if `SENTRY_DSN` env var is set, `sentry_sdk.init` is called with `FastApiIntegration` + `StarletteIntegration`, `traces_sample_rate=0.1` in production (0.0 otherwise), `send_default_pii=False`, and a `_before_send` hook that drops 401/403/404/429 `HTTPException` events, replaces `Authorization` header values with `"[Filtered]"`, and strips cookies. A `GET /debug/sentry-test` endpoint is registered in non-production environments to trigger a test event.
 - `main.py` lifespan creates a unique sparse index on `users.email` at startup.
+
+## 15. Block System, Report System, and Account Deletion
+
+**Session 2026-06-03 (Tasks P2.22, P2.21, P2.20):** Three new services were introduced and all user-facing queries were updated to respect block and soft-delete state.
+
+### Block system (`blockService.py`)
+
+- `block_user` writes to `blocks_collection` and calls `likeService` to auto-unmatch and remove mutual likes.
+- `unblock_user` removes the block document; does NOT restore the former match.
+- `is_blocked(user_a, user_b)` performs a bidirectional check — returns True if either direction has a block.
+- All discover, likes, matches, chat, and notification queries filter blocked IDs bidirectionally.
+- `verify_match_exists` dependency in `dependencies.py` now checks for an active block before checking match existence; returns 403 with `"Blocked"` if a block exists in either direction.
+
+### Report system (`reportService.py`)
+
+- Six valid `ReportReason` enum values: `harassment`, `inappropriate_content`, `fake_profile`, `spam`, `underage`, `other`.
+- Reports are rate-capped at 5 per reporter per day (enforced in service layer).
+- Creating a report auto-blocks the reported user from the reporter.
+- Admin endpoints: `GET /admin/reports` (with optional `?status` filter), `POST /admin/reports/{id}/resolve`.
+
+### Account deletion (`deletionService.py`)
+
+- **Soft delete**: sets `deletedAt` timestamp on the user document; generates a cryptographically random restore token stored as a SHA-256 hash with 7-day expiry; returns plain token to caller.
+- **Restore**: hashes the plain token, finds a matching non-expired soft-deleted user, clears `deletedAt` and token fields.
+- **Data export**: assembles full JSON payload (profile, likes sent/received, matches, chat messages, notifications) for GDPR portability.
+- **Hard delete**: cascades across all 7 collections; removes Cloudinary photo by stored public ID.
+- **Cleanup**: `cleanup_expired_deletions()` is called at app startup (lifespan); hard-deletes any accounts whose 7-day restore window has elapsed.
+
+### New Pydantic models
+
+| Model | Fields |
+|-------|--------|
+| `ReportReason` | enum: 6 values |
+| `ReportCreate` | `reason: ReportReason`, `description: Optional[str]` (max 1000 chars) |
+| `DeleteAccountRequest` | `password: str` |
+| `RestoreAccountRequest` | `token: str` |
+| `ResolveReportRequest` | `resolution_note: Optional[str]` |
+
+---
+
+## 16. Security Audit (OWASP Top 10)
+
+**Session 2026-06-03 (Task P2.24):** A full OWASP Top 10 (2021) audit was conducted and documented at `backend/SECURITY_AUDIT_FINAL.md`.
+
+| Severity | ID | Finding | Status |
+|----------|----|---------|--------|
+| High | VULN-01 | `matchRoutes.py` endpoints unauthenticated | Tracked P3B.2 |
+| High | VULN-06 | Password reset token returned in response body | Tracked P3FT.2 |
+| Medium | VULN-02 | No router-layer rate limiting on block/report endpoints | Open |
+| Medium | VULN-03 | No audit log for admin actions | Open (P3FT.7) |
+| Medium | VULN-04 | `cleanup_expired_deletions` runs only at startup | Open (new backlog) |
+| Low | VULN-05 | Sequential integer user IDs enable enumeration | Tracked P3A.4 |
+| Low | VULN-07 | No CSRF protection (mitigated by JSON + Authorization header) | Accepted |
+| Low | VULN-08 | Cloudinary public IDs are sequential | Open |
+| Low | VULN-09 | No logout endpoint / token invalidation | Open |
+| Low | VULN-10 | Bulk upload bypasses Pydantic (NOTE-2 from B3) | Open |

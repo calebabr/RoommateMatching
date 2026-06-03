@@ -14,6 +14,9 @@ from app.services.recommendationService import RecommendationService
 from app.services.likeService import LikeService
 from app.services.chatService import ChatService
 from app.services.notificationService import NotificationService
+from app.services.blockService import BlockService
+from app.services.reportService import ReportService
+from app.services.deletionService import DeletionService
 from app.models import (
     UserCreate,
     UserResponse,
@@ -22,6 +25,10 @@ from app.models import (
     LikeRequest,
     LikeResponse,
     ChatMessageCreate,
+    ReportCreate,
+    DeleteAccountRequest,
+    RestoreAccountRequest,
+    ResolveReportRequest,
 )
 
 router = APIRouter()
@@ -36,13 +43,16 @@ recommendationService = RecommendationService()
 likeService = LikeService()
 chatService = ChatService()
 notificationService = NotificationService()
+blockService = BlockService()
+reportService = ReportService()
+deletionService = DeletionService()
 
 # --- User CRUD ---
 
 @router.get("/users/all")
 @limiter.limit("60/minute")
 async def get_all_users(request: Request, _: dict = Depends(get_current_user)):
-    cursor = userProfileService.collection.find({})
+    cursor = userProfileService.collection.find({"deletedAt": {"$exists": False}})
     users = []
     async for user in cursor:
         user.pop("_id", None)
@@ -103,12 +113,17 @@ async def update_profile(request: Request, user_id: int, user: UserCreate, _: di
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/users/{user_id}")
-@limiter.limit("60/minute")
-async def delete_user(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
-    deleted = await userProfileService.delete_user(user_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"message": "User deleted"}
+@limiter.limit("10/hour")
+async def delete_user(request: Request, user_id: int, body: DeleteAccountRequest, _: dict = Depends(get_current_user_or_403)):
+    """Soft-delete: marks account for deletion and returns a 7-day restore token."""
+    try:
+        restore_token = await deletionService.soft_delete_user(user_id, body.password)
+        return {
+            "message": "Account scheduled for deletion. Use the restore token within 7 days to undo.",
+            "restoreToken": restore_token,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # --- Recommendations ---
 
@@ -118,6 +133,9 @@ async def get_top_matches(request: Request, user_id: int, _: dict = Depends(get_
     matches = await recommendationService.get_top_matches(user_id)
     if not matches:
         raise HTTPException(status_code=404, detail="No recommendations yet. Run /admin/recompute first.")
+    # Filter out blocked users and soft-deleted users from recommendations
+    blocked_ids = await blockService.get_blocked_ids(user_id)
+    matches = [m for m in matches if m["user_id"] not in blocked_ids]
     return TopMatchesResponse(userId=user_id, matches=matches)
 
 # --- Likes and Matching ---
@@ -137,17 +155,28 @@ async def like_user(request: Request, user_id: int, body: LikeRequest, _: dict =
 @router.get("/users/{user_id}/likes-received")
 @limiter.limit("60/minute")
 async def get_likes_received(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
-    return await likeService.get_likes_received(user_id)
+    likes = await likeService.get_likes_received(user_id)
+    blocked_ids = await blockService.get_blocked_ids(user_id)
+    return [like for like in likes if like.get("fromUser") not in blocked_ids]
 
 @router.get("/users/{user_id}/likes-sent")
 @limiter.limit("60/minute")
 async def get_likes_sent(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
-    return await likeService.get_likes_sent(user_id)
+    liked_ids = await likeService.get_likes_sent(user_id)
+    blocked_ids = await blockService.get_blocked_ids(user_id)
+    return [uid for uid in liked_ids if uid not in blocked_ids]
 
 @router.get("/users/{user_id}/matches")
 @limiter.limit("60/minute")
 async def get_matches(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
-    return await likeService.get_matches(user_id)
+    matches = await likeService.get_matches(user_id)
+    blocked_ids = await blockService.get_blocked_ids(user_id)
+    filtered = []
+    for m in matches:
+        partner_id = m["user2_id"] if m["user1_id"] == user_id else m["user1_id"]
+        if partner_id not in blocked_ids:
+            filtered.append(m)
+    return filtered
 
 @router.post("/users/{user_id}/unmatch/{partner_id}")
 @limiter.limit("60/minute")
@@ -164,6 +193,78 @@ async def unmatch_user(request: Request, user_id: int, partner_id: int, _: dict 
         return {"message": "Unmatched successfully"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# --- Block ---
+
+@router.post("/users/{user_id}/block")
+@limiter.limit("60/minute")
+async def block_user(request: Request, user_id: int, body: dict, _: dict = Depends(get_current_user_or_403)):
+    """Block another user. Auto-unmatches the pair and removes pending likes."""
+    blocked_id = body.get("userId")
+    if not isinstance(blocked_id, int):
+        raise HTTPException(status_code=422, detail="userId (int) required in body")
+    try:
+        await blockService.block_user(user_id, blocked_id)
+        return {"message": "User blocked"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/users/{user_id}/unblock")
+@limiter.limit("60/minute")
+async def unblock_user(request: Request, user_id: int, body: dict, _: dict = Depends(get_current_user_or_403)):
+    """Unblock a previously blocked user. Does not restore any prior match."""
+    blocked_id = body.get("userId")
+    if not isinstance(blocked_id, int):
+        raise HTTPException(status_code=422, detail="userId (int) required in body")
+    await blockService.unblock_user(user_id, blocked_id)
+    return {"message": "User unblocked"}
+
+
+@router.get("/users/{user_id}/blocked")
+@limiter.limit("60/minute")
+async def get_blocked_users(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Return list of users explicitly blocked by this user."""
+    return await blockService.get_blocked_by_user(user_id)
+
+
+# --- Report ---
+
+@router.post("/users/{user_id}/report/{reported_id}")
+@limiter.limit("5/day")
+async def report_user_by_id(
+    request: Request,
+    user_id: int,
+    reported_id: int,
+    body: ReportCreate,
+    _: dict = Depends(get_current_user_or_403),
+):
+    """Report a specific user. Automatically blocks the reported user from seeing the reporter."""
+    try:
+        report = await reportService.create_report(
+            reporter_id=user_id,
+            reported_id=reported_id,
+            reason=body.reason.value,
+            description=body.description,
+        )
+        # Block in reporter → reported direction so reported user can't see reporter
+        await blockService.block_user(user_id, reported_id)
+        return {"message": "Report submitted", "reportId": report["id"]}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- Data Export ---
+
+@router.get("/users/{user_id}/export")
+@limiter.limit("5/hour")
+async def export_user_data(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Export all data associated with this user account."""
+    try:
+        return await deletionService.export_user_data(user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 
 # --- Chat ---
 
@@ -326,8 +427,9 @@ async def upload_photo(request: Request, user_id: int, file: UploadFile = File(.
 
 @router.get("/admin/users")
 @limiter.limit("30/minute")
-async def admin_list_users(request: Request, _: dict = Depends(get_admin_user)):
-    cursor = userProfileService.collection.find({})
+async def admin_list_users(request: Request, include_deleted: bool = False, _: dict = Depends(get_admin_user)):
+    query = {} if include_deleted else {"deletedAt": {"$exists": False}}
+    cursor = userProfileService.collection.find(query)
     users = []
     async for user in cursor:
         user.pop("_id", None)
@@ -433,3 +535,26 @@ async def admin_user_activity(request: Request, user_id: int, _: dict = Depends(
         "likes_sent": likes_sent,
         "chat_partners": chat_partners,
     }
+
+
+@router.get("/admin/reports")
+@limiter.limit("30/minute")
+async def admin_get_reports(request: Request, status: str = None, _: dict = Depends(get_admin_user)):
+    """Admin endpoint: list all reports, optionally filtered by status (pending/actioned/dismissed)."""
+    return await reportService.get_reports(status_filter=status)
+
+
+@router.post("/admin/reports/{report_id}/resolve")
+@limiter.limit("30/minute")
+async def admin_resolve_report(request: Request, report_id: str, body: ResolveReportRequest, current_admin: dict = Depends(get_admin_user)):
+    """Admin endpoint: resolve a report as actioned or dismissed."""
+    try:
+        result = await reportService.resolve_report(
+            report_id=report_id,
+            admin_id=current_admin["id"],
+            resolution=body.resolution,
+            status=body.status,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

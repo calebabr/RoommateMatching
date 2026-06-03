@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator, Field
 from typing import Optional, List, Literal
 from datetime import datetime
+from enum import Enum
 
 MAX_MATCHES = 5
 
@@ -234,6 +235,45 @@ class ChatMessageResponse(BaseModel):
     toUser: int
     content: str
     createdAt: datetime
+
+# --- Block / Report Models ---
+
+class ReportReason(str, Enum):
+    harassment = "harassment"
+    inappropriate_content = "inappropriate_content"
+    fake_profile = "fake_profile"
+    spam = "spam"
+    underage = "underage"
+    other = "other"
+
+
+class ReportCreate(BaseModel):
+    reason: ReportReason
+    description: Optional[str] = Field(None, max_length=1000)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def strip_description_html(cls, v):
+        if v is None:
+            return None
+        import nh3
+        return nh3.clean(str(v), tags=set())
+
+
+# --- Deletion Models ---
+
+class DeleteAccountRequest(BaseModel):
+    password: str = Field(..., max_length=128)
+
+
+class RestoreAccountRequest(BaseModel):
+    token: str = Field(..., min_length=1, max_length=128)
+
+
+class ResolveReportRequest(BaseModel):
+    resolution: str = Field(..., min_length=1, max_length=500)
+    status: Literal["actioned", "dismissed"] = "actioned"
+
 
 # --- Notification Models ---
 

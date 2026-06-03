@@ -113,6 +113,15 @@ async def lifespan(app: FastAPI):
         {"$setOnInsert": {"seq": max_id}},
         upsert=True,
     )
+    # Hard-delete accounts whose 30-day grace period has expired
+    try:
+        from app.services.deletionService import DeletionService
+        deleted_count = await DeletionService().cleanup_expired_deletions()
+        if deleted_count:
+            import logging
+            logging.getLogger(__name__).info(f"Startup cleanup: hard-deleted {deleted_count} expired accounts")
+    except Exception:
+        pass  # Never block startup if cleanup fails
     yield
 
 app = FastAPI(title="RoomMatch API", lifespan=lifespan)

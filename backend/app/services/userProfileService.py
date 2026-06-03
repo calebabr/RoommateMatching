@@ -61,7 +61,7 @@ class UserProfileService:
 
     async def get_user(self, user_id: int) -> dict:
         """
-        Retrieves a user profile by user ID.
+        Retrieves a user profile by user ID. Raises ValueError for soft-deleted users.
 
         Parameters:
             user_id (int): The unique identifier of the user to retrieve.
@@ -70,9 +70,9 @@ class UserProfileService:
             dict: The user object containing all profile information.
 
         Raises:
-            ValueError: If user with the specified ID does not exist.
+            ValueError: If user with the specified ID does not exist or is soft-deleted.
         """
-        user = await self.collection.find_one({"id": user_id})
+        user = await self.collection.find_one({"id": user_id, "deletedAt": {"$exists": False}})
         if not user:
             raise ValueError("User not found")
         user.pop("_id", None)
@@ -175,13 +175,16 @@ class UserProfileService:
 
     async def get_all_active_users(self) -> list[dict]:
         """
-        Retrieves all users who have fewer than MAX_MATCHES confirmed matches.
-        These users are still available in the discovery/recommendation pool.
+        Retrieves all users who have fewer than MAX_MATCHES confirmed matches
+        and are not soft-deleted. These users are available in the recommendation pool.
         """
         from app.models import MAX_MATCHES
-        cursor = self.collection.find({"$or": [
-            {"matchCount": {"$lt": MAX_MATCHES}},
-            {"matchCount": {"$exists": False}},
+        cursor = self.collection.find({"$and": [
+            {"deletedAt": {"$exists": False}},
+            {"$or": [
+                {"matchCount": {"$lt": MAX_MATCHES}},
+                {"matchCount": {"$exists": False}},
+            ]},
         ]})
         users = []
         async for user in cursor:

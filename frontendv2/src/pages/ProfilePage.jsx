@@ -1,8 +1,28 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
+function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  );
+}
+import { useNavigate } from 'react-router-dom';
 import { Colors, Radius } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { updateUser, deleteUser, uploadPhoto, getPhotoUrl } from '../services/api';
+import { updateUser, uploadPhoto, getPhotoUrl, getBlockedUsers, unblockUser, exportUserData, deleteAccount } from '../services/api';
 import SliderPicker from '../components/SliderPicker';
 import Toggle from '../components/Toggle';
 import NotificationBell from '../components/NotificationBell';
@@ -20,6 +40,23 @@ export default function ProfilePage() {
   const [selectedTags, setSelectedTags] = useState(user?.lifestyleTags || []);
   const fileInputRef   = useRef(null);
   const cameraInputRef = useRef(null);
+
+  // Blocked users
+  const [blockedUsers,     setBlockedUsers]     = useState([]);
+  const [unblockingId,     setUnblockingId]     = useState(null);
+
+  // Danger zone — delete with password
+  const [showDeleteModal,  setShowDeleteModal]  = useState(false);
+  const [deletePassword,   setDeletePassword]   = useState('');
+  const [deleting,         setDeleting]         = useState(false);
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [restoreToken,     setRestoreToken]      = useState(null);
+  const [tokenCopied,      setTokenCopied]      = useState(false);
+
+  // Danger zone — export
+  const [exporting,        setExporting]        = useState(false);
+
+  const navigate = useNavigate();
 
   const [preferences, setPreferences] = useState(
     CATEGORIES.reduce((acc, cat) => {
@@ -70,15 +107,59 @@ export default function ProfilePage() {
     }, {}));
   };
 
-  const handleDelete = () => {
-    setModal({
-      title: 'Delete Account', danger: true, confirmText: 'Delete',
-      message: 'This will permanently delete your account, matches, and all data. This cannot be undone.',
-      onConfirm: async () => {
-        try { await deleteUser(user.id); await logout(); }
-        catch { setModal({ title: 'Error', message: 'Could not delete account.' }); }
-      },
-    });
+  // Load blocked users on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    getBlockedUsers(user.id).then(setBlockedUsers).catch(() => {});
+  }, [user?.id]);
+
+  const handleUnblock = async (targetId) => {
+    setUnblockingId(targetId);
+    try {
+      await unblockUser(targetId);
+      setBlockedUsers(prev => prev.filter(u => u.id !== targetId));
+    } catch {
+      setModal({ title: 'Error', message: 'Could not unblock user.' });
+    } finally {
+      setUnblockingId(null);
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const data = await exportUserData(user.id);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'roommatch-data.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setModal({ title: 'Error', message: 'Could not export data.' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword.trim()) return;
+    setDeleting(true);
+    try {
+      const result = await deleteAccount(user.id, deletePassword);
+      setShowDeleteModal(false);
+      setDeletePassword('');
+      setRestoreToken(result.restore_token || null);
+      await logout();
+      if (!result.restore_token) navigate('/login');
+    } catch (err) {
+      setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not delete account. Check your password.' });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (!user) return null;
@@ -149,7 +230,6 @@ export default function ProfilePage() {
 
               <div style={{ width: '100%', marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <button style={S.logoutBtn} onClick={logout}>Log Out</button>
-                <button style={S.deleteBtn} onClick={handleDelete}>Delete Account</button>
               </div>
             </div>
           </div>
@@ -229,9 +309,142 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* ── Blocked Users ── */}
+            {blockedUsers.length > 0 && (
+              <div style={{ ...S.section, marginTop: 28 }}>
+                <p style={S.sectionTitle}>Blocked Users</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {blockedUsers.map(bu => (
+                    <div key={bu.id} style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: Colors.bgCard, borderRadius: Radius.md, padding: '12px 16px', border: `1px solid ${Colors.border}` }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: Colors.bgCardLight, border: `2px solid ${Colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                        {bu.photoUrl
+                          ? <img src={bu.photoUrl.startsWith('http') ? bu.photoUrl : getPhotoUrl(bu.photoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <span style={{ fontSize: 16, fontWeight: 700, color: Colors.textMuted }}>{(bu.username || '?')[0].toUpperCase()}</span>
+                        }
+                      </div>
+                      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: Colors.textPrimary }}>{bu.username}</span>
+                      <button
+                        style={{ padding: '7px 14px', borderRadius: Radius.md, border: `1px solid ${Colors.border}`, backgroundColor: 'transparent', fontSize: 13, fontWeight: 600, color: Colors.textSecondary, cursor: 'pointer', opacity: unblockingId === bu.id ? 0.5 : 1 }}
+                        onClick={() => handleUnblock(bu.id)}
+                        disabled={unblockingId === bu.id}
+                      >
+                        {unblockingId === bu.id ? '...' : 'Unblock'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Danger Zone ── */}
+            <div style={S.dangerZone}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: Colors.danger, margin: '0 0 14px' }}>Danger Zone</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: Colors.textPrimary, margin: '0 0 2px' }}>Export My Data</p>
+                    <p style={{ fontSize: 12, color: Colors.textMuted, margin: 0 }}>Download a JSON copy of all your account data.</p>
+                  </div>
+                  <button
+                    style={{ ...S.dangerActionBtn, borderColor: Colors.textMuted, color: Colors.textSecondary, opacity: exporting ? 0.6 : 1 }}
+                    onClick={handleExport}
+                    disabled={exporting}
+                  >
+                    {exporting ? '...' : 'Export Data'}
+                  </button>
+                </div>
+                <div style={{ borderTop: `1px solid ${Colors.border}`, paddingTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: Colors.danger, margin: '0 0 2px' }}>Delete Account</p>
+                    <p style={{ fontSize: 12, color: Colors.textMuted, margin: 0 }}>This will delete your account. You have 7 days to restore it.</p>
+                  </div>
+                  <button
+                    style={{ ...S.dangerActionBtn, borderColor: Colors.danger, color: Colors.danger }}
+                    onClick={() => setShowDeleteModal(true)}
+                  >
+                    Delete Account
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Delete account confirmation modal */}
+      {showDeleteModal && (
+        <div style={S.overlayBg} onClick={() => { setShowDeleteModal(false); setDeletePassword(''); }}>
+          <div style={S.inlineModal} onClick={e => e.stopPropagation()}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: Colors.textPrimary, margin: '0 0 8px' }}>Delete Account</p>
+            <p style={{ fontSize: 14, color: Colors.textSecondary, margin: '0 0 16px', lineHeight: '20px' }}>
+              This will delete your account. You have 7 days to restore it using the restore token provided after deletion.
+            </p>
+            <label style={S.modalLabel}>Enter your password to confirm</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showDeletePassword ? 'text' : 'password'}
+                style={{ ...S.modalInput, paddingRight: 40 }}
+                value={deletePassword}
+                onChange={e => setDeletePassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleDeleteAccount()}
+                placeholder="Password"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowDeletePassword(p => !p)}
+                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#888', display: 'flex', alignItems: 'center' }}
+                aria-label={showDeletePassword ? 'Hide password' : 'Show password'}
+              >
+                {showDeletePassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button
+                style={{ ...S.modalActionBtn, backgroundColor: Colors.danger, color: Colors.white, opacity: (!deletePassword.trim() || deleting) ? 0.5 : 1 }}
+                onClick={handleDeleteAccount}
+                disabled={!deletePassword.trim() || deleting}
+              >
+                {deleting ? '...' : 'Delete Account'}
+              </button>
+              <button
+                style={{ ...S.modalActionBtn, backgroundColor: 'transparent', border: `1.5px solid ${Colors.border}`, color: Colors.textSecondary }}
+                onClick={() => { setShowDeleteModal(false); setDeletePassword(''); }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore token notice (shown after deletion, before redirect) */}
+      {restoreToken && (
+        <div style={S.overlayBg}>
+          <div style={S.inlineModal}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: Colors.textPrimary, margin: '0 0 8px' }}>Account Deleted</p>
+            <p style={{ fontSize: 14, color: Colors.textSecondary, margin: '0 0 12px', lineHeight: '20px' }}>
+              Save this token to restore your account within 7 days:
+            </p>
+            <div style={{ backgroundColor: Colors.bgInput, borderRadius: Radius.md, padding: '11px 14px', border: `1px solid ${Colors.border}`, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <code style={{ flex: 1, fontSize: 12, color: Colors.accent, wordBreak: 'break-all' }}>{restoreToken}</code>
+              <button
+                style={{ flexShrink: 0, padding: '6px 12px', borderRadius: Radius.md, border: `1px solid ${Colors.accent}`, backgroundColor: Colors.accentGlow, fontSize: 12, fontWeight: 600, color: Colors.accent, cursor: 'pointer' }}
+                onClick={() => { navigator.clipboard.writeText(restoreToken); setTokenCopied(true); }}
+              >
+                {tokenCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <button
+              style={{ width: '100%', backgroundColor: Colors.accent, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 700, color: Colors.black, border: 'none', cursor: 'pointer' }}
+              onClick={() => { setRestoreToken(null); navigate('/login'); }}
+            >
+              Continue to Login
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -255,5 +468,11 @@ const S = {
   saveBtn:    { flex: 1, backgroundColor: Colors.accent, borderRadius: Radius.md, padding: '13px 0', fontSize: 14, fontWeight: 700, color: Colors.black, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cancelBtn:  { flex: 1, backgroundColor: 'transparent', border: `1.5px solid ${Colors.border}`, borderRadius: Radius.md, padding: '13px 0', fontSize: 14, fontWeight: 600, color: Colors.textSecondary, cursor: 'pointer' },
   logoutBtn:  { width: '100%', backgroundColor: Colors.bgCardLight, border: `1px solid ${Colors.border}`, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 600, color: Colors.textPrimary, cursor: 'pointer' },
-  deleteBtn:  { width: '100%', backgroundColor: 'transparent', border: `1.5px solid ${Colors.danger}`, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 600, color: Colors.danger, cursor: 'pointer' },
+  dangerZone:   { marginTop: 28, padding: 20, borderRadius: Radius.lg, border: `1.5px solid ${Colors.danger}`, backgroundColor: Colors.dangerDim },
+  dangerActionBtn: { flexShrink: 0, padding: '9px 16px', borderRadius: Radius.md, border: '1.5px solid', backgroundColor: 'transparent', fontSize: 13, fontWeight: 600, cursor: 'pointer' },
+  overlayBg:   { position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  inlineModal: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 24, width: '100%', maxWidth: 420, border: `1px solid ${Colors.border}` },
+  modalLabel:  { display: 'block', fontSize: 12, fontWeight: 600, color: Colors.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 },
+  modalInput:  { width: '100%', backgroundColor: Colors.bgInput, borderRadius: Radius.md, padding: '12px 14px', fontSize: 14, color: Colors.textPrimary, border: `1px solid ${Colors.border}`, outline: 'none', boxSizing: 'border-box' },
+  modalActionBtn: { flex: 1, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' },
 };

@@ -20,20 +20,21 @@ A fully functional React SPA. All core features are implemented: auth (login/sig
 
 | Route | Page | Purpose |
 |-------|------|---------|
-| `/login` | `LoginPage` | Email/password login; configurable backend URL; "Forgot password?" link below Sign In button |
-| `/signup` | `SignupPage` | 3-step wizard: basic info → preferences → lifestyle tags |
+| `/login` | `LoginPage` | Email/password login; configurable backend URL; "Forgot password?" link below Sign In button; password show/hide toggle |
+| `/signup` | `SignupPage` | 3-step wizard: basic info → preferences → lifestyle tags; password show/hide toggle on Step 1 |
 | `/forgot-password` | `ForgotPasswordPage` | Email input; shows reset token in monospace box on success with dev-mode note; accessible without auth |
-| `/reset-password` | `ResetPasswordPage` | Token input (pre-filled from `?token=` URL param) + new password; redirects to `/login` after 2s on success; accessible without auth |
-| `/profile` | `ProfilePage` | View/edit own profile, preferences, photo, bio, tags; delete account |
+| `/reset-password` | `ResetPasswordPage` | Token input (pre-filled from `?token=` URL param) + new password with show/hide toggle; redirects to `/login` after 2s on success; accessible without auth |
+| `/restore-account` | `RestoreAccountPage` | Public page; token input (pre-filled from `?token=` URL param); calls restore-account endpoint; accessible without auth |
+| `/profile` | `ProfilePage` | View/edit own profile, preferences, photo, bio, tags; Blocked Users section; Danger Zone (export data, delete account with password modal + show/hide toggle + restore token notice) |
 | `/discover` | `DiscoverPage` | Grid of top recommended profiles with scores; send likes |
 | `/likes` | `LikesPage` | Incoming likes; like back to create a match |
 | `/matches` | `MatchesPage` | Confirmed matches; preference comparison; navigate to chat |
 | `/chat` | `ChatListPage` | List of active conversations with last message preview |
 | `/chat/:partnerId` | `ChatPage` | Full chat thread; polls every 3s; Enter-to-send; unmatch from here |
-| `/user/:userId` | `UserDetailPage` | Public profile view with compatibility score and like button; like button reflects current user's actual like/match state (P1.5) |
+| `/user/:userId` | `UserDetailPage` | Public profile view with compatibility score and like button; like button reflects current user's actual like/match state (P1.5); Block button with confirmation overlay; Report button with reason dropdown + description modal |
 | `/notifications` | `NotificationsPage` | Activity feed (likes, matches, unmatches); marks read on open |
 
-Unauthenticated users (where `user` is null and loading is false) are redirected to `/login` by `AppRoutes`. `/forgot-password` and `/reset-password` are outside the auth guard and accessible without a token. When a user reaches max matches (5), Discover and Likes tabs are hidden from the sidebar.
+Unauthenticated users (where `user` is null and loading is false) are redirected to `/login` by `AppRoutes`. `/forgot-password`, `/reset-password`, and `/restore-account` are outside the auth guard and accessible without a token. When a user reaches max matches (5), Discover and Likes tabs are hidden from the sidebar.
 
 ## 4. API Integration
 
@@ -41,13 +42,16 @@ All calls go through `src/services/api.js` via a single Axios instance. The base
 
 | Category | Functions | Called From |
 |----------|-----------|-------------|
-| Auth | `authLogin`, `authRegister`, `authMe`, `authForgotPassword`, `authResetPassword` | AuthContext, LoginPage, SignupPage, ForgotPasswordPage, ResetPasswordPage |
-| User CRUD | `getUser`, `updateUser`, `deleteUser`, `uploadPhoto`, `getPhotoUrl` | ProfilePage, most pages (profile enrichment) |
+| Auth | `authLogin`, `authRegister`, `authMe`, `authForgotPassword`, `authResetPassword`, `restoreAccount` | AuthContext, LoginPage, SignupPage, ForgotPasswordPage, ResetPasswordPage, RestoreAccountPage |
+| User CRUD | `getUser`, `updateUser`, `deleteUser`, `uploadPhoto`, `getPhotoUrl`, `exportUserData` | ProfilePage, most pages (profile enrichment) |
 | Recommendations | `getTopMatches` | DiscoverPage |
 | Likes/Matching | `sendLike`, `getLikesReceived`, `getLikesSent`, `getMatches`, `unmatchUser` | DiscoverPage, LikesPage, MatchesPage, ChatPage, UserDetailPage |
 | Match Score | `getMatchScore` | MatchesPage, UserDetailPage |
 | Chat | `getChatConversations`, `getChatMessages`, `sendChatMessage` | ChatListPage, ChatPage |
 | Notifications | `getNotifications`, `getUnreadNotificationCount`, `markNotificationsRead` | NotificationsPage, NotificationBell |
+| Block | `blockUser`, `unblockUser`, `getBlockedUsers` | UserDetailPage, ProfilePage |
+| Report | `reportUser` | UserDetailPage |
+| Account deletion | `deleteAccount`, `exportUserData` | ProfilePage |
 
 ## 5. Gaps / TODOs
 
@@ -114,6 +118,41 @@ The activity fetch (`adminGetUserActivity`) runs in parallel with the user fetch
 | `frontendAdmin/.env.example` | Documents `VITE_API_BASE_URL` for this app |
 | `frontendAdmin/vite.config.js` | Dev server on port 3001 |
 | `frontendAdmin/package.json` | Dependencies: `axios ^1.6.0`, `react-router-dom ^6.0.0` |
+
+---
+
+## 8. Block System, Report System, Account Deletion UI, and Password Toggle
+
+**Session 2026-06-03 (Tasks P2.20, P2.21, P2.22 UI + Password Toggle):**
+
+### `RestoreAccountPage.jsx` (new, `/restore-account`)
+
+Public page (no auth guard). Accepts a restore token — pre-filled from the `?token=` URL param if present. On submit calls `restoreAccount(token)`. Shows a success confirmation with a link to `/login` on 200; shows an error message on 400 (invalid or expired token).
+
+### `UserDetailPage.jsx` — block and report controls
+
+- **Block button**: renders a confirmation overlay before executing. After a successful block the user is navigated away to `/discover`. If the viewed user has already been blocked, the button label changes to "Unblock" and calls `unblockUser` instead.
+- **Report button**: opens a modal with a 6-option reason `<select>` (`harassment`, `inappropriate_content`, `fake_profile`, `spam`, `underage`, `other`) and an optional `<textarea>` for description (max 1000 chars). On submit calls `reportUser`. Shows a success toast on 200 and an inline error on failure.
+
+### `ProfilePage.jsx` — Blocked Users section and Danger Zone
+
+- **Blocked Users section**: fetches and lists all users blocked by the current user (`getBlockedUsers`). Each entry shows the user's name with an Unblock button (`unblockUser`).
+- **Danger Zone section**:
+  - **Export Data** button: calls `exportUserData`; triggers a browser download of the response as `roommatch-data.json`.
+  - **Delete Account** button: opens a modal requiring password re-entry. On confirm calls `deleteAccount`. On success the restore token is displayed in a monospace box with a note that the user has 7 days to restore the account, plus a link to `/restore-account`. The user is not immediately logged out — they must copy the token before the session ends.
+  - Password field in the delete modal has a show/hide eye icon toggle (same pattern as other password fields).
+
+### Password show/hide toggle (all pages)
+
+An eye icon button is placed at the right edge of every password `<input>`. Clicking toggles the field's `type` between `"password"` and `"text"`. The toggle was added to:
+
+| File | Field |
+|------|-------|
+| `frontendv2/src/pages/LoginPage.jsx` | Login password |
+| `frontendv2/src/pages/SignupPage.jsx` | Signup password (Step 1) |
+| `frontendv2/src/pages/ResetPasswordPage.jsx` | New password |
+| `frontendv2/src/pages/ProfilePage.jsx` | Delete account modal password |
+| `frontendAdmin/src/pages/LoginPage.jsx` | Admin login password |
 
 ---
 

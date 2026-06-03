@@ -2,7 +2,7 @@ import os
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.auth.utils import decode_token
-from app.database import users_collection, matches_collection
+from app.database import users_collection, matches_collection, blocks_collection
 
 bearer_scheme = HTTPBearer()
 
@@ -52,6 +52,16 @@ async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict
 
 
 async def verify_match_exists(user_id: int, partner_id: int) -> None:
+    # Check for active block in either direction
+    block = await blocks_collection.find_one({
+        "$or": [
+            {"blockerId": user_id, "blockedId": partner_id},
+            {"blockerId": partner_id, "blockedId": user_id},
+        ]
+    })
+    if block is not None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not matched with this user")
+
     match = await matches_collection.find_one({
         "$or": [
             {"user1_id": user_id, "user2_id": partner_id},

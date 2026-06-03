@@ -253,3 +253,21 @@ async def reset_password(request: Request, body: ResetPasswordRequest):
         },
     )
     return {"message": "Password reset successfully"}
+
+
+class RestoreAccountRequest(BaseModel):
+    token: str = Field(..., min_length=1, max_length=128)
+
+
+@router.post("/restore-account", status_code=200)
+@limiter.limit("10/hour")
+async def restore_account(request: Request, body: RestoreAccountRequest):
+    """Restore a soft-deleted account using the plain restore token (valid 7 days)."""
+    from app.services.deletionService import DeletionService
+    svc = DeletionService()
+    try:
+        user = await svc.restore_account(body.token)
+        token = create_access_token({"sub": str(user["id"])})
+        return {"message": "Account restored", "access_token": token, "user": user}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
