@@ -69,7 +69,7 @@ The existing 1-test suite in `backend/test_security_headers.py` still passes (1/
 
 ### Current status
 
-Fix applied locally. P2.9 is still open — the change must be pushed and Render must redeploy before a re-scan can confirm the A grade.
+**Closed 2026-06-03.** Render redeployed and securityheaders.com confirmed A grade. P2.9 complete.
 
 ### Files changed
 

@@ -199,7 +199,7 @@ app.include_router(userRouter, prefix="/api")
 def root():
     return {"status": "Matching Algorithm API running", "version": "0.2.0"}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok"}
 

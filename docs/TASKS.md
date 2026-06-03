@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-03 by security-headers-asgi-fix_
+_Last updated: 2026-06-03 by checklist-sync_
 
 ---
 
@@ -80,6 +80,11 @@ _Nothing currently in progress._
 | P2.6 `[PHASE-2]` Run MongoDB index migration script against Atlas cluster — 13 indexes created (`users_email_unique` skipped, already existed); all other indexes confirmed `[ok]` | DB Agent | 2026-06-03 |
 | P2.7 `[PHASE-2]` Verified Atlas user count = 2 — synthetic test users never reached prod DB; no action needed | DB Agent | 2026-06-03 |
 | P2.8 `[PHASE-2]` Verified `GET /health` returns `{"status":"ok"}` on live Render URL | — | 2026-06-03 |
+| P2.9 `[PHASE-2]` `securityheaders.com` scan returns A grade — fixed by replacing `BaseHTTPMiddleware` with pure ASGI middleware + CSP updates (`'unsafe-inline'` in `script-src`, production origin in `connect-src`) | Backend Agent | 2026-06-03 |
+| P2.11 `[PHASE-2]` Run `POST /api/admin/recompute` on production DB — recomputed recommendations for 2 users | — | 2026-06-03 |
+| P2.12 `[PHASE-2]` Smoke-test full user journey on production — register → discover → like → match → chat all working | — | 2026-06-03 |
+| P2.13 `[PHASE-2]` Verified profile photo persists after save on production | — | 2026-06-03 |
+| P2.14 `[PHASE-2]` Verified recompute fires on registration — new account appeared in existing user's discover feed automatically | — | 2026-06-03 |
 
 ---
 
@@ -100,13 +105,15 @@ _Infrastructure is up. These are deployment config, data, and verification steps
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
 | P2.16 | `[PHASE-2]` Set `SENTRY_DSN` on Render and `VITE_SENTRY_DSN` on Vercel once Sentry project is created — all other env vars are live | — | **Critical** | 2026-06-03 |
-| P2.9 | `[PHASE-2]` Verify `securityheaders.com` scan of production URL returns A grade — D grade root cause was `BaseHTTPMiddleware` silently dropping header mutations; replaced with pure ASGI middleware + CSP updated (`'unsafe-inline'` in `script-src`, `https://roommatematching.onrender.com` in `connect-src`); fix applied locally, needs push + Render deploy + re-scan | — | High | 2026-06-01 |
 | P2.10 | `[PHASE-2]` Verify Sentry receives events — hit `GET /debug/sentry-test` on Render, confirm event appears in Sentry dashboard | — | High | 2026-06-01 |
-| P2.11 | `[PHASE-2]` Run `POST /api/admin/recompute` once on production DB to seed the recommendations collection | — | **Critical** | 2026-06-01 |
-| P2.12 | `[PHASE-2]` Smoke-test full user journey on production: register → discover → like → match → chat | — | **Critical** | 2026-06-01 |
-| P2.13 | `[PHASE-2]` Test profile photo persists after save — re-upload photo, then edit and save preferences; verify photo URL is not cleared. Fix deployed: `photoUrl` added to `_IMMUTABLE_FIELDS` in `userRoutes.py` (2026-06-03). | — | **Critical** | 2026-06-03 |
-| P2.14 | `[PHASE-2]` Verify recompute fires on registration — register a new account and confirm it appears in existing users' discovery feeds within a few seconds (no manual admin recompute needed). Also confirm registration + profile-save latency is acceptable; if sluggish, see P3B.8 (BackgroundTasks). | — | **Critical** | 2026-06-03 |
 | P2.15 | `[PHASE-2]` Deploy `frontendAdmin` to Vercel — root: `frontendAdmin`, install: `npm install && chmod +x node_modules/.bin/vite`, build: `npx vite build`, env: `VITE_API_BASE_URL=https://roommatematching.onrender.com/api`. Then add `ADMIN_FRONTEND_URL=<vercel-url>` to Render env vars and redeploy to update CORS. | — | **Critical** | 2026-06-03 |
+| P2.19 | `[PHASE-2]` Set up UptimeRobot (free tier) — ping `/health` every 5 minutes, alert on downtime > 5 min; add Render built-in alerts for memory >80%, CPU >80%, elevated error rate | — | Medium | 2026-06-03 |
+| P2.20 | `[PHASE-2]` Account deletion endpoint — soft-delete (set `deletedAt`, hide from all queries); hard-delete cron after 30 days (cascade: remove from matches, delete chat messages, likes, notifications, Cloudinary photos); require password re-entry; 7-day restore window; data export (GDPR right to portability — JSON of all user data) | Backend Agent + Frontend Agent | **Critical** | 2026-06-03 |
+| P2.21 | `[PHASE-2]` Report user system — `POST /users/{userId}/report` (reason enum: harassment/inappropriate_content/fake_profile/spam/underage/other, optional description 1000 chars max); `reports` collection; rate-limit 5/user/day; reporter auto-hidden from reported user; admin endpoints: `GET /admin/reports`, `POST /admin/reports/{id}/resolve` | Backend Agent + Frontend Agent | High | 2026-06-03 |
+| P2.22 | `[PHASE-2]` User block system — `POST /users/{userId}/block`: mutual invisibility (neither user appears in discover/likes/matches/chat/notifications for the other); auto-unmatch on block; `blocks` collection; unblock endpoint exists but does NOT restore matches; all discover/likes/matches queries must filter blocked pairs bidirectionally | Backend Agent + Frontend Agent | High | 2026-06-03 |
+| P2.23 | `[PHASE-2]` Email domain validator at signup — restrict to `.edu` emails (configurable via `ALLOWED_EMAIL_DOMAINS` env var); block disposable email providers using `disposable-email-domains` package; normalize emails (lowercase, strip whitespace); server-side only; return friendly error "Please sign up with your @auburn.edu address." | Backend Agent | **Critical** | 2026-06-03 |
+| P2.24 | `[PHASE-2]` Comprehensive security audit — OWASP Top 10 (2021) review; written report at `backend/SECURITY_AUDIT_FINAL.md` covering each item, remaining vulnerabilities (CVSS-ranked), recommended fixes with effort estimates, items needing business/legal decisions, and residual risk section; all Critical/High items fixed or explicitly accepted with rationale | Backend Agent | High | 2026-06-03 |
+| P2.25 | `[PHASE-2]` PostHog product analytics — install `posthog-js` in frontend; capture key events: signup_started, signup_completed, email_verified, profile_completed, photo_uploaded, swipe_right, swipe_left, match_created, message_sent, login, logout, account_deleted; identify users by user ID after login; pull `POSTHOG_API_KEY` / `VITE_POSTHOG_KEY` from env vars | Frontend Agent | Medium | 2026-06-03 |
 
 ---
 
@@ -124,6 +131,19 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3A.3 | `[PHASE-3]` Add email verification on registration — confirm email ownership before activating account | Auth Agent | Medium | 2026-05-29 |
 | P3A.4 | `[PHASE-3]` Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
 | P3A.5 | `[PHASE-3]` Fix NOTE-1: `limit` parameter on `GET /users/{id}/chat/{partner_id}` is unbounded — clamp to max 200 | Backend Agent | Low | 2026-05-29 |
+| P3A.7 | `[PHASE-3]` Privacy Policy and Terms of Service — generate via Termly or iubenda; customize for photo storage, message storage, .edu email collection, third-party data sharing (Cloudinary, SendGrid, Sentry, PostHog, Atlas, Render, Vercel); add explicit consent checkbox (not pre-checked) to signup flow; include data retention policy, right to export, and account deletion rights | — | **Critical** | 2026-06-03 |
+
+#### Features
+
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3FT.1 | `[PHASE-3]` Age verification (18+) at signup — add `dateOfBirth` field; reject users under 18 at registration endpoint; display-layer note in ToS; add to `SignupPage` | Backend Agent + Frontend Agent | High | 2026-06-03 |
+| P3FT.2 | `[PHASE-3]` Email verification on signup — generate 32-byte cryptographically random token (24h expiry); send via SendGrid; block login (403 "email not verified") until verified; resend endpoint (rate-limited 3/hr per email); unverified banner in frontend; `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL` env vars | Backend Agent + Frontend Agent | High | 2026-06-03 |
+| P3FT.3 | `[PHASE-3]` Profile pause and deactivation — "Pause" toggle: hidden from discover, still in existing matches/chats, reversible; "Deactivate": hidden from everyone including matches, reversible within 30 days then auto-soft-deletes; both require password re-entry and send confirmation email | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
+| P3FT.4 | `[PHASE-3]` Rejection cooldown — track left-swipes (new `swipes` collection or extend `likes`); users who were left-swiped are suppressed from that user's discover feed for 30 days; TTL index auto-expires records; discover query filters by cooldown | Backend Agent + DB Agent | Medium | 2026-06-03 |
+| P3FT.5 | `[PHASE-3]` Auto-moderation on uploads and bios — photos: Cloudinary moderation add-on (or AWS Rekognition fallback) flags explicit/violent content → set `pending_review`, hide from discover until admin approves; bios: OpenAI moderation endpoint on create/update → `pending_review` if flagged; usernames: `better-profanity` filter at signup; admin queue endpoint for pending content | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
+| P3FT.6 | `[PHASE-3]` Match email notifications — on mutual match, send both users a SendGrid email with: match preview (name, photo, 1-2 lifestyle tags), deep link to chat, unsubscribe link; `emailOnMatch` user preference toggle (default true); respect SendGrid 100/day free-tier cap with graceful fallback | Backend Agent | Medium | 2026-06-03 |
+| P3FT.7 | `[PHASE-3]` Admin audit log — immutable append-only `admin_audit_log` collection; fields: timestamp, adminUserId, action, targetUserId, targetResourceId, reason, ipAddress; every admin endpoint writes an entry before returning; `GET /admin/audit-log` (admin-only, paginated); no update/delete endpoints | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
 
 #### Backend Cleanup
 
@@ -136,7 +156,8 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3B.5 | `[PHASE-3]` Remove or update `userProfileService.mark_matched` / `unmatch_user` — use old single-int `matchedWith` format, no longer called | Backend Agent | Low | 2026-05-29 |
 | P3B.6 | `[PHASE-3]` Expose per-notification mark-read endpoint — `NotificationService.mark_read()` exists but has no route | Backend Agent | Low | 2026-05-29 |
 | P3B.7 | `[PHASE-3]` Consolidate `_normalize_matched_with()` — duplicated across `likeService.py`, `chatService.py`, `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
-| P3B.8 | `[PHASE-3]` Move recommendation recompute to FastAPI BackgroundTasks — `on_new_user` currently runs synchronously, blocking registration and profile-save responses as O(N) DB writes; switching to `background_tasks.add_task(...)` returns the response instantly and runs recompute after; new user's discover feed may lag a few seconds but registration is unblocked. Revisit if P2.14 shows latency issues at beta scale. | Backend Agent | Medium | 2026-06-03 |
+| P3B.8 | `[PHASE-3]` Move recommendation recompute to FastAPI BackgroundTasks — `on_new_user` currently runs synchronously, blocking registration and profile-save responses as O(N) DB writes; switching to `background_tasks.add_task(...)` returns the response instantly and runs recompute after; new user's discover feed may lag a few seconds but registration is unblocked. | Backend Agent | Medium | 2026-06-03 |
+| P3B.9 | `[PHASE-3]` Trigger recompute on profile save when preferences change significantly — only recompute if any preference score shifts by ≥ 2 points (on 0–10 scale) OR any deal-breaker status toggles; rate-limit to 1 recompute per user per hour to prevent rapid-save abuse; implement alongside P3B.8 (BackgroundTasks) so profile save response is never blocked | Backend Agent | Medium | 2026-06-03 |
 
 #### Database
 
@@ -147,6 +168,10 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3D.3 | `[PHASE-3]` Add TTL index on `notifications` to auto-expire old records | DB Agent | Low | 2026-05-29 |
 | P3D.4 | `[PHASE-3]` Add TTL index on `likes` to expire stale pending likes | DB Agent | Low | 2026-05-29 |
 | P3D.5 | `[PHASE-3]` Evaluate `clusters` collection — written by `clusterService` but never read for matching; integrate or remove | DB Agent | Low | 2026-05-29 |
+| P3D.9 | `[PHASE-3]` Restrict MongoDB Atlas network access to Render's egress IPs only — remove `0.0.0.0/0`; requires upgrading Render to Starter ($7/mo) for static outbound IPs; defer until after beta when paid tier is warranted | — | High | 2026-06-03 |
+| P3D.8 | `[PHASE-3]` MongoDB Atlas backup restore test — upgrade Atlas cluster to M2+ (paid tier required for backups), enable backups, restore a snapshot to a new cluster and confirm data integrity; defer until after beta when data is worth protecting | — | High | 2026-06-03 |
+| P3D.6 | `[PHASE-3]` Add TTL index on `recommendations` collection — expire after 7 days (stale recommendations should be recomputed, not served indefinitely) | DB Agent | Medium | 2026-06-03 |
+| P3D.7 | `[PHASE-3]` DB performance review — run `explain()` on every hot query, document the index that supports each; audit matching algorithm complexity at 5000 users; add Redis or Mongo TTL caching for top-matches (serve cached up to 1 hour, recompute on-demand); written report at `backend/PERFORMANCE_INDEXES.md` | DB Agent + Backend Agent | High | 2026-06-03 |
 
 #### Tests
 
@@ -167,6 +192,8 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3AD.1 | `[PHASE-3]` Add error/bug log view to admin dashboard — surface Sentry events via Sentry API (requires `SENTRY_AUTH_TOKEN` + `SENTRY_ORG`/`SENTRY_PROJECT` env vars); backend proxy endpoint `GET /api/admin/errors` returns recent Sentry issues; admin dashboard renders them in a table. Depends on Sentry live on production (P2.10). | Backend Agent + Frontend Agent | Medium | 2026-06-02 |
 | P3AD.2 | `[PHASE-3]` Add user feedback system — backend: `POST /api/feedback` (authenticated, stores `{user_id, message, created_at}` in `feedback` collection) + `GET /api/admin/feedback` (admin-gated, returns all submissions); main app: feedback button/modal accessible from sidebar; admin dashboard: feedback inbox page showing all submissions with user info and timestamp. | Backend Agent + Frontend Agent | Medium | 2026-06-02 |
 | P3AD.4 | `[PHASE-3]` Implement reported conversation moderation — users can flag a chat conversation for review (`POST /api/chat/{partner_id}/report`); admin dashboard shows a "Reports" inbox with flagged conversations (full message history visible only for reported chats); admin can dismiss or act (ban) from the same view. Depends on P3AD.2 (feedback/reporting infrastructure). | Backend Agent + Frontend Agent | Medium | 2026-06-02 |
+| P3AD.5 | `[PHASE-3]` Content moderation queue in admin dashboard — list all `pending_review` photos and bios; admin can approve or reject; approve clears flag and makes visible; reject removes content and notifies user; depends on P3FT.5 (auto-moderation) | Frontend Agent | Medium | 2026-06-03 |
+| P3AD.6 | `[PHASE-3]` Audit log viewer in admin dashboard — paginated table of `admin_audit_log` entries (timestamp, admin, action, target); read-only; depends on P3FT.7 | Frontend Agent | Medium | 2026-06-03 |
 
 #### Frontend
 
@@ -179,3 +206,13 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3F.5 | `[PHASE-3]` Expand gender options beyond binary male/female in `SignupPage` | Frontend Agent | Medium | 2026-05-29 |
 | P3F.6 | `[PHASE-3]` Stop `NotificationBell` polling when user is already on the Notifications page | Frontend Agent | Low | 2026-05-29 |
 | P3F.7 | `[PHASE-3]` Expose backend URL setting from within the app (not just login screen) | Frontend Agent | Low | 2026-05-29 |
+
+---
+
+### 🚀 Phase 4 — Campus-Wide Launch `[PHASE-4]`
+
+_App is fully built. This phase is about confirming readiness and executing the launch._
+
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P4.1 | `[PHASE-4]` Load test before launch — Locust or k6 test: 500 concurrent users, mix of signup (5%), login (10%), discover/swipe (60%), chat (20%), profile view (5%); targets: p95 < 500ms, error rate < 0.5%; run against staging; document bottlenecks and file fixes as new tasks | Backend Agent | High | 2026-06-03 |

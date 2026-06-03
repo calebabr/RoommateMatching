@@ -139,18 +139,28 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 
 **Session 2026-06-01 (Task C2):** `SecurityHeadersMiddleware` was added to `app/main.py`, registered after `BodySizeLimitMiddleware`. It injects six HTTP security headers on every response.
 
+**Session 2026-06-03 (Task P2.9 — CSP fix):** Two CSP directives were updated to fix a D grade on `securityheaders.com`:
+
+- `script-src` changed from `'self'` to `'self' 'unsafe-inline'` — required because the frontend injects inline scripts.
+- `connect-src` updated from `'self'` to `'self' https://roommatematching.onrender.com` — allows the frontend to reach the production API origin.
+
+Current CSP and all security header values after the fix:
+
 | Header | Value |
 |--------|-------|
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
 | `X-Content-Type-Options` | `nosniff` |
 | `X-Frame-Options` | `DENY` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
-| `Content-Security-Policy` | `default-src 'self'; img-src 'self' res.cloudinary.com data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self'` |
+| `Content-Security-Policy` | `default-src 'self'; img-src 'self' res.cloudinary.com data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https://roommatematching.onrender.com` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
 
-**CSP note:** `style-src` includes `'unsafe-inline'` because the frontend uses inline styles via `utils/theme.js`. To remove it, inline styles must be migrated to CSS files first.
+**CSP notes:**
+- `style-src 'unsafe-inline'` is required because the frontend uses inline styles via `utils/theme.js`.
+- `script-src 'unsafe-inline'` was added in the 2026-06-03 fix; it prevents an A+ rating. Removing it requires migrating all inline scripts to external `.js` files (tracked as a Phase 3 backlog item).
+- The fix has been applied locally and is pending deployment + re-scan on `securityheaders.com`.
 
-Test coverage: `backend/test_security_headers.py` (1 test, passing).
+Test coverage: `backend/test_security_headers.py` — expanded from 2 loose assertions to 8 precise assertions covering every CSP directive and all Permissions-Policy entries (updated 2026-06-03).
 
 ## 8. Admin Gating
 
