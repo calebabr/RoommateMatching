@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import chat_collection, users_collection
 
 
@@ -32,7 +32,7 @@ class ChatService:
             "fromUser": from_id,
             "toUser": partner_id,
             "content": content,
-            "createdAt": datetime.utcnow()
+            "createdAt": datetime.now(timezone.utc)
         }
         result = await self.messages.insert_one(msg)
         msg["_id"] = str(result.inserted_id)

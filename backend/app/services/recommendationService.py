@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.services.matchScore import matchScore
 from app.database import recommendations_collection
 
@@ -35,7 +35,7 @@ class RecommendationService:
 
         await self.recommendations.update_one(
             {"userId": target_user["id"]},
-            {"$set": {"matches": top_matches, "computedAt": datetime.utcnow()}},
+            {"$set": {"matches": top_matches, "computedAt": datetime.now(timezone.utc)}},
             upsert=True
         )
 

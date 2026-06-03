@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-02 by P2.1 ban-endpoints_
+_Last updated: 2026-06-02 by P3AD.3 user-activity_
 
 ---
 
@@ -72,6 +72,8 @@ _Nothing currently in progress._
 | P1.3 `[PHASE-1]` Gate `POST /api/uploadUsers` as admin-only — upgraded to `get_admin_user`; endpoint retained for seeding test data. 4 tests (non-admin 403, admin 200 on both endpoints) all passing. | Backend Agent + Tests Agent | 2026-06-02 |
 | P1.4 `[PHASE-1]` Password reset / forgot-password flow — backend: `POST /api/auth/forgot-password` (rate-limited 3/hr, SHA-256 token stored on user, always 200) + `POST /api/auth/reset-password` (rate-limited 5/hr, validates hash + expiry, enforces password strength, clears token on success). Frontend: `ForgotPasswordPage`, `ResetPasswordPage`, routes in `App.jsx`, "Forgot password?" link in `LoginPage`, `authForgotPassword`/`authResetPassword` in `api.js`. 7 tests all passing. Note: no email delivery — token returned in API response body (dev/MVP mode). | Backend Agent + Frontend Agent + Tests Agent | 2026-06-02 |
 | P2.1 `[PHASE-2]` Add `POST /api/admin/ban/{user_id}` and `POST /api/admin/unban/{user_id}` endpoints — sets `is_banned: bool` on user document; `authRoutes.py` login handler raises HTTP 403 if `is_banned` is True (checked after password verification, before token issuance); both endpoints gated by `get_admin_user`. 7 tests all passing (`test_ban.py`). | Backend Agent + Tests Agent | 2026-06-02 |
+| P2.2 `[PHASE-2]` Admin frontend app in `frontendAdmin/` (port 3001) — standalone React app with login (admin check), user list (search + status pills), user detail (ban/unban + ConfirmDialog), Sidebar nav, placeholder pages for Errors (P3AD.1) and Feedback (P3AD.2); `adminApi.js` service layer; `is_admin` added to login + `/me` responses in `authRoutes.py`; `GET /api/admin/users` endpoint added to `userRoutes.py`; 5 tests in `test_admin_response.py` all passing. | Backend Agent + Frontend Agent + Tests Agent | 2026-06-02 |
+| P3AD.3 `[PHASE-3]` Admin user activity view — backend: `GET /api/admin/users/{user_id}/activity` returns `matches`, `likes_sent`, `chat_partners` aggregated from three collections; missing users shown as "Deleted User"; admin-gated, rate-limited 30/min. Frontend: activity card in `UserDetailPage` (matches table, likes pills, chat partners table); `adminGetUserActivity` in `adminApi.js`; parallel fetch with error isolation. 4 tests in `test_user_activity.py` all passing. | Backend Agent + Frontend Agent + Tests Agent | 2026-06-02 |
 
 ---
 
@@ -91,7 +93,6 @@ _Infrastructure is up. These are deployment config, data, and verification steps
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P2.2 | `[PHASE-2]` Add protected `/admin` section to frontend — guarded by `is_admin` flag; pages: user list (search/filter), user detail (ban/unban button); keep all admin API calls in a separate `services/adminApi.js` so it can be extracted to a standalone app later | Frontend Agent | **Critical** | 2026-06-02 |
 | P2.3 | `[PHASE-2]` Set all Render env vars: `SECRET_KEY`, `MONGO_URL`, `MONGO_DB_NAME`, `CLOUDINARY_*`, `FRONTEND_URL`, `SENTRY_DSN`, `ROOMMATCH_ENV=production` | — | **Critical** | 2026-06-01 |
 | P2.4 | `[PHASE-2]` Add `ADMIN_USER_IDS` env var to Render — comma-separated list of integer user IDs granted admin access | — | **Critical** | 2026-06-02 |
 | P2.5 | `[PHASE-2]` Set all Vercel env vars: `VITE_API_BASE_URL`, `VITE_SENTRY_DSN`, `VITE_ENV=production` | — | **Critical** | 2026-06-01 |
@@ -152,6 +153,14 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3T.5 | `[PHASE-3]` Add Vitest + React Testing Library — at minimum test `AuthContext`, `api.js`, and the like/match UI flow | Tests Agent | High | 2026-05-29 |
 | P3T.6 | `[PHASE-3]` Add tests for cluster/recommendation algorithm internals | Tests Agent | Low | 2026-05-29 |
 | P3T.7 | `[PHASE-3]` Convert `test_api.py` and `test_api_v2.py` from plain Python scripts to proper pytest modules | Tests Agent | Low | 2026-05-29 |
+
+#### Admin Dashboard
+
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3AD.1 | `[PHASE-3]` Add error/bug log view to admin dashboard — surface Sentry events via Sentry API (requires `SENTRY_AUTH_TOKEN` + `SENTRY_ORG`/`SENTRY_PROJECT` env vars); backend proxy endpoint `GET /api/admin/errors` returns recent Sentry issues; admin dashboard renders them in a table. Depends on Sentry live on production (P2.10). | Backend Agent + Frontend Agent | Medium | 2026-06-02 |
+| P3AD.2 | `[PHASE-3]` Add user feedback system — backend: `POST /api/feedback` (authenticated, stores `{user_id, message, created_at}` in `feedback` collection) + `GET /api/admin/feedback` (admin-gated, returns all submissions); main app: feedback button/modal accessible from sidebar; admin dashboard: feedback inbox page showing all submissions with user info and timestamp. | Backend Agent + Frontend Agent | Medium | 2026-06-02 |
+| P3AD.4 | `[PHASE-3]` Implement reported conversation moderation — users can flag a chat conversation for review (`POST /api/chat/{partner_id}/report`); admin dashboard shows a "Reports" inbox with flagged conversations (full message history visible only for reported chats); admin can dismiss or act (ban) from the same view. Depends on P3AD.2 (feedback/reporting infrastructure). | Backend Agent + Frontend Agent | Medium | 2026-06-02 |
 
 #### Frontend
 

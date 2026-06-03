@@ -47,6 +47,8 @@ When your tasks are complete, send a message to the **docs-agent** teammate usin
 
 The docs-agent uses this to update `docs/summaries/frontend_summary.md`, the session summary in `docs/session-summaries/`, and `docs/TASKS.md`. Do not shut down until you have sent this message.
 
+The teammate name is always `docs-agent` — use that directly as the `to` field in SendMessage. Do NOT read the team config to look it up.
+
 ## Do Not
 
 - Modify backend code

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import users_collection, likes_collection, recommendations_collection, matches_collection
 
 class UserProfileService:
@@ -47,7 +47,7 @@ class UserProfileService:
         user_data["matched"] = False
         user_data["matchCount"] = 0
         user_data["matchedWith"] = []
-        user_data["createdAt"] = datetime.utcnow()
+        user_data["createdAt"] = datetime.now(timezone.utc)
 
         # Ensure new optional fields have defaults if not provided
         user_data.setdefault("bio", "")

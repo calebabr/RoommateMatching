@@ -2,7 +2,7 @@
 
 ## 1. Current State
 
-Fifteen backend test files now exist: two legacy scripts and thirteen pytest modules. Unit tests, pytest fixtures, an isolated test database, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present.
+Sixteen backend test files now exist: two legacy scripts and fourteen pytest modules. Unit tests, pytest fixtures, an isolated test database, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present.
 
 ## 2. Test Files
 
@@ -24,6 +24,8 @@ Fifteen backend test files now exist: two legacy scripts and thirteen pytest mod
 | `backend/test_likes_sent.py` | pytest async | 3 | `getLikesSent` contains target after like, empty for user who sent no likes, unauthenticated returns 401/403; AsyncMock collections (same pattern as test_admin_gate.py) |
 | `backend/test_migrate_indexes.py` | pytest | 2 | `create_indexes()` against `roommatch_migrate_test` DB creates all expected indexes with correct uniqueness; idempotent second run raises no error |
 | `backend/test_ban.py` | pytest async | 7 | Admin ban/unban endpoints and login ban check; AsyncMock collections, no live DB needed |
+| `backend/test_admin_response.py` | pytest async | 5 | `is_admin` field in login + `/me` responses (true and false cases); `GET /api/admin/users` 200 + list; non-admin 403; AsyncMock collections, monkeypatches `ADMIN_USER_IDS` |
+| `backend/test_user_activity.py` | pytest async | 4 | Admin activity endpoint: admin 200 with populated lists, non-admin 403, missing user 404, empty user returns all-empty lists |
 | `backend/app/test/` | JSON data only | — | `usersTest20.json`, `usersTest250.json`, `usersTest1000.json` — seed data, not automated tests |
 
 ## 3. Test Infrastructure
@@ -59,6 +61,9 @@ Fifteen backend test files now exist: two legacy scripts and thirteen pytest mod
 - Like-sent / like button state tests — `test_likes_sent.py` (3 tests) covers `getLikesSent` API correctness and auth enforcement (2026-06-02)
 - Index migration tests — `test_migrate_indexes.py` (2 tests) confirms `create_indexes()` creates correct indexes and is idempotent (2026-06-02)
 - Ban/unban admin endpoint tests — `test_ban.py` (7 tests) covers admin ban/unban 200, non-admin 403, 404 for missing user, banned user login 403, and unbanned user login 200 (2026-06-02)
+- is_admin response + admin users endpoint tests — `test_admin_response.py` (5 tests) covers `is_admin: true/false` in login and `/me` responses, `GET /api/admin/users` 200 + list, and non-admin 403 (2026-06-02)
+
+- Admin user activity tests — `test_user_activity.py` (4 tests) covers admin 200 with populated data, non-admin 403, missing user 404, and empty-activity user returning all-empty lists (2026-06-02)
 
 **Still TODO**
 - Unit-test `matchScore.py` directly without HTTP round-trips

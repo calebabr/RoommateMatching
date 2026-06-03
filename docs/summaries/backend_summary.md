@@ -66,6 +66,8 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - `POST /api/admin/recompute` — gated by `get_admin_user`; 403 for non-admin users
 - `POST /api/admin/ban/{user_id}` — gated by `get_admin_user`; sets `is_banned: True`; 404 if not found
 - `POST /api/admin/unban/{user_id}` — gated by `get_admin_user`; sets `is_banned: False`; 404 if not found
+- `GET  /api/admin/users` — gated by `get_admin_user`; returns all users with `is_banned` visible; strips `hashed_password` and `_id`; rate-limited 30/minute
+- `GET  /api/admin/users/{user_id}/activity` — gated by `get_admin_user`; returns `matches`, `likes_sent`, `chat_partners` lists for the given user; rate-limited 30/minute
 
 **Utility**
 - `GET  /` — health/version
@@ -211,7 +213,62 @@ No email is sent. The token is returned in the API response body. This is intent
 
 ---
 
-## 11. Gaps / TODOs (pre-production)
+## 11. is_admin in Auth Responses + GET /api/admin/users
+
+**Session 2026-06-02 (Task P2.2 — backend):** The login and `/me` responses now expose `is_admin` so the frontend can gate admin UI without a separate round-trip. A new admin-gated endpoint lists all users.
+
+### Changes to `authRoutes.py`
+
+| Change | Detail |
+|--------|--------|
+| `import _admin_ids` | Imported from `app.auth.dependencies` |
+| Login handler | Sets `user["is_admin"] = (user["id"] in _admin_ids())` before building the JWT response |
+| `/me` handler | Sets `current_user["is_admin"]` the same way before returning |
+
+### New endpoint
+
+| Endpoint | Rate limit | Behavior |
+|----------|-----------|---------|
+| `GET /api/admin/users` | 30/minute | Admin-gated (`get_admin_user`); returns all users; strips `hashed_password` and `_id`; exposes `is_banned` |
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `app/routers/authRoutes.py` | Imported `_admin_ids`; login + `/me` set `is_admin` on response |
+| `app/routers/userRoutes.py` | Added `GET /api/admin/users` near other admin endpoints |
+
+---
+
+## 12. Admin User Activity Endpoint
+
+**Session 2026-06-02 (Task P3AD.3):** A new admin-gated endpoint was added to `userRoutes.py` that returns aggregated activity data for any user.
+
+### New endpoint
+
+| Endpoint | Rate limit | Behavior |
+|----------|-----------|---------|
+| `GET /api/admin/users/{user_id}/activity` | 30/minute | Admin-gated (`get_admin_user`); returns 404 if user not found; returns three keys, all guaranteed as lists (never null) |
+
+### Response shape
+
+| Key | Source | Fields |
+|-----|--------|--------|
+| `matches` | `matches_collection` where `user1_id` or `user2_id` == user_id | `partner_id`, `partner_name`, `matched_date` (from `confirmedAt`) |
+| `likes_sent` | `likes_collection` where `fromUser` == user_id | `to_user_id`, `to_user_name`, `created_at` |
+| `chat_partners` | `chat_collection` aggregated across sent/received messages | `partner_id`, `partner_name`, `message_count`, `last_message_at` |
+
+Missing partner users are surfaced as `"Deleted User"` rather than an error. All `_id` fields are excluded from output.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `app/routers/userRoutes.py` | Added `GET /api/admin/users/{user_id}/activity` near other admin endpoints |
+
+---
+
+## 13. Gaps / TODOs (pre-production)
 
 - **`chatRoutes.py` not mounted** — a second chat router exists with `after` timestamp pagination but is not registered in `main.py`, so that feature is unreachable.
 - **`matchRoutes.py` not mounted** — the legacy in-memory router is dead code.
@@ -222,7 +279,7 @@ No email is sent. The token is returned in the API response body. This is intent
 - **No per-notification mark-read route exposed** — `NotificationService.mark_read()` exists but has no endpoint.
 - **Password reset has no email delivery** — `POST /api/auth/forgot-password` returns the reset token in the response body (dev/MVP mode). SMTP or a transactional email service (SendGrid, SES, etc.) must be wired in before production launch.
 
-## 12. Notable Patterns
+## 14. Notable Patterns
 
 - All routes require `get_current_user` (JWT Bearer) except `/auth/register` and `/auth/login`.
 - Rate limiting is enforced on auth endpoints via slowapi (`app/limiter.py`): register 3/hour, login 5/15min, change-password 5/hour, forgot-password 3/hour, reset-password 5/hour. 429 responses include `Retry-After: 60`.

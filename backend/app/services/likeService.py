@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import likes_collection, matches_collection, users_collection, recommendations_collection, notifications_collection
 from app.models import MAX_MATCHES
 
@@ -30,7 +30,7 @@ class LikeService:
             "toUser": to_user,
             "message": message,
             "read": False,
-            "createdAt": datetime.utcnow()
+            "createdAt": datetime.now(timezone.utc)
         })
 
     async def send_like(self, from_id: int, to_id: int) -> dict:
@@ -73,7 +73,7 @@ class LikeService:
             await self.likes.insert_one({
                 "fromUser": from_id,
                 "toUser": to_id,
-                "createdAt": datetime.utcnow()
+                "createdAt": datetime.now(timezone.utc)
             })
             from_username = from_user.get("username", f"User #{from_id}")
             await self._create_notification(
@@ -111,7 +111,7 @@ class LikeService:
             await self.matches.insert_one({
                 "user1_id": from_id,
                 "user2_id": to_id,
-                "confirmedAt": datetime.utcnow()
+                "confirmedAt": datetime.now(timezone.utc)
             })
 
             from_username = from_user.get("username", f"User #{from_id}")

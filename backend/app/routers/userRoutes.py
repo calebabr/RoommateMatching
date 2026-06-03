@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 import cloudinary
 import cloudinary.uploader
 from app.auth.dependencies import get_current_user, get_current_user_or_403, verify_match_exists, get_admin_user
+from app.database import users_collection, likes_collection, matches_collection, chat_collection
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
 from app.services.recommendationService import RecommendationService
@@ -323,6 +324,18 @@ async def upload_photo(request: Request, user_id: int, file: UploadFile = File(.
 
 # --- Admin ---
 
+@router.get("/admin/users")
+@limiter.limit("30/minute")
+async def admin_list_users(request: Request, _: dict = Depends(get_admin_user)):
+    cursor = userProfileService.collection.find({})
+    users = []
+    async for user in cursor:
+        user.pop("_id", None)
+        user.pop("hashed_password", None)
+        users.append(user)
+    return users
+
+
 @router.post("/admin/ban/{user_id}")
 async def ban_user(user_id: int, _: dict = Depends(get_admin_user)):
     result = await userProfileService.collection.update_one({"id": user_id}, {"$set": {"is_banned": True}})
@@ -353,3 +366,70 @@ async def recompute_all(request: Request, _: dict = Depends(get_admin_user)):
 
     await recommendationService.recompute_all(user_dicts)
     return {"message": f"Recomputed recommendations for {len(users)} users"}
+
+
+@router.get("/admin/users/{user_id}/activity")
+@limiter.limit("30/minute")
+async def admin_user_activity(request: Request, user_id: int, _: dict = Depends(get_admin_user)):
+    user = await users_collection.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    async def get_username(uid: int) -> str:
+        u = await users_collection.find_one({"id": uid})
+        return u.get("username", f"User #{uid}") if u else "Deleted User"
+
+    # Matches
+    match_docs = await matches_collection.find(
+        {"$or": [{"user1_id": user_id}, {"user2_id": user_id}]}
+    ).to_list(length=None)
+    matches = []
+    for doc in match_docs:
+        partner_id = doc["user2_id"] if doc["user1_id"] == user_id else doc["user1_id"]
+        matches.append({
+            "partner_id": partner_id,
+            "partner_name": await get_username(partner_id),
+            "matched_date": doc.get("confirmedAt"),
+        })
+
+    # Likes sent
+    like_docs = await likes_collection.find({"fromUser": user_id}).to_list(length=None)
+    likes_sent = []
+    for doc in like_docs:
+        to_id = doc["toUser"]
+        likes_sent.append({
+            "to_user_id": to_id,
+            "to_user_name": await get_username(to_id),
+            "created_at": doc.get("createdAt"),
+        })
+
+    # Chat partners — find all unique partners and aggregate per-conversation stats
+    sent_msgs = await chat_collection.find({"fromUser": user_id}).to_list(length=None)
+    received_msgs = await chat_collection.find({"toUser": user_id}).to_list(length=None)
+
+    partner_ids = set()
+    for msg in sent_msgs + received_msgs:
+        other = msg["toUser"] if msg["fromUser"] == user_id else msg["fromUser"]
+        partner_ids.add(other)
+
+    chat_partners = []
+    for partner_id in partner_ids:
+        conversation = [
+            m for m in sent_msgs + received_msgs
+            if (m["fromUser"] == user_id and m["toUser"] == partner_id)
+            or (m["fromUser"] == partner_id and m["toUser"] == user_id)
+        ]
+        message_count = len(conversation)
+        last_ts = max((m["createdAt"] for m in conversation if m.get("createdAt")), default=None)
+        chat_partners.append({
+            "partner_id": partner_id,
+            "partner_name": await get_username(partner_id),
+            "message_count": message_count,
+            "last_message_at": last_ts,
+        })
+
+    return {
+        "matches": matches,
+        "likes_sent": likes_sent,
+        "chat_partners": chat_partners,
+    }

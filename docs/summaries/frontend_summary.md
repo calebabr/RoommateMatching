@@ -60,7 +60,64 @@ All calls go through `src/services/api.js` via a single Axios instance. The base
 - **No email verification** step in signup.
 - **Backend URL setting** is only accessible from the login screen; no way to change it once logged in.
 
-## 6. Notable Patterns
+## 6. Admin Dashboard App (`frontendAdmin/`)
+
+**Session 2026-06-02 (Task P2.2):** A standalone React admin dashboard was built in `frontendAdmin/`. It runs on port 3001, uses its own `AuthContext`, and keeps all admin API calls in a dedicated service so it can be extracted or deployed independently.
+
+### Auth flow
+
+`frontendAdmin/src/context/AuthContext.jsx` stores the JWT in localStorage. On login, the response `is_admin` flag is checked — non-admin users are rejected immediately with an error message. The `App.jsx` auth guard redirects unauthenticated users to `/login`.
+
+### Service layer
+
+`frontendAdmin/src/services/adminApi.js` — centralized Axios client for all admin API calls. Attaches JWT on every request; redirects to `/login` on 401.
+
+### Pages
+
+| Route | Page | Purpose |
+|-------|------|---------|
+| `/login` | `LoginPage` | Email/password login; rejects non-admin accounts |
+| `/users` | `UserListPage` | Lists all users from `GET /api/admin/users`; search bar; status pills (active/banned) |
+| `/users/:id` | `UserDetailPage` | User detail view; ban/unban button with `ConfirmDialog` |
+| `/errors` | `ErrorsPage` | Placeholder for P3AD.1 (Sentry error log view) |
+| `/feedback` | `FeedbackPage` | Placeholder for P3AD.2 (user feedback inbox) |
+
+**Session 2026-06-02 (Task P3AD.3):** `UserDetailPage` was extended with an activity section; `adminApi.js` received a new function.
+
+#### Activity section in `UserDetailPage`
+
+An activity card was added below the existing user detail card. It contains three subsections:
+
+| Subsection | Display |
+|-----------|---------|
+| Matches | Table: Name \| Matched Date |
+| Likes Sent | Name pills (inline chips) |
+| Chat Partners | Table: Name \| Messages \| Last Active |
+
+The activity fetch (`adminGetUserActivity`) runs in parallel with the user fetch inside `useEffect`. Loading state shows `"Loading activity..."` and error state shows `"Could not load activity."` — both are self-contained and do not affect the rest of the page. Styling follows the existing card pattern.
+
+#### `adminApi.js`
+
+`adminGetUserActivity(userId)` added at the end of the service file. Calls `GET /api/admin/users/{userId}/activity` with the admin Bearer token.
+
+### Components
+
+| Component | Purpose |
+|-----------|---------|
+| `Sidebar.jsx` | Nav sidebar with links to Users, Errors, Feedback pages |
+| `ConfirmDialog.jsx` | Modal confirmation prompt used by ban/unban actions |
+
+### Configuration
+
+| File | Purpose |
+|------|---------|
+| `frontendAdmin/.env.example` | Documents `VITE_API_BASE_URL` for this app |
+| `frontendAdmin/vite.config.js` | Dev server on port 3001 |
+| `frontendAdmin/package.json` | Dependencies: `axios ^1.6.0`, `react-router-dom ^6.0.0` |
+
+---
+
+## 7. Notable Patterns
 
 - **Styling**: All inline styles using shared `Colors`/`Radius` constants from `utils/theme.js`; local `const S = {...}` style objects defined at the bottom of each file.
 - **State**: React Context for auth only; all page-level state is local `useState`. No Redux or Zustand.

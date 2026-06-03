@@ -7,7 +7,9 @@ import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 
 function formatTime(dateStr) {
-  const d = new Date(dateStr);
+  if (!dateStr) return '';
+  const s = typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+') ? dateStr + 'Z' : dateStr;
+  const d = new Date(s);
   const h = d.getHours();
   const m = d.getMinutes().toString().padStart(2, '0');
   const ampm = h >= 12 ? 'PM' : 'AM';

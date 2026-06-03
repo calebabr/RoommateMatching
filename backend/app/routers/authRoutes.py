@@ -1,10 +1,11 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from pymongo import ReturnDocument
 from app.database import users_collection, counters_collection
 from app.auth.utils import hash_password, verify_password, create_access_token, validate_password_strength
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, _admin_ids
 from app.limiter import limiter
 from app.models import Preference, ALLOWED_LIFESTYLE_TAGS
 
@@ -102,6 +103,7 @@ async def register(request: Request, body: RegisterRequest):
         "matched": False,
         "matchCount": 0,
         "matchedWith": [],
+        "createdAt": datetime.now(timezone.utc),
         "bio": body.bio,
         "photoUrl": "",
         "lifestyleTags": body.lifestyleTags,
@@ -141,6 +143,7 @@ async def login(request: Request, body: LoginRequest):
 
     user.pop("_id", None)
     user.pop("hashed_password", None)
+    user["is_admin"] = user["id"] in _admin_ids()
 
     token = create_access_token({"sub": str(user["id"])})
     return TokenResponse(access_token=token, user=user)
@@ -148,6 +151,7 @@ async def login(request: Request, body: LoginRequest):
 
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
+    current_user["is_admin"] = current_user["id"] in _admin_ids()
     return current_user
 
 

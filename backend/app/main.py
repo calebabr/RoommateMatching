@@ -122,7 +122,10 @@ app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:3000")],
+    allow_origins=list(filter(None, [
+        os.getenv("FRONTEND_URL", "http://localhost:3000"),
+        os.getenv("ADMIN_FRONTEND_URL"),
+    ])),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
