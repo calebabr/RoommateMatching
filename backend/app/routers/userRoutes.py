@@ -28,7 +28,7 @@ router = APIRouter()
 
 _IMMUTABLE_FIELDS = frozenset({
     "password", "hashed_password", "id", "matched",
-    "matchCount", "matchedWith", "createdAt", "email",
+    "matchCount", "matchedWith", "createdAt", "email", "photoUrl",
 })
 
 userProfileService = UserProfileService()
