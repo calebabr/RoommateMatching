@@ -21,7 +21,6 @@ export default function LoginPage() {
     if (!email.trim() || !password) { setModal({ title: 'Missing Fields', message: 'Please enter your email and password.' }); return; }
     setLoading(true);
     try {
-      setApiBase(serverUrl);
       await login(email.trim(), password);
     } catch (err) {
       const msg = err?.response?.data?.detail || 'Invalid email or password.';
@@ -87,21 +86,25 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <button style={S.serverToggle} onClick={() => setShowServer(s => !s)}>
-          {showServer ? '▼' : '▸'} Server Settings
-        </button>
+        {import.meta.env.DEV && (
+          <>
+            <button style={S.serverToggle} onClick={() => setShowServer(s => !s)}>
+              {showServer ? '▼' : '▸'} Server Settings
+            </button>
 
-        {showServer && (
-          <div style={S.serverCard}>
-            <label style={S.label}>Backend URL</label>
-            <input
-              style={S.input}
-              placeholder="http://192.168.x.x:8000/api"
-              value={serverUrl}
-              onChange={e => { setServerUrl(e.target.value); setApiBase(e.target.value); }}
-            />
-            <p style={S.hint}>Use your machine's local IP when testing on a physical device</p>
-          </div>
+            {showServer && (
+              <div style={S.serverCard}>
+                <label style={S.label}>Backend URL</label>
+                <input
+                  style={S.input}
+                  placeholder="http://192.168.x.x:8000/api"
+                  value={serverUrl}
+                  onChange={e => { setServerUrl(e.target.value); setApiBase(e.target.value); }}
+                />
+                <p style={S.hint}>Use your machine's local IP when testing on a physical device</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
