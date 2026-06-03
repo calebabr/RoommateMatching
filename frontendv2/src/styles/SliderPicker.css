@@ -1,0 +1,29 @@
+.slider-wrapper { margin-top: 4px; }
+
+.slider-label-row {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.slider-value-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.slider-range {
+  width: 100%;
+  /* dynamic background set via inline style (JS-computed gradient) */
+}
+
+.slider-minmax-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.slider-min-label,
+.slider-max-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}

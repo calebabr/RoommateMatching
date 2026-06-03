@@ -1,0 +1,256 @@
+.signup-page {
+  height: 100dvh;
+  background-color: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.signup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 12px;
+  flex-shrink: 0;
+}
+
+.signup-back-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signup-step-row {
+  display: flex;
+  align-items: center;
+}
+
+.signup-step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-border);
+}
+
+.signup-step-dot--active { background-color: var(--color-accent); }
+
+.signup-step-line {
+  width: 24px;
+  height: 2px;
+  background-color: var(--color-border);
+  margin: 0 4px;
+}
+
+.signup-step-line--active { background-color: var(--color-accent); }
+
+.signup-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 60px;
+}
+
+.signup-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 8px 0 4px;
+}
+
+.signup-subtitle {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  margin: 0 0 28px;
+}
+
+.signup-gender-note {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin: 0 0 12px;
+}
+
+.signup-gender-row {
+  display: flex;
+  gap: 12px;
+}
+
+.signup-gender-btn {
+  flex: 1;
+  padding: 20px 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+}
+
+.signup-gender-btn--selected {
+  background-color: var(--color-accent-glow);
+  border-color: var(--color-accent);
+}
+
+.signup-gender-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.signup-gender-label--selected { color: var(--color-accent); }
+
+.signup-bio-count {
+  text-align: right;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin: 4px 0 0;
+}
+
+.signup-photo-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.signup-photo-preview-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--color-accent);
+}
+
+.signup-photo-picker-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.signup-photo-picker-btn {
+  flex: 1;
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  padding: 18px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px dashed var(--color-border);
+  cursor: pointer;
+}
+
+.signup-photo-picker-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.signup-remove-btn {
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.signup-pref-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid var(--color-border);
+}
+
+.signup-pref-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signup-pref-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.signup-pref-dealbreaker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup-pref-dealbreaker-text {
+  font-size: 11px;
+  color: var(--color-danger);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.signup-pref-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 4px 0 16px;
+}
+
+.signup-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.signup-tag-btn {
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-secondary);
+}
+
+.signup-tag-btn--selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-glow);
+  color: var(--color-accent);
+}
+
+.signup-tag-count {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.signup-next-btn {
+  width: 100%;
+  background-color: var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-black);
+  border: none;
+  margin-top: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.signup-next-btn--disabled { opacity: 0.5; }
+
+.signup-input-wrapper { position: relative; }

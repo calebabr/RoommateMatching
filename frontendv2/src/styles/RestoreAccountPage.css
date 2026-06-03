@@ -1,0 +1,105 @@
+.restore-page {
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.restore-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--color-border);
+}
+
+.restore-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.restore-success-msg {
+  font-size: 15px;
+  color: var(--color-success);
+  margin: 0 0 20px;
+  line-height: 22px;
+}
+
+.restore-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.restore-input {
+  width: 100%;
+  background-color: var(--color-bg-input);
+  border-radius: var(--radius-md);
+  padding: 13px 16px;
+  font-size: 15px;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.restore-error {
+  font-size: 13px;
+  color: var(--color-danger);
+  margin: 8px 0 0;
+  line-height: 18px;
+}
+
+.restore-submit-btn {
+  width: 100%;
+  margin-top: 16px;
+  background-color: var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 14px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-black);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restore-submit-btn--disabled { opacity: 0.6; }
+
+.restore-footer {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.restore-login-link {
+  display: block;
+  text-align: center;
+  padding: 12px 0;
+  background-color: var(--color-accent-glow);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-accent);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.restore-inline-login-link {
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: none;
+}

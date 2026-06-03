@@ -1,0 +1,180 @@
+.discover-refresh-btn {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.discover-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.discover-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+}
+
+.discover-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.discover-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 14px;
+}
+
+.discover-user-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.discover-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--color-accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  border: 2px solid var(--color-accent);
+  flex-shrink: 0;
+}
+
+.discover-avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+  border: 2px solid var(--color-accent);
+  flex-shrink: 0;
+}
+
+.discover-username {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.discover-gender {
+  font-size: 11px;
+  color: var(--color-info);
+  font-weight: 600;
+  margin: 2px 0 0;
+}
+
+.discover-bio {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 2px 0 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.discover-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.discover-shared-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-success);
+  margin: 0 0 10px;
+}
+
+.discover-pref-bars { margin-bottom: 14px; }
+
+.discover-pref-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.discover-pref-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  width: 76px;
+  flex-shrink: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.discover-pref-bar-track {
+  flex: 1;
+  height: 4px;
+  background-color: var(--color-border);
+  border-radius: 2px;
+  margin: 0 8px;
+  overflow: hidden;
+}
+
+.discover-pref-bar-fill {
+  height: 100%;
+  background-color: var(--color-accent);
+  border-radius: 2px;
+}
+
+.discover-pref-value {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  width: 18px;
+  text-align: right;
+}
+
+.discover-pending {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 11px 0;
+  text-align: center;
+}
+
+.discover-pending-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.discover-like-btn {
+  width: 100%;
+  background-color: var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 11px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-black);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+}

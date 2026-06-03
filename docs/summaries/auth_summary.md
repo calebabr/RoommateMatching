@@ -27,19 +27,58 @@ Full JWT-based authentication is implemented end-to-end:
 
 ## Auth Endpoints
 
+See the updated endpoint table in the **Token Refresh** section above for the complete list including `/refresh` and `/logout`.
+
+### `POST /api/auth/change-password`
+Requires a valid Bearer token. Request body must include `current_password` (validated against the stored hash) and `new_password` (validated via `validate_password_strength()`). On success, updates the bcrypt hash in the database. Returns 401 if `current_password` is wrong, 422 if `new_password` fails strength requirements, 429 if rate limit exceeded.
+
+## Token Refresh (P3A.1 — 2026-06-03)
+
+A 30-day refresh token layer was added alongside the existing 24-hour access token. The full token lifecycle is now:
+
+1. **Login / Register** — server issues both a 24h access token (JWT) and a 30d refresh token (opaque `secrets.token_urlsafe(32)`). The plain refresh token is returned in the response; its SHA-256 hash is stored on the user document alongside an expiry field (`refresh_token_hash`, `refresh_token_expires`).
+2. **API requests** — access token sent as `Authorization: Bearer <token>` on every request (unchanged).
+3. **Access token expiry (401)** — the queued interceptor in `api.js` pauses all in-flight requests, calls `POST /api/auth/refresh` with the stored refresh token, retries the queue with the new access token on success, or clears all tokens and redirects to `/login` on failure.
+4. **Refresh token rotation** — each successful `/refresh` call generates a new refresh token; the old hash is replaced. Replaying the old token returns 401.
+5. **Logout** — `POST /api/auth/logout` (Bearer-authenticated) `$unset`s `refresh_token_hash` and `refresh_token_expires` from the user document, invalidating the refresh token server-side. `AuthContext.logout()` calls this before clearing localStorage.
+
+### New endpoints
+
+| Method | Path | Auth Required | Rate Limit | Behavior |
+|--------|------|---------------|------------|---------|
+| `POST` | `/api/auth/refresh` | No (refresh token in body) | 10/hr | Validates hash + expiry; rotates token; returns new `access_token` + `refresh_token`; 401 on invalid/expired |
+| `POST` | `/api/auth/logout` | Bearer token | 10/hr | Clears `refresh_token_hash` + `refresh_token_expires` on user document |
+
+### Frontend changes
+
+- `api.js`: `saveRefreshToken`, `loadRefreshToken`, `clearRefreshToken` (localStorage key: `roommatch_refresh_token`); `authRefresh(refreshToken)`, `authLogout()` API functions; queued 401 interceptor (`_isRefreshing` flag + `_refreshQueue`; skips refresh loop if the failing request was itself `/auth/refresh`)
+- `AuthContext.jsx`: `login` and `signup` save `refresh_token` from response; `logout` is async and calls `authLogout()` before clearing localStorage
+
+### Known gap
+
+No database index on `refresh_token_hash`. A sparse index should be added before production (future DB agent task).
+
+---
+
+## Auth Endpoints (updated — includes refresh and logout)
+
 | Method | Path | Auth Required | Rate Limit |
 |--------|------|---------------|------------|
 | `POST` | `/api/auth/register` | No | 3/hour |
 | `POST` | `/api/auth/login` | No | 5/15min |
 | `GET`  | `/api/auth/me` | Bearer token | None |
 | `POST` | `/api/auth/change-password` | Bearer token | 5/hour |
+| `POST` | `/api/auth/forgot-password` | No | 3/hour |
+| `POST` | `/api/auth/reset-password` | No | 5/hour |
+| `POST` | `/api/auth/refresh` | No (refresh token in body) | 10/hour |
+| `POST` | `/api/auth/logout` | Bearer token | 10/hour |
 
-### `POST /api/auth/change-password`
-Requires a valid Bearer token. Request body must include `current_password` (validated against the stored hash) and `new_password` (validated via `validate_password_strength()`). On success, updates the bcrypt hash in the database. Returns 401 if `current_password` is wrong, 422 if `new_password` fails strength requirements, 429 if rate limit exceeded.
+---
 
 ## Gaps / TODOs
 
-- No token refresh mechanism — expiry forces full re-login
+- ~~No token refresh mechanism~~ — resolved in P3A.1 (2026-06-03)
+- No index on `refresh_token_hash` field — add sparse index via DB agent
 - CORS is now scoped to the `FRONTEND_URL` env var (defaults to `http://localhost:3000`); set this to the production frontend origin before deploying
 - No email verification on registration
 - Sequential integer user IDs are more enumerable than UUIDs

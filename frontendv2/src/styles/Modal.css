@@ -1,0 +1,67 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-box {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  border: 1px solid var(--color-border);
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 8px;
+}
+
+.modal-message {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0 0 20px;
+  line-height: 20px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+}
+
+.modal-btn {
+  border-radius: var(--radius-md);
+  padding-top: 13px;
+  padding-bottom: 13px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.modal-btn-primary {
+  background-color: var(--color-accent);
+  color: var(--color-black);
+}
+
+.modal-btn-danger {
+  background-color: var(--color-danger);
+  color: var(--color-white);
+}
+
+.modal-btn-cancel {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1.5px solid var(--color-border);
+}

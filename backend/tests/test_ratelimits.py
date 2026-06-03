@@ -14,7 +14,7 @@ Limits under test (matching Tasks #2 and #3):
 
 Run with:
   cd backend
-  pytest test_ratelimits.py -v
+  pytest tests/test_ratelimits.py -v
 """
 
 import pytest

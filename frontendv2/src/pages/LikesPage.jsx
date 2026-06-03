@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Colors, Radius } from '../utils/theme';
+import { Colors } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { getLikesReceived, sendLike, getUser, getPhotoUrl } from '../services/api';
 import NotificationBell from '../components/NotificationBell';
@@ -54,54 +54,56 @@ export default function LikesPage() {
   };
 
   if (loading) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+    <div className="loading-page">
       <Spinner size={40} />
-      <p style={{ color: Colors.textSecondary, fontSize: 14, margin: 0 }}>Loading likes...</p>
+      <p className="text-secondary" style={{ fontSize: 14, margin: 0 }}>Loading likes...</p>
     </div>
   );
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', backgroundColor: Colors.bg }}>
+    <div className="full-height overflow-y bg-base">
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} />}
 
-      <div style={S.page}>
-        <div style={S.header}>
+      <div className="page-container">
+        <div className="page-header">
           <div>
-            <p style={S.headerTitle}>Likes</p>
-            <p style={S.headerSub}>{likes.length} {likes.length === 1 ? 'person likes' : 'people like'} you</p>
+            <p className="page-header-title">Likes</p>
+            <p className="page-header-sub">{likes.length} {likes.length === 1 ? 'person likes' : 'people like'} you</p>
           </div>
           <NotificationBell />
         </div>
 
         {likes.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 }}>
+          <div className="empty-state">
             <span style={{ fontSize: 56 }}>💌</span>
-            <p style={{ fontSize: 22, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>No Likes Yet</p>
-            <p style={{ fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: '20px', margin: 0 }}>When someone likes you, they'll appear here.</p>
+            <p className="empty-state-title">No Likes Yet</p>
+            <p className="empty-state-desc">When someone likes you, they'll appear here.</p>
           </div>
         ) : (
-          <div style={S.grid}>
+          <div className="likes-grid">
             {likes.map((item, i) => {
               const p = item.profile;
               const photoSrc = getPhotoUrl(p?.photoUrl);
               return (
-                <div key={`${item.fromUser}-${i}`} style={S.card}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, cursor: 'pointer' }} onClick={() => navigate(`/user/${p.id}`)}>
+                <div key={`${item.fromUser}-${i}`} className="likes-card">
+                  <div className="likes-user-row" onClick={() => navigate(`/user/${p.id}`)}>
                     {photoSrc ? (
-                      <img src={photoSrc} alt="" style={S.avatarImg} />
+                      <img src={photoSrc} alt="" className="likes-avatar-img" />
                     ) : (
-                      <div style={S.avatar}><span style={{ fontSize: 22, fontWeight: 800, color: Colors.danger }}>{(p.username || '?')[0].toUpperCase()}</span></div>
+                      <div className="likes-avatar">
+                        <span className="avatar-letter-danger">{(p.username || '?')[0].toUpperCase()}</span>
+                      </div>
                     )}
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 18, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>{p.username || `User #${p.id}`}</p>
-                      <p style={{ fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' }}>Wants to be your roommate!</p>
+                      <p className="likes-username">{p.username || `User #${p.id}`}</p>
+                      <p className="likes-tagline">Wants to be your roommate!</p>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <button style={S.likeBackBtn} onClick={() => handleLikeBack(p.id)} disabled={actionId === p.id}>
+                  <div className="likes-actions">
+                    <button className="likes-like-back-btn" onClick={() => handleLikeBack(p.id)} disabled={actionId === p.id}>
                       {actionId === p.id ? <Spinner size={16} color={Colors.black} /> : '♥ Like Back'}
                     </button>
-                    <button style={S.viewBtn} onClick={() => navigate(`/user/${p.id}`)}>View Profile</button>
+                    <button className="likes-view-btn" onClick={() => navigate(`/user/${p.id}`)}>View Profile</button>
                   </div>
                 </div>
               );
@@ -112,16 +114,3 @@ export default function LikesPage() {
     </div>
   );
 }
-
-const S = {
-  page:       { padding: '28px 32px 40px' },
-  header:     { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  headerTitle:{ fontSize: 24, fontWeight: 800, color: Colors.textPrimary, margin: 0 },
-  headerSub:  { fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' },
-  grid:       { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 },
-  card:       { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 20, border: `1px solid ${Colors.border}`, display: 'flex', flexDirection: 'column' },
-  avatar:     { width: 52, height: 52, borderRadius: '50%', backgroundColor: Colors.dangerDim, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 14, border: `2px solid ${Colors.danger}`, flexShrink: 0 },
-  avatarImg:  { width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', marginRight: 14, border: `2px solid ${Colors.danger}`, flexShrink: 0 },
-  likeBackBtn:{ flex: 1, backgroundColor: Colors.accent, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 700, color: Colors.black, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  viewBtn:    { flex: 1, backgroundColor: 'transparent', border: `1.5px solid ${Colors.border}`, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 600, color: Colors.textSecondary, cursor: 'pointer' },
-};

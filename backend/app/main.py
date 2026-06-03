@@ -162,14 +162,14 @@ class SecurityHeadersMiddleware:
                 headers["X-Content-Type-Options"] = "nosniff"
                 headers["X-Frame-Options"] = "DENY"
                 headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-                # unsafe-inline for style-src/script-src is temporary until inline styles/scripts are extracted
                 # img-src includes cloudinary for profile photo uploads
                 # connect-src includes production API host for cross-origin API calls
+                # unsafe-inline removed from style-src and script-src after frontend CSS migration completed
                 headers["Content-Security-Policy"] = (
                     "default-src 'self'; "
                     "img-src 'self' data: https://res.cloudinary.com; "
-                    "script-src 'self' 'unsafe-inline'; "
-                    "style-src 'self' 'unsafe-inline'; "
+                    "script-src 'self'; "
+                    "style-src 'self'; "
                     "connect-src 'self' https://roommatematching.onrender.com"
                 )
                 headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"

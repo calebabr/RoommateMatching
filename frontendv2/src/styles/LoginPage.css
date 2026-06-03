@@ -1,0 +1,57 @@
+.login-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.login-divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.login-divider-text {
+  margin: 0 14px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.login-forgot-row {
+  text-align: right;
+  margin: 8px 0 4px;
+}
+
+.login-forgot-link {
+  font-size: 13px;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.login-server-toggle {
+  display: block;
+  margin: 28px auto 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.login-server-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.login-server-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin: 8px 0 0;
+}
+
+.login-input-wrapper { position: relative; }
+
+.login-input-padded { padding-right: 40px !important; }

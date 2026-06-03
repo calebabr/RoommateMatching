@@ -1,3 +1,9 @@
+"""
+Conftest for the backend/tests/ directory.
+
+Applies to all test files in this directory and subdirectories.
+"""
+import os
 import pytest
 from pymongo import MongoClient
 from unittest.mock import AsyncMock, MagicMock
@@ -5,8 +11,28 @@ import app.database
 import app.routers.authRoutes
 import app.auth.dependencies
 
+os.environ.setdefault("ROOMMATCH_ENV", "test")
+os.environ.setdefault("SECRET_KEY", "dev-only-secret-not-for-production")
+
 TEST_MONGO_URL = "mongodb://localhost:27017/"
 TEST_DB_NAME = "roommatch_test"
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Reset in-memory slowapi storage before each test.
+
+    Without this, successful register/login calls in one test file exhaust the
+    per-IP rate limit budget and cause 429 failures in later tests that run in
+    the same pytest session.
+    """
+    from app.limiter import limiter
+    storage = limiter._storage
+    if hasattr(storage, "reset"):
+        storage.reset()
+    elif hasattr(storage, "_storage") and isinstance(storage._storage, dict):
+        storage._storage.clear()
+    yield
 
 
 @pytest.fixture(scope="session", autouse=True)

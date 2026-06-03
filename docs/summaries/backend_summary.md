@@ -41,6 +41,8 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - `POST /api/auth/change-password` — requires Bearer token; validates `current_password`; enforces password strength on `new_password`; rate-limited 5/hour
 - `POST /api/auth/forgot-password` — accepts `email`; rate-limited 3/hour; always returns HTTP 200 (no email enumeration); returns reset token in response body (no email delivery yet — dev/MVP mode only)
 - `POST /api/auth/reset-password` — accepts `token` + `new_password`; rate-limited 5/hour; validates SHA-256-hashed token + expiry stored on user document; enforces password strength; clears token fields on success
+- `POST /api/auth/refresh` — accepts `refresh_token` in body; rate-limited 10/hour; validates SHA-256 hash + expiry; rotates token (new hash replaces old on user document); returns new `access_token` + `refresh_token`; 401 on invalid/expired/missing
+- `POST /api/auth/logout` — requires Bearer token; rate-limited 10/hour; `$unset` clears `refresh_token_hash` and `refresh_token_expires` from user document, invalidating the refresh token server-side
 
 **Matching** (`/api`)
 - `POST /api/matchScore`
@@ -167,12 +169,20 @@ Current CSP and all security header values after the fix:
 | `Content-Security-Policy` | `default-src 'self'; img-src 'self' res.cloudinary.com data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https://roommatematching.onrender.com` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
 
-**CSP notes:**
-- `style-src 'unsafe-inline'` is required because the frontend uses inline styles via `utils/theme.js`.
-- `script-src 'unsafe-inline'` was added in the 2026-06-03 fix; it prevents an A+ rating. Removing it requires migrating all inline scripts to external `.js` files (tracked as a Phase 3 backlog item).
-- The fix has been applied locally and is pending deployment + re-scan on `securityheaders.com`.
+**CSP notes (updated 2026-06-03 — P3A.6):** `'unsafe-inline'` was removed from both `style-src` and `script-src` following the frontend CSS migration (see frontend_summary.md Section 8). Current CSP no longer contains any `unsafe-inline` directives.
 
-Test coverage: `backend/test_security_headers.py` — expanded from 2 loose assertions to 8 precise assertions covering every CSP directive and all Permissions-Policy entries (updated 2026-06-03).
+Current CSP and all security header values after P3A.6:
+
+| Header | Value |
+|--------|-------|
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Content-Security-Policy` | `default-src 'self'; img-src 'self' res.cloudinary.com data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'self' https://roommatematching.onrender.com` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
+
+Test coverage: `backend/test_security_headers.py` — assertions updated to confirm `unsafe-inline` is absent from both `script-src` and `style-src`.
 
 ## 8. Admin Gating
 
@@ -356,7 +366,45 @@ Missing partner users are surfaced as `"Deleted User"` rather than an error. All
 
 ---
 
-## 16. Security Audit (OWASP Top 10)
+## 16. Token Refresh Mechanism
+
+**Session 2026-06-03 (Task P3A.1):** A 30-day refresh token layer was added to `authRoutes.py`.
+
+### New Pydantic models
+
+| Model | Fields |
+|-------|--------|
+| `TokenResponse` | `refresh_token: Optional[str] = None` added |
+| `RefreshRequest` | `refresh_token: str` |
+
+### Helper
+
+`_generate_refresh_token(user_id)` — async; generates `secrets.token_urlsafe(32)`, SHA-256 hashes it, stores `refresh_token_hash` + `refresh_token_expires` (30 days from now) on the user document, returns the plain token.
+
+### New endpoints
+
+| Endpoint | Rate limit | Behavior |
+|----------|-----------|---------|
+| `POST /api/auth/refresh` | 10/hour | Validates `refresh_token` hash + expiry; rotates token; returns new `access_token` + `refresh_token`; 401 on invalid/expired/missing |
+| `POST /api/auth/logout` | 10/hour, Bearer required | `$unset` clears `refresh_token_hash` + `refresh_token_expires` from user document |
+
+### Login and register changes
+
+Both `/login` and `/register` now call `_generate_refresh_token` and include the plain token in `TokenResponse`.
+
+### Known gap
+
+No database index on `refresh_token_hash`. A sparse index on this field should be added before production.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `app/routers/authRoutes.py` | `TokenResponse.refresh_token`, `RefreshRequest`, `_generate_refresh_token`, `/refresh`, `/logout`; login + register updated |
+
+---
+
+## 17. Security Audit (OWASP Top 10)
 
 **Session 2026-06-03 (Task P2.24):** A full OWASP Top 10 (2021) audit was conducted and documented at `backend/SECURITY_AUDIT_FINAL.md`.
 

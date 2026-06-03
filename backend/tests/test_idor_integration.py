@@ -10,7 +10,7 @@ Prerequisites:
 
 Run with:
   cd backend
-  pytest test_idor_integration.py -v
+  pytest tests/test_idor_integration.py -v
 
 Cleanup: all test users created here are deleted in the session-scoped teardown.
 """

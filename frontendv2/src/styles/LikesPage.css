@@ -1,0 +1,89 @@
+.likes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.likes-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.likes-user-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.likes-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--color-danger-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  border: 2px solid var(--color-danger);
+  flex-shrink: 0;
+}
+
+.likes-avatar-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 14px;
+  border: 2px solid var(--color-danger);
+  flex-shrink: 0;
+}
+
+.likes-username {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.likes-tagline {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 2px 0 0;
+}
+
+.likes-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.likes-like-back-btn {
+  flex: 1;
+  background-color: var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-black);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.likes-view-btn {
+  flex: 1;
+  background-color: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}

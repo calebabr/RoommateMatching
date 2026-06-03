@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Colors, Radius } from './utils/theme';
 
 import LoginPage          from './pages/LoginPage';
 import SignupPage         from './pages/SignupPage';
@@ -56,57 +55,45 @@ function SidebarLayout() {
   const sidebarW = !isMobile && collapsed ? 64 : 220;
 
   return (
-    <div style={{ display: 'flex', height: '100dvh', backgroundColor: Colors.bg, overflow: 'hidden', position: 'relative' }}>
+    <div className="app-shell">
 
       {/* Backdrop (mobile only) */}
       {isMobile && sidebarOpen && (
         <div
+          className="sidebar-backdrop"
           onClick={() => setSidebarOpen(false)}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 40 }}
         />
       )}
 
       {/* ── Sidebar ── */}
-      <aside style={{
-        position:        isMobile ? 'fixed' : 'relative',
-        top:             0,
-        bottom:          0,
-        left:            isMobile ? (sidebarOpen ? 0 : -(sidebarW + 20)) : 0,
-        width:           sidebarW,
-        zIndex:          isMobile ? 50 : 'auto',
-        flexShrink:      0,
-        backgroundColor: Colors.bgCard,
-        borderRight:     `1px solid ${Colors.border}`,
-        display:         'flex',
-        flexDirection:   'column',
-        transition:      'left 0.26s ease, width 0.2s ease',
-        overflow:        'hidden',
-        boxShadow:       isMobile && sidebarOpen ? '6px 0 32px rgba(0,0,0,0.4)' : 'none',
-      }}>
+      <aside
+        className={`sidebar ${isMobile ? '' : 'sidebar--desktop'}`}
+        style={{
+          position:   isMobile ? 'fixed' : 'relative',
+          left:       isMobile ? (sidebarOpen ? 0 : -(sidebarW + 20)) : 0,
+          width:      sidebarW,
+          zIndex:     isMobile ? 50 : 'auto',
+          boxShadow:  isMobile && sidebarOpen ? '6px 0 32px rgba(0,0,0,0.4)' : 'none',
+        }}
+      >
 
         {/* Logo row */}
-        <div style={{
-          padding: '18px 14px 16px',
-          borderBottom: `1px solid ${Colors.border}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
-        }}>
+        <div className={`sidebar-logo-row ${collapsed && !isMobile ? 'sidebar-logo-row--collapsed' : 'sidebar-logo-row--expanded'}`}>
           {collapsed && !isMobile ? (
             <span style={{ fontSize: 26 }}>🏠</span>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="sidebar-brand">
               <span style={{ fontSize: 26 }}>🏠</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: Colors.accent }}>RoomMatch</span>
+              <span className="sidebar-brand-name">RoomMatch</span>
             </div>
           )}
 
           {/* Desktop collapse toggle */}
           {!isMobile && (
             <button
+              className="sidebar-icon-btn sidebar-collapse-btn"
               onClick={() => setCollapsed(c => !c)}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              style={{ background: 'none', border: 'none', color: Colors.textMuted, cursor: 'pointer', fontSize: 15, padding: 4, lineHeight: 1, flexShrink: 0 }}
             >
               {collapsed ? '›' : '‹'}
             </button>
@@ -115,8 +102,8 @@ function SidebarLayout() {
           {/* Mobile close button */}
           {isMobile && (
             <button
+              className="sidebar-icon-btn sidebar-close-btn"
               onClick={() => setSidebarOpen(false)}
-              style={{ background: 'none', border: 'none', color: Colors.textSecondary, cursor: 'pointer', fontSize: 22, padding: 4, lineHeight: 1 }}
             >
               ✕
             </button>
@@ -124,7 +111,7 @@ function SidebarLayout() {
         </div>
 
         {/* Nav items */}
-        <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
+        <nav className="sidebar-nav">
           {tabs.map(tab => {
             const active =
               location.pathname === tab.path ||
@@ -133,28 +120,11 @@ function SidebarLayout() {
             return (
               <button
                 key={tab.path}
+                className={`sidebar-nav-item ${iconOnly ? 'sidebar-nav-item--collapsed' : 'sidebar-nav-item--expanded'} ${active ? 'sidebar-nav-item--active' : 'sidebar-nav-item--inactive'}`}
                 onClick={() => { navigate(tab.path); if (isMobile) setSidebarOpen(false); }}
                 title={iconOnly ? tab.label : undefined}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: iconOnly ? 'center' : 'flex-start',
-                  gap: iconOnly ? 0 : 12,
-                  padding: iconOnly ? '12px 0' : '11px 14px',
-                  borderRadius: Radius.md,
-                  backgroundColor: active ? Colors.accentGlow : 'transparent',
-                  border: `1px solid ${active ? Colors.accent + '40' : 'transparent'}`,
-                  color: active ? Colors.accent : Colors.textSecondary,
-                  fontSize: 15,
-                  fontWeight: active ? 700 : 500,
-                  cursor: 'pointer',
-                  marginBottom: 6,
-                  textAlign: 'left',
-                  transition: 'all 0.15s',
-                }}
               >
-                <span style={{ fontSize: 20 }}>{TAB_ICONS[tab.label]}</span>
+                <span className="sidebar-nav-icon">{TAB_ICONS[tab.label]}</span>
                 {!iconOnly && tab.label}
               </button>
             );
@@ -163,24 +133,18 @@ function SidebarLayout() {
       </aside>
 
       {/* ── Main content ── */}
-      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <main className="app-main">
 
         {/* Mobile top bar */}
         {isMobile && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '10px 16px',
-            backgroundColor: Colors.bgCard,
-            borderBottom: `1px solid ${Colors.border}`,
-            flexShrink: 0,
-          }}>
+          <div className="mobile-topbar">
             <button
+              className="mobile-topbar-menu-btn"
               onClick={() => setSidebarOpen(true)}
-              style={{ background: 'none', border: 'none', fontSize: 22, color: Colors.textPrimary, cursor: 'pointer', padding: 4, lineHeight: 1 }}
             >
               ☰
             </button>
-            <span style={{ fontSize: 17, fontWeight: 800, color: Colors.accent }}>🏠 RoomMatch</span>
+            <span className="mobile-topbar-brand">🏠 RoomMatch</span>
           </div>
         )}
 
@@ -195,10 +159,10 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div style={{ height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg }}>
-        <div style={{ textAlign: 'center' }}>
+      <div className="app-loading">
+        <div className="app-loading-inner">
           <span style={{ fontSize: 56 }}>🏠</span>
-          <p style={{ color: Colors.accent, fontWeight: 700, marginTop: 12, margin: '12px 0 0' }}>RoomMatch</p>
+          <p className="app-loading-name">RoomMatch</p>
         </div>
       </div>
     );

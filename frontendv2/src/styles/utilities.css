@@ -1,0 +1,348 @@
+/* ── Backgrounds ── */
+.bg-base       { background-color: var(--color-bg); }
+.bg-card       { background-color: var(--color-bg-card); }
+.bg-card-light { background-color: var(--color-bg-card-light); }
+.bg-input      { background-color: var(--color-bg-input); }
+.bg-accent-glow{ background-color: var(--color-accent-glow); }
+.bg-success-dim{ background-color: var(--color-success-dim); }
+.bg-danger-dim { background-color: var(--color-danger-dim); }
+.bg-info-dim   { background-color: var(--color-info-dim); }
+
+/* ── Text ── */
+.text-primary   { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted     { color: var(--color-text-muted); }
+.text-accent    { color: var(--color-accent); }
+.text-danger    { color: var(--color-danger); }
+.text-success   { color: var(--color-success); }
+.text-info      { color: var(--color-info); }
+.text-black     { color: var(--color-black); }
+.text-white     { color: var(--color-white); }
+
+/* ── Borders ── */
+.border-default { border: 1px solid var(--color-border); }
+.border-accent  { border: 1px solid var(--color-accent); }
+.border-danger  { border: 1px solid var(--color-danger); }
+.border-success { border: 1px solid var(--color-success); }
+
+/* ── Layout ── */
+.flex-center  { display: flex; align-items: center; justify-content: center; }
+.flex-col     { display: flex; flex-direction: column; }
+.flex-row     { display: flex; flex-direction: row; }
+.full-height  { height: 100%; }
+.full-width   { width: 100%; }
+.overflow-y   { overflow-y: auto; }
+
+/* ── Border radius ── */
+.radius-sm   { border-radius: var(--radius-sm); }
+.radius-md   { border-radius: var(--radius-md); }
+.radius-lg   { border-radius: var(--radius-lg); }
+.radius-xl   { border-radius: var(--radius-xl); }
+.radius-full { border-radius: var(--radius-full); }
+.radius-circle { border-radius: 50%; }
+
+/* ── Common shared form elements ── */
+.form-input {
+  width: 100%;
+  background-color: var(--color-bg-input);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 16px;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.btn-primary {
+  width: 100%;
+  background-color: var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-black);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  width: 100%;
+  background-color: transparent;
+  border: 1.5px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 14px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.btn-disabled { opacity: 0.6; }
+
+/* ── Auth page shared layout ── */
+.auth-page {
+  height: 100dvh;
+  background-color: var(--color-bg);
+  overflow-y: auto;
+}
+
+.auth-scroll {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+.auth-brand {
+  text-align: center;
+  padding-top: 60px;
+  margin-bottom: 36px;
+}
+
+.auth-brand-title {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--color-accent);
+  letter-spacing: 1px;
+  margin: 12px 0 6px;
+}
+
+.auth-brand-subtitle {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.auth-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--color-border);
+}
+
+.auth-card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 4px;
+}
+
+.auth-card-desc {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0 0 24px;
+}
+
+.input-group { margin-bottom: 20px; }
+
+/* ── Page header pattern ── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-header-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.page-header-sub {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 2px 0 0;
+}
+
+/* ── Page container ── */
+.page-container { padding: 28px 32px 40px; }
+
+/* ── Spinner animation ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Modal fade ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Loading page ── */
+.loading-page {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  gap: 12px;
+}
+
+.empty-state-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.empty-state-desc {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 20px;
+  margin: 0;
+}
+
+/* ── Password toggle button ── */
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #888;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Overlay / inline modal ── */
+.overlay-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.inline-modal {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--color-border);
+}
+
+.modal-action-btn {
+  flex: 1;
+  border-radius: var(--radius-md);
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+/* ── Profile/pref grid ── */
+.pref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.pref-card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  border: 1px solid var(--color-border);
+}
+
+/* ── Tag pill ── */
+.tag-pill {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tag-pill-accent {
+  background-color: var(--color-accent-glow);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+}
+
+.tag-pill-success {
+  background-color: var(--color-success-dim);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.tag-pill-info {
+  background-color: var(--color-info-dim);
+  border: 1px solid var(--color-info);
+  color: var(--color-info);
+}
+
+.tag-pill-neutral {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+/* ── Avatar circle ── */
+.avatar-circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* ── Two-col layout ── */
+.two-col-layout {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.col-left-280 { width: 280px; flex-shrink: 0; }
+.col-right-flex { flex: 1; min-width: 0; }
+
+/* ── Avatar initial letter colors ── */
+.avatar-letter-accent   { font-size: 18px; font-weight: 800; color: var(--color-accent); }
+.avatar-letter-success  { font-size: 22px; font-weight: 800; color: var(--color-success); }
+.avatar-letter-danger   { font-size: 22px; font-weight: 800; color: var(--color-danger); }
+.avatar-letter-muted    { font-size: 16px; font-weight: 700; color: var(--color-text-muted); }
+
+/* ── Back button ── */
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 15px;
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}

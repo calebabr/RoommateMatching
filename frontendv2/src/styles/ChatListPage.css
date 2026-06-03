@@ -1,0 +1,68 @@
+.chatlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 800px;
+}
+
+.chatlist-card {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.chatlist-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 14px;
+  border: 2px solid var(--color-success);
+  flex-shrink: 0;
+}
+
+.chatlist-avatar-fallback {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--color-success-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  border: 2px solid var(--color-success);
+  flex-shrink: 0;
+}
+
+.chatlist-info { flex: 1; overflow: hidden; }
+
+.chatlist-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.chatlist-username {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.chatlist-time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.chatlist-preview {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

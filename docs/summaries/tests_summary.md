@@ -2,7 +2,7 @@
 
 ## 1. Current State
 
-Twenty backend test files now exist: two legacy scripts, fourteen pytest modules in the root `backend/` directory, and four new pytest modules in `backend/tests/`. Unit tests, pytest fixtures, an isolated test database, a shared helpers module, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present. Total: 231 tests, all passing.
+Twenty-one backend test files now exist: two legacy scripts, fourteen pytest modules in the root `backend/` directory, and five new pytest modules in `backend/tests/`. Unit tests, pytest fixtures, an isolated test database, a shared helpers module, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present. Total: 240 tests, all passing.
 
 ## 2. Test Files
 
@@ -30,6 +30,7 @@ Twenty backend test files now exist: two legacy scripts, fourteen pytest modules
 | `backend/tests/test_block.py` | pytest | 9 | Block/unblock, auto-unmatch, bidirectional discover/likes/matches filter, chat blocked 403; uses `helpers.py` test DB |
 | `backend/tests/test_report.py` | pytest | 14 | Create, reason enum validation, rate limit (5/day), auto-block, self-report 400, admin list/filter/resolve, non-admin 403; uses `helpers.py` test DB |
 | `backend/tests/test_deletion.py` | pytest | 15 | Soft-delete, restore (valid/invalid/expired token), export contents, hard-delete cascade, Cloudinary call, cleanup expired/non-expired, end-to-end DELETE endpoint; uses `helpers.py` test DB |
+| `backend/tests/test_token_refresh.py` | pytest | 8 | Token refresh and logout: login/register return refresh_token, valid refresh → 200 + new tokens, rotation (new token differs), invalid token 401, used/rotated token 401, logout-then-refresh 401, new access_token authenticates at /me |
 | `backend/app/test/` | JSON data only | — | `usersTest20.json`, `usersTest250.json`, `usersTest1000.json` — seed data, not automated tests |
 
 ## 3. Test Infrastructure
@@ -48,7 +49,7 @@ Twenty backend test files now exist: two legacy scripts, fourteen pytest modules
 - **Gender-gated matching**: no test that users only see same-gender recommendations
 - **MAX\_MATCHES cap**: no test enforcing the 5-match limit
 - **Cluster/recommendation algorithm**: recompute is called but internal clustering logic is untested
-- **Token invalidation on logout**: no logout endpoint exists, so this is untested
+- **Token invalidation on logout**: `POST /api/auth/logout` now exists; `test_token_refresh.py` test 7 verifies logout invalidates the refresh token
 - **Frontend**: zero test files; no Vitest, no React Testing Library, no component tests, no E2E tests
 - **Legacy scripts not converted**: `test_api.py` and `test_api_v2.py` are still plain Python scripts, not pytest modules
 
@@ -72,6 +73,8 @@ Twenty backend test files now exist: two legacy scripts, fourteen pytest modules
 - Block system tests — `test_block.py` (9 tests) covers block/unblock, auto-unmatch, bidirectional discover/likes/matches filtering, and chat-blocked 403; shared `helpers.py` infrastructure (2026-06-03)
 - Report system tests — `test_report.py` (14 tests) covers create, enum validation, rate limit enforcement (5/day), auto-block on report, self-report 400, admin list/filter/resolve, and non-admin 403 (2026-06-03)
 - Deletion system tests — `test_deletion.py` (15 tests) covers soft-delete, restore (valid/invalid/expired), data export contents, hard-delete cascade, Cloudinary call, cleanup expired/non-expired accounts, and DELETE endpoint round-trip (2026-06-03)
+- Token refresh tests — `test_token_refresh.py` (8 tests) covers login/register returning refresh_token, valid refresh returning new tokens, token rotation correctness, invalid/used token 401, logout-then-refresh 401, and new access token authenticating at `/me` (2026-06-03)
+- Security headers test updated — `test_security_headers.py` stale `unsafe-inline` assertions removed; two `not in` assertions added confirming `unsafe-inline` absent from `script-src` and `style-src` after P3A.6 CSS migration (2026-06-03)
 
 **Still TODO**
 - Unit-test `matchScore.py` directly without HTTP round-trips

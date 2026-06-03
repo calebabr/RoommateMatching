@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Colors, Radius } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import { getNotifications, markNotificationsRead } from '../services/api';
 import Spinner from '../components/Spinner';
@@ -42,54 +41,54 @@ export default function NotificationsPage() {
   }, [user?.id]);
 
   if (loading) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg }}>
+    <div className="full-height flex-center bg-base">
       <Spinner size={40} />
     </div>
   );
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', backgroundColor: Colors.bg }}>
-      <div style={S.page}>
+    <div className="full-height overflow-y bg-base">
+      <div className="page-container">
         {/* Header */}
-        <div style={S.header}>
-          <button style={S.backBtn} onClick={() => navigate(-1)}>← Back</button>
-          <span style={{ fontSize: 24, fontWeight: 800, color: Colors.textPrimary }}>Activity</span>
-          <div style={{ width: 80 }} />
+        <div className="page-header">
+          <button className="notifications-back-btn" onClick={() => navigate(-1)}>← Back</button>
+          <span className="notifications-header-title">Activity</span>
+          <div className="notifications-header-spacer" />
         </div>
 
         {notifications.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 }}>
+          <div className="empty-state">
             <span style={{ fontSize: 56 }}>🔔</span>
-            <p style={{ fontSize: 22, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>No Activity Yet</p>
-            <p style={{ fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: '20px', margin: 0 }}>Likes, matches, and updates will appear here.</p>
+            <p className="empty-state-title">No Activity Yet</p>
+            <p className="empty-state-desc">Likes, matches, and updates will appear here.</p>
           </div>
         ) : (
-          <div style={S.list}>
+          <div className="notifications-list">
             {notifications.map(item => {
               const icon  = NOTIF_ICON[item.type]  || '🔔';
-              const color = NOTIF_COLOR[item.type] || Colors.accent;
+              const color = NOTIF_COLOR[item.type] || 'var(--color-accent)';
               const clickable = item.type === 'like_received' || item.type === 'match_created';
               return (
                 <div
                   key={item.id}
-                  style={{
-                    display: 'flex', alignItems: 'center',
-                    backgroundColor: item.read ? Colors.bgCard : Colors.accentGlow,
-                    borderRadius: Radius.md, padding: 16,
-                    border: `1px solid ${item.read ? Colors.border : Colors.accent + '40'}`,
-                    cursor: clickable ? 'pointer' : 'default',
-                  }}
+                  className={`notifications-item ${item.read ? 'notifications-item--read' : 'notifications-item--unread'} ${clickable ? 'notifications-item--clickable' : 'notifications-item--static'}`}
                   onClick={() => clickable && navigate(`/user/${item.fromUser}`)}
                 >
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: color + '20', border: `1.5px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 14, flexShrink: 0 }}>
-                    <span style={{ fontSize: 20 }}>{icon}</span>
+                  <div
+                    className="notifications-icon-circle"
+                    style={{ backgroundColor: color + '20', border: `1.5px solid ${color}` }}
+                  >
+                    <span className="notifications-icon-emoji">{icon}</span>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: Colors.textPrimary, lineHeight: '20px', margin: '0 0 4px' }}>{item.message}</p>
-                    <p style={{ fontSize: 12, color: Colors.textMuted, margin: 0 }}>{timeAgo(item.createdAt)}</p>
+                  <div className="notifications-content">
+                    <p className="notifications-message">{item.message}</p>
+                    <p className="notifications-time">{timeAgo(item.createdAt)}</p>
                   </div>
                   {!item.read && (
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: color, marginLeft: 8, flexShrink: 0 }} />
+                    <div
+                      className="notifications-unread-dot"
+                      style={{ backgroundColor: color }}
+                    />
                   )}
                 </div>
               );
@@ -100,10 +99,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-
-const S = {
-  page:    { padding: '28px 32px 40px' },
-  header:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  backBtn: { background: 'none', border: 'none', fontSize: 15, color: Colors.accent, fontWeight: 600, cursor: 'pointer', padding: 0 },
-  list:    { display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 800 },
-};

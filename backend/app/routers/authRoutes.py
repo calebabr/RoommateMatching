@@ -1,4 +1,6 @@
-from datetime import datetime, timezone
+import secrets
+import hashlib
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
@@ -75,6 +77,23 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: dict
+    refresh_token: Optional[str] = None
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str = Field(..., max_length=128)
+
+
+async def _generate_refresh_token(user_id: int) -> str:
+    """Generate a new refresh token, store its hash on the user doc, return plain token."""
+    plain = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(plain.encode()).hexdigest()
+    expires = datetime.now(timezone.utc) + timedelta(days=30)
+    await users_collection.update_one(
+        {"id": user_id},
+        {"$set": {"refresh_token_hash": token_hash, "refresh_token_expires": expires}},
+    )
+    return plain
 
 
 async def _get_next_id() -> int:
@@ -139,7 +158,8 @@ async def register(request: Request, body: RegisterRequest):
         pass  # never block registration if recompute fails
 
     token = create_access_token({"sub": str(user_id)})
-    return TokenResponse(access_token=token, user=user_doc)
+    refresh_token = await _generate_refresh_token(user_id)
+    return TokenResponse(access_token=token, refresh_token=refresh_token, user=user_doc)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -161,13 +181,43 @@ async def login(request: Request, body: LoginRequest):
     user["is_admin"] = user["id"] in _admin_ids()
 
     token = create_access_token({"sub": str(user["id"])})
-    return TokenResponse(access_token=token, user=user)
+    refresh_token = await _generate_refresh_token(user["id"])
+    return TokenResponse(access_token=token, refresh_token=refresh_token, user=user)
 
 
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
     current_user["is_admin"] = current_user["id"] in _admin_ids()
     return current_user
+
+
+@router.post("/refresh")
+@limiter.limit("10/hour")
+async def refresh_token(request: Request, body: RefreshRequest):
+    """Exchange a valid refresh token for a new access token and rotated refresh token."""
+    token_hash = hashlib.sha256(body.refresh_token.encode()).hexdigest()
+    now = datetime.now(timezone.utc)
+    user = await users_collection.find_one({"refresh_token_hash": token_hash})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    expires = user.get("refresh_token_expires")
+    if expires is None or (expires.tzinfo is None and expires.replace(tzinfo=timezone.utc) <= now) or (expires.tzinfo is not None and expires <= now):
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    # Rotate: generate new refresh token
+    new_refresh = await _generate_refresh_token(user["id"])
+    new_access = create_access_token({"sub": str(user["id"])})
+    return {"access_token": new_access, "refresh_token": new_refresh, "token_type": "bearer"}
+
+
+@router.post("/logout")
+@limiter.limit("10/hour")
+async def logout(request: Request, current_user: dict = Depends(get_current_user)):
+    """Invalidate the current user's refresh token."""
+    await users_collection.update_one(
+        {"id": current_user["id"]},
+        {"$unset": {"refresh_token_hash": "", "refresh_token_expires": ""}},
+    )
+    return {"message": "Logged out"}
 
 
 class ChangePasswordRequest(BaseModel):

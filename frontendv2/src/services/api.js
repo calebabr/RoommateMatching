@@ -20,6 +20,10 @@ export const saveToken  = (token) => localStorage.setItem('token', token);
 export const loadToken  = ()      => localStorage.getItem('token');
 export const clearToken = ()      => localStorage.removeItem('token');
 
+export const saveRefreshToken  = (t) => localStorage.setItem('roommatch_refresh_token', t);
+export const loadRefreshToken  = ()  => localStorage.getItem('roommatch_refresh_token');
+export const clearRefreshToken = ()  => localStorage.removeItem('roommatch_refresh_token');
+
 // Attach JWT on every request
 api.interceptors.request.use((config) => {
   const token = loadToken();
@@ -27,25 +31,67 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// On 401, clear token and redirect to login
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err?.response?.status === 401) {
-      clearToken();
-      clearSession();
-      window.location.href = '/login';
-    }
-    return Promise.reject(err);
-  }
-);
-
 // ── Auth ───────────────────────────────────────────────────────────────────
 export const authLogin         = (email, password)            => api.post('/auth/login', { email, password }).then(r => r.data);
 export const authRegister      = (email, password, data)      => api.post('/auth/register', { email, password, ...data }).then(r => r.data);
 export const authMe            = ()                            => api.get('/auth/me').then(r => r.data);
 export const authForgotPassword = (email)                     => api.post('/auth/forgot-password', { email }).then(r => r.data);
 export const authResetPassword  = (token, newPassword)        => api.post('/auth/reset-password', { token, new_password: newPassword }).then(r => r.data);
+export const authRefresh       = (refreshToken)               => api.post('/auth/refresh', { refresh_token: refreshToken }).then(r => r.data);
+export const authLogout        = ()                           => api.post('/auth/logout').then(r => r.data).catch(() => {});
+
+// ── 401 interceptor with token refresh ────────────────────────────────────
+let _isRefreshing = false;
+let _refreshQueue = [];
+
+const _processQueue = (error, token = null) => {
+  _refreshQueue.forEach(({ resolve, reject }) => error ? reject(error) : resolve(token));
+  _refreshQueue = [];
+};
+
+api.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const original = err.config;
+    if (err?.response?.status === 401 && !original._retry) {
+      const refreshToken = loadRefreshToken();
+      // Don't try to refresh if the failing call was itself the refresh endpoint
+      if (!refreshToken || original.url?.includes('/auth/refresh')) {
+        clearToken(); clearRefreshToken(); clearSession();
+        window.location.href = '/login';
+        return Promise.reject(err);
+      }
+      if (_isRefreshing) {
+        // Queue this request to retry once refresh completes
+        return new Promise((resolve, reject) => {
+          _refreshQueue.push({ resolve, reject });
+        }).then(token => {
+          original.headers['Authorization'] = `Bearer ${token}`;
+          return api(original);
+        });
+      }
+      original._retry = true;
+      _isRefreshing = true;
+      try {
+        const data = await api.post('/auth/refresh', { refresh_token: refreshToken }).then(r => r.data);
+        saveToken(data.access_token);
+        saveRefreshToken(data.refresh_token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
+        _processQueue(null, data.access_token);
+        original.headers['Authorization'] = `Bearer ${data.access_token}`;
+        return api(original);
+      } catch (refreshErr) {
+        _processQueue(refreshErr, null);
+        clearToken(); clearRefreshToken(); clearSession();
+        window.location.href = '/login';
+        return Promise.reject(refreshErr);
+      } finally {
+        _isRefreshing = false;
+      }
+    }
+    return Promise.reject(err);
+  }
+);
 
 // ── User CRUD ──────────────────────────────────────────────────────────────
 export const createUser   = (data)          => api.post('/users', data).then(r => r.data);

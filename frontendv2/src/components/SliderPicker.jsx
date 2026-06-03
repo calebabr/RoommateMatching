@@ -3,18 +3,21 @@ import { Colors } from '../utils/theme';
 
 export default function SliderPicker({ min, max, value, onChange, formatLabel }) {
   const pct = ((value - min) / (max - min)) * 100;
+  // The track background gradient is dynamic (depends on the slider value),
+  // so it must remain inline.
   const trackStyle = {
     background: `linear-gradient(to right, ${Colors.accent} ${pct}%, ${Colors.border} ${pct}%)`,
   };
 
   return (
-    <div style={{ marginTop: 4 }}>
-      <div style={{ textAlign: 'center', marginBottom: 10 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: Colors.accent }}>
+    <div className="slider-wrapper">
+      <div className="slider-label-row">
+        <span className="slider-value-label">
           {formatLabel ? formatLabel(value) : value}
         </span>
       </div>
       <input
+        className="slider-range"
         type="range"
         min={min}
         max={max}
@@ -22,9 +25,9 @@ export default function SliderPicker({ min, max, value, onChange, formatLabel })
         onChange={e => onChange(parseInt(e.target.value, 10))}
         style={trackStyle}
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-        <span style={{ fontSize: 11, color: Colors.textMuted }}>{min}</span>
-        <span style={{ fontSize: 11, color: Colors.textMuted }}>{max}</span>
+      <div className="slider-minmax-row">
+        <span className="slider-min-label">{min}</span>
+        <span className="slider-max-label">{max}</span>
       </div>
     </div>
   );

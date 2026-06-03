@@ -1,0 +1,7 @@
+.spinner {
+  border-radius: 50%;
+  border: 3px solid var(--color-border);
+  /* border-top-color and width/height set via inline style (JS props) */
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}

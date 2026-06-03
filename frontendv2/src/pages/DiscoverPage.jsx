@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Colors, Radius } from '../utils/theme';
+import { Colors } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
 import { getTopMatches, sendLike, getLikesSent, getUser, getPhotoUrl } from '../services/api';
@@ -56,24 +56,24 @@ export default function DiscoverPage() {
   };
 
   if (loading) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+    <div className="loading-page">
       <Spinner size={40} />
-      <p style={{ color: Colors.textSecondary, fontSize: 14, margin: 0 }}>Finding compatible roommates...</p>
+      <p className="text-secondary" style={{ fontSize: 14, margin: 0 }}>Finding compatible roommates...</p>
     </div>
   );
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', backgroundColor: Colors.bg }}>
+    <div className="full-height overflow-y bg-base">
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} />}
 
-      <div style={S.page}>
-        <div style={S.header}>
+      <div className="page-container">
+        <div className="page-header">
           <div>
-            <p style={S.headerTitle}>Discover</p>
-            <p style={S.headerSub}>{matchProfiles.length} compatible roommates</p>
+            <p className="page-header-title">Discover</p>
+            <p className="page-header-sub">{matchProfiles.length} compatible roommates</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button style={S.refreshBtn} onClick={() => { setRefreshing(true); loadMatches().finally(() => setRefreshing(false)); }} disabled={refreshing}>
+          <div className="discover-header-actions">
+            <button className="discover-refresh-btn" onClick={() => { setRefreshing(true); loadMatches().finally(() => setRefreshing(false)); }} disabled={refreshing}>
               {refreshing ? <Spinner size={14} color={Colors.black} /> : '↻ Refresh'}
             </button>
             <NotificationBell />
@@ -81,13 +81,13 @@ export default function DiscoverPage() {
         </div>
 
         {matchProfiles.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 }}>
+          <div className="empty-state">
             <span style={{ fontSize: 56 }}>🔍</span>
-            <p style={{ fontSize: 22, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>No Matches Yet</p>
-            <p style={{ fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: '20px', margin: 0 }}>New users are being added all the time. Hit Refresh!</p>
+            <p className="empty-state-title">No Matches Yet</p>
+            <p className="empty-state-desc">New users are being added all the time. Hit Refresh!</p>
           </div>
         ) : (
-          <div style={S.grid}>
+          <div className="discover-grid">
             {matchProfiles.map(item => {
               const score    = item.compatibilityScore;
               const color    = getCompatibilityColor(score);
@@ -99,64 +99,81 @@ export default function DiscoverPage() {
               const pending  = likedIds.has(item.id);
 
               return (
-                <div key={item.id} style={S.card}>
+                <div key={item.id} className="discover-card">
                   {/* Score badge */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: Radius.full, border: `1px solid ${color}`, backgroundColor: color + '20', marginBottom: 14 }}>
+                  <div
+                    className="discover-score-badge"
+                    style={{ border: `1px solid ${color}`, backgroundColor: color + '20' }}
+                  >
                     <span style={{ fontSize: 15, fontWeight: 800, color }}>{Math.round(score * 100)}%</span>
                     <span style={{ fontSize: 11, fontWeight: 600, color }}>{label}</span>
                   </div>
 
                   {/* User info */}
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, cursor: 'pointer' }} onClick={() => navigate(`/user/${item.id}`, { state: { score } })}>
+                  <div className="discover-user-row" onClick={() => navigate(`/user/${item.id}`, { state: { score } })}>
                     {photoSrc ? (
-                      <img src={photoSrc} alt="" style={S.avatarImg} />
+                      <img src={photoSrc} alt="" className="discover-avatar-img" />
                     ) : (
-                      <div style={S.avatar}><span style={{ fontSize: 18, fontWeight: 800, color: Colors.accent }}>{(item.username || '?')[0].toUpperCase()}</span></div>
+                      <div className="discover-avatar">
+                        <span className="avatar-letter-accent">{(item.username || '?')[0].toUpperCase()}</span>
+                      </div>
                     )}
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 17, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>{item.username || `User #${item.id}`}</p>
-                      {item.gender && <p style={{ fontSize: 11, color: Colors.info, fontWeight: 600, margin: '2px 0 0' }}>{item.gender === 'male' ? '♂ Male' : '♀ Female'}</p>}
-                      {item.bio && <p style={{ fontSize: 12, color: Colors.textSecondary, margin: '2px 0 0', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.bio}</p>}
+                      <p className="discover-username">{item.username || `User #${item.id}`}</p>
+                      {item.gender && <p className="discover-gender">{item.gender === 'male' ? '♂ Male' : '♀ Female'}</p>}
+                      {item.bio && <p className="discover-bio">{item.bio}</p>}
                     </div>
                   </div>
 
                   {/* Tags */}
                   {theirTags.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
+                    <div className="discover-tags">
                       {theirTags.slice(0, 6).map(tag => (
-                        <span key={tag} style={{ padding: '2px 8px', borderRadius: Radius.full, border: `1px solid ${shared.includes(tag) ? Colors.success : Colors.border}`, backgroundColor: shared.includes(tag) ? Colors.successDim : Colors.bgCardLight, fontSize: 11, fontWeight: 600, color: shared.includes(tag) ? Colors.success : Colors.textMuted }}>
+                        <span
+                          key={tag}
+                          className={`tag-pill ${shared.includes(tag) ? 'tag-pill-success' : ''}`}
+                          style={!shared.includes(tag) ? {
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-full)',
+                            border: '1px solid var(--color-border)',
+                            backgroundColor: 'var(--color-bg-card-light)',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: 'var(--color-text-muted)',
+                          } : { padding: '2px 8px', fontSize: 11 }}
+                        >
                           {tag}
                         </span>
                       ))}
                     </div>
                   )}
-                  {shared.length > 0 && <p style={{ fontSize: 11, fontWeight: 600, color: Colors.success, margin: '0 0 10px' }}>{shared.length} shared {shared.length === 1 ? 'interest' : 'interests'}</p>}
+                  {shared.length > 0 && <p className="discover-shared-count">{shared.length} shared {shared.length === 1 ? 'interest' : 'interests'}</p>}
 
                   {/* Pref bars */}
-                  <div style={{ marginBottom: 14 }}>
+                  <div className="discover-pref-bars">
                     {CATEGORIES.map(cat => {
                       const pref = item[cat.key];
                       if (!pref) return null;
                       const pct = (pref.value / cat.max) * 100;
                       const short = cat.label.replace(' (Weekdays)', ' WD').replace(' (Weekends)', ' WE').replace('Smoking / Substances', 'Smoking');
                       return (
-                        <div key={cat.key} style={{ display: 'flex', alignItems: 'center', marginBottom: 5 }}>
-                          <span style={{ fontSize: 10, color: Colors.textMuted, width: 76, flexShrink: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{short}</span>
-                          <div style={{ flex: 1, height: 4, backgroundColor: Colors.border, borderRadius: 2, margin: '0 8px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${pct}%`, backgroundColor: Colors.accent, borderRadius: 2 }} />
+                        <div key={cat.key} className="discover-pref-row">
+                          <span className="discover-pref-label">{short}</span>
+                          <div className="discover-pref-bar-track">
+                            <div className="discover-pref-bar-fill" style={{ width: `${pct}%` }} />
                           </div>
-                          <span style={{ fontSize: 10, color: Colors.textSecondary, width: 18, textAlign: 'right' }}>{Math.round(pref.value)}</span>
+                          <span className="discover-pref-value">{Math.round(pref.value)}</span>
                         </div>
                       );
                     })}
                   </div>
 
                   {pending ? (
-                    <div style={{ border: `1.5px solid ${Colors.border}`, borderRadius: Radius.md, padding: '11px 0', textAlign: 'center' }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: Colors.textMuted }}>✓ Pending</span>
+                    <div className="discover-pending">
+                      <span className="discover-pending-text">✓ Pending</span>
                     </div>
                   ) : (
-                    <button style={S.likeBtn} onClick={() => handleLike(item.id)} disabled={likingId === item.id}>
+                    <button className="discover-like-btn" onClick={() => handleLike(item.id)} disabled={likingId === item.id}>
                       {likingId === item.id ? <Spinner size={16} color={Colors.black} /> : '♥ Like'}
                     </button>
                   )}
@@ -169,16 +186,3 @@ export default function DiscoverPage() {
     </div>
   );
 }
-
-const S = {
-  page:       { padding: '28px 32px 40px' },
-  header:     { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  headerTitle:{ fontSize: 24, fontWeight: 800, color: Colors.textPrimary, margin: 0 },
-  headerSub:  { fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' },
-  refreshBtn: { backgroundColor: Colors.bgCard, border: `1px solid ${Colors.border}`, borderRadius: Radius.md, padding: '8px 16px', fontSize: 13, fontWeight: 600, color: Colors.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 },
-  grid:       { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 16 },
-  card:       { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 20, border: `1px solid ${Colors.border}`, display: 'flex', flexDirection: 'column' },
-  avatar:     { width: 44, height: 44, borderRadius: '50%', backgroundColor: Colors.accentGlow, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12, border: `2px solid ${Colors.accent}`, flexShrink: 0 },
-  avatarImg:  { width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', marginRight: 12, border: `2px solid ${Colors.accent}`, flexShrink: 0 },
-  likeBtn:    { width: '100%', backgroundColor: Colors.accent, borderRadius: Radius.md, padding: '11px 0', fontSize: 14, fontWeight: 700, color: Colors.black, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 'auto' },
-};

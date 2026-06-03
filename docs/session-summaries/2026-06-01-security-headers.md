@@ -76,3 +76,86 @@ The existing 1-test suite in `backend/test_security_headers.py` still passes (1/
 | File | Change |
 |------|--------|
 | `backend/app/main.py` | Replaced `BaseHTTPMiddleware` subclass with raw ASGI middleware; updated `script-src` and `connect-src` in CSP |
+
+---
+
+## Follow-up (2026-06-03) — P3A.6: Full CSP unsafe-inline Removal
+
+### What changed
+
+`'unsafe-inline'` was removed from both `script-src` and `style-src` in the CSP, completing the work tracked as P3A.6. This was unblocked by migrating all inline styles to external CSS files in the frontend (see the frontend section below).
+
+### Backend — `backend/app/main.py`
+
+| Directive | Old value | New value |
+|-----------|-----------|-----------|
+| `style-src` | `'self' 'unsafe-inline'` | `'self'` |
+| `script-src` | `'self' 'unsafe-inline'` | `'self'` |
+
+The adjacent comment in the middleware was updated to note the migration is complete.
+
+### Frontend — CSS migration (21 new files)
+
+All inline styles that used `utils/theme.js` `Colors` and `Radius` constants were moved to external CSS files. This is what allowed `'unsafe-inline'` to be dropped from `style-src`.
+
+**New files in `frontendv2/src/styles/`:**
+
+| File | Contents |
+|------|----------|
+| `theme.css` | CSS custom properties for all `Colors` and `Radius` values from `theme.js` |
+| `utilities.css` | Reusable utility classes: `bg-*`, `text-*`, `border-*`, layout helpers |
+| `App.css` | App-level layout styles |
+| `LoginPage.css` | Login page styles |
+| `SignupPage.css` | Signup wizard styles |
+| `ProfilePage.css` | Profile page styles |
+| `DiscoverPage.css` | Discover grid styles |
+| `LikesPage.css` | Likes page styles |
+| `MatchesPage.css` | Matches page styles |
+| `ChatListPage.css` | Chat list styles |
+| `ChatPage.css` | Chat thread styles |
+| `UserDetailPage.css` | Public profile view styles |
+| `NotificationsPage.css` | Notifications feed styles |
+| `ForgotPasswordPage.css` | Forgot-password page styles |
+| `ResetPasswordPage.css` | Reset-password page styles |
+| `RestoreAccountPage.css` | Restore-account page styles |
+| `Modal.css` | Modal component styles |
+| `SliderPicker.css` | Slider picker component styles |
+| `Toggle.css` | Toggle component styles |
+| `NotificationBell.css` | Notification bell component styles |
+| `Spinner.css` | Spinner component styles |
+
+**Migrated source files (18 total):**
+
+- `frontendv2/src/main.jsx` — imports all 21 CSS files at the top level
+- `frontendv2/src/App.jsx` — all static styles moved to `App.css`; dynamic sidebar position/width remain inline (JS state-driven, legitimately dynamic)
+- All 13 page files and all 5 component files — `style={{Colors.*}}` and `style={{Radius.*}}` replaced with `className`; `Radius` import removed from all files; `Colors` import removed where no longer needed
+
+**Remaining legitimate inline styles (not migrated):**
+
+| File | Reason |
+|------|--------|
+| `Toggle.jsx` | Background color is a JS conditional (`isOn ? ... : ...`) |
+| `SliderPicker.jsx` | Gradient is JS-computed from a dynamic value |
+| `App.jsx` sidebar | Width and position driven by JS state (open/closed) |
+| `MatchesPage.jsx`, `NotificationsPage.jsx`, `UserDetailPage.jsx` | Per-item computed colors derived from compatibility score |
+
+### Test update — `backend/test_security_headers.py`
+
+- Removed stale assertions that expected `unsafe-inline` in `script-src` and `style-src`
+- Added directive-level CSP parsing + two `not in` assertions confirming `unsafe-inline` is absent from both `script-src` and `style-src`
+- All existing structural assertions (default-src, img-src, connect-src) retained
+
+| Scope | Tests | Result |
+|-------|-------|--------|
+| `backend/test_security_headers.py` | 1 (updated) | Passing |
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `backend/app/main.py` | Removed `'unsafe-inline'` from `script-src` and `style-src`; updated comment |
+| `frontendv2/src/main.jsx` | Added imports for all 21 new CSS files |
+| `frontendv2/src/App.jsx` | Static styles → `App.css` classes |
+| All 13 pages and 5 components in `frontendv2/src/` | Inline `style={{...}}` → `className`; `Radius`/`Colors` imports cleaned up |
+| `frontendv2/src/styles/` | 21 new CSS files created |
+| `backend/test_security_headers.py` | Removed `unsafe-inline` assertions; added `not in` assertions for both directives |

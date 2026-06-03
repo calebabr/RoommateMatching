@@ -156,9 +156,80 @@ An eye icon button is placed at the right edge of every password `<input>`. Clic
 
 ---
 
+## 9. CSS Migration and CSP Hardening (P3A.6 — 2026-06-03)
+
+All inline styles driven by `utils/theme.js` `Colors` and `Radius` constants were migrated to external CSS files. This enabled removal of `'unsafe-inline'` from both `script-src` and `style-src` in the backend CSP.
+
+### New files in `frontendv2/src/styles/` (21 total)
+
+| File | Contents |
+|------|----------|
+| `theme.css` | CSS custom properties for all `Colors` and `Radius` values |
+| `utilities.css` | Reusable utility classes (`bg-*`, `text-*`, `border-*`, layout) |
+| `App.css` | App-level layout |
+| `LoginPage.css` | Login page |
+| `SignupPage.css` | Signup wizard |
+| `ProfilePage.css` | Profile page |
+| `DiscoverPage.css` | Discover grid |
+| `LikesPage.css` | Likes page |
+| `MatchesPage.css` | Matches page |
+| `ChatListPage.css` | Chat list |
+| `ChatPage.css` | Chat thread |
+| `UserDetailPage.css` | Public profile view |
+| `NotificationsPage.css` | Notifications feed |
+| `ForgotPasswordPage.css` | Forgot-password page |
+| `ResetPasswordPage.css` | Reset-password page |
+| `RestoreAccountPage.css` | Restore-account page |
+| `Modal.css` | Modal component |
+| `SliderPicker.css` | Slider picker component |
+| `Toggle.css` | Toggle component |
+| `NotificationBell.css` | Notification bell component |
+| `Spinner.css` | Spinner component |
+
+### Migrated source files (18)
+
+- `frontendv2/src/main.jsx` — imports all 21 CSS files
+- `frontendv2/src/App.jsx` — static styles moved to `App.css`; sidebar position/width remain inline (JS state-driven)
+- All 13 page files and all 5 component files — `style={{Colors.*}}` and `style={{Radius.*}}` replaced with `className`; `Radius` import removed from all files; `Colors` import removed where no longer needed
+
+### Legitimate remaining inline styles
+
+| File | Reason |
+|------|--------|
+| `Toggle.jsx` | Background is a JS conditional (`isOn ? colorA : colorB`) |
+| `SliderPicker.jsx` | Gradient computed from a dynamic numeric value |
+| `App.jsx` sidebar | Width and position driven by open/closed JS state |
+| `MatchesPage.jsx`, `NotificationsPage.jsx`, `UserDetailPage.jsx` | Per-item colors derived from compatibility score |
+
+### Impact on backend CSP
+
+`backend/app/main.py` CSP updated: `'unsafe-inline'` removed from `style-src` and `script-src`. Both directives now only allow `'self'`.
+
+---
+
+## 10. Token Refresh Frontend (P3A.1 — 2026-06-03)
+
+### `frontendv2/src/services/api.js`
+
+Three localStorage helpers added (`saveRefreshToken`, `loadRefreshToken`, `clearRefreshToken`; key: `roommatch_refresh_token`) and two API functions (`authRefresh(refreshToken)`, `authLogout()`).
+
+The previous simple 401-redirect interceptor was replaced with a **queued refresh interceptor**:
+- On any 401, sets `_isRefreshing = true` and queues all in-flight requests in `_refreshQueue`
+- Calls `authRefresh` with the stored refresh token
+- On success: stores new tokens, replays every queued request with the new access token
+- On failure: clears all tokens (`token`, `roommatch_user`, `roommatch_refresh_token`) and redirects to `/login`
+- Guard: if the failing request is itself `/auth/refresh`, skips the refresh attempt to avoid an infinite loop
+
+### `frontendv2/src/context/AuthContext.jsx`
+
+- `login` and `signup` now call `saveRefreshToken(response.data.refresh_token)`
+- `logout` is now `async`; calls `authLogout()` to invalidate the refresh token server-side before clearing localStorage
+
+---
+
 ## 7. Notable Patterns
 
-- **Styling**: All inline styles using shared `Colors`/`Radius` constants from `utils/theme.js`; local `const S = {...}` style objects defined at the bottom of each file.
+- **Styling**: CSS custom properties in `theme.css` replace the `Colors`/`Radius` JavaScript constants for static values. Dynamic/computed values (score-based colors, toggle state, slider gradients, sidebar dimensions) remain as inline styles where JavaScript logic drives the value.
 - **State**: React Context for auth only; all page-level state is local `useState`. No Redux or Zustand.
 - **Routing**: React Router v6 nested routes; `SidebarLayout` renders `<Outlet />` for child pages.
 - **Auth guard**: Implemented directly in `AppRoutes` — if `user` is null (and not loading), only `/login`, `/signup`, `/forgot-password`, and `/reset-password` are rendered.

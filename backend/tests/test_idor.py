@@ -8,7 +8,7 @@ and that user A can successfully act on their own resources (→ 200/201).
 
 Run with:
   cd backend
-  pytest test_idor.py -v
+  pytest tests/test_idor.py -v
 """
 
 import os

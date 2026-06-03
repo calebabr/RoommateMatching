@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Colors, Radius } from '../utils/theme';
+import { Colors } from '../utils/theme';
 import { CATEGORIES } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
 import { getMatches, getUser, unmatchUser, getMatchScore, getPhotoUrl } from '../services/api';
@@ -62,65 +62,67 @@ export default function MatchesPage() {
   };
 
   if (loading) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+    <div className="loading-page">
       <Spinner size={40} />
-      <p style={{ color: Colors.textSecondary, fontSize: 14, margin: 0 }}>Loading matches...</p>
+      <p className="text-secondary" style={{ fontSize: 14, margin: 0 }}>Loading matches...</p>
     </div>
   );
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', backgroundColor: Colors.bg }}>
+    <div className="full-height overflow-y bg-base">
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} onConfirm={modal.onConfirm} confirmText={modal.confirmText} danger={modal.danger} />}
 
-      <div style={S.page}>
-        <div style={S.header}>
+      <div className="page-container">
+        <div className="page-header">
           <div>
-            <p style={S.headerTitle}>Matches</p>
-            <p style={S.headerSub}>{matches.length} confirmed {matches.length === 1 ? 'match' : 'matches'}</p>
+            <p className="page-header-title">Matches</p>
+            <p className="page-header-sub">{matches.length} confirmed {matches.length === 1 ? 'match' : 'matches'}</p>
           </div>
           <NotificationBell />
         </div>
 
         {matches.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 }}>
+          <div className="empty-state">
             <span style={{ fontSize: 56 }}>🏠</span>
-            <p style={{ fontSize: 22, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>No Matches Yet</p>
-            <p style={{ fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: '20px', margin: 0 }}>When you and someone like each other, you'll see them here.</p>
+            <p className="empty-state-title">No Matches Yet</p>
+            <p className="empty-state-desc">When you and someone like each other, you'll see them here.</p>
           </div>
         ) : (
-          <div style={S.grid}>
+          <div className="matches-grid">
             {matches.map((item, i) => {
               const p = item.profile;
               const score = item.compatibilityScore;
               const photoSrc = getPhotoUrl(p?.photoUrl);
 
               return (
-                <div key={item._id || i} style={S.card}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <div key={item._id || i} className="matches-card">
+                  <div className="matches-card-header">
                     <span style={{ fontSize: 20 }}>🤝</span>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: Colors.success }}>Roommate Match</span>
+                    <span className="matches-label">Roommate Match</span>
                     {score !== null && (
-                      <span style={{ marginLeft: 'auto', backgroundColor: Colors.successDim, padding: '3px 10px', borderRadius: Radius.full, fontSize: 12, fontWeight: 600, color: Colors.success }}>
+                      <span className="matches-score-badge">
                         {Math.round(score * 100)}% compatible
                       </span>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, cursor: 'pointer' }} onClick={() => navigate(`/user/${p.id}`, { state: { score } })}>
+                  <div className="matches-user-row" onClick={() => navigate(`/user/${p.id}`, { state: { score } })}>
                     {photoSrc ? (
-                      <img src={photoSrc} alt="" style={S.avatarImg} />
+                      <img src={photoSrc} alt="" className="matches-avatar-img" />
                     ) : (
-                      <div style={S.avatar}><span style={{ fontSize: 24, fontWeight: 800, color: Colors.success }}>{(p.username || '?')[0].toUpperCase()}</span></div>
+                      <div className="matches-avatar">
+                        <span className="avatar-letter-success" style={{ fontSize: 24 }}>{(p.username || '?')[0].toUpperCase()}</span>
+                      </div>
                     )}
                     <div>
-                      <p style={{ fontSize: 20, fontWeight: 700, color: Colors.textPrimary, margin: 0 }}>{p.username || `User #${p.id}`}</p>
-                      <p style={{ fontSize: 12, color: Colors.textMuted, margin: '2px 0 0' }}>ID: {p.id}</p>
+                      <p className="matches-username">{p.username || `User #${p.id}`}</p>
+                      <p className="matches-user-id">ID: {p.id}</p>
                     </div>
                   </div>
 
                   {p.sleepScoreWD && (
-                    <div style={S.comparison}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: Colors.textSecondary, margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: 0.6 }}>Preference Comparison</p>
+                    <div className="matches-comparison">
+                      <p className="matches-comparison-title">Preference Comparison</p>
                       {CATEGORIES.map(cat => {
                         const mine   = user[cat.key]?.value;
                         const theirs = p[cat.key]?.value;
@@ -132,14 +134,14 @@ export default function MatchesPage() {
                         const simBg    = sim >= 80 ? Colors.successDim : sim >= 50 ? Colors.accentGlow : Colors.dangerDim;
                         const shortLabel = cat.label.replace(' (Weekdays)', ' WD').replace(' (Weekends)', ' WE');
                         return (
-                          <div key={cat.key} style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                            <span style={{ flex: 1, fontSize: 12, color: Colors.textMuted }}>{shortLabel}</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 10 }}>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: Colors.accent }}>{Math.round(mine)}</span>
-                              <span style={{ fontSize: 10, color: Colors.textMuted }}>vs</span>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: Colors.info }}>{Math.round(theirs)}</span>
+                          <div key={cat.key} className="matches-comp-row">
+                            <span className="matches-comp-label">{shortLabel}</span>
+                            <div className="matches-comp-values">
+                              <span className="matches-comp-mine">{Math.round(mine)}</span>
+                              <span className="matches-comp-vs">vs</span>
+                              <span className="matches-comp-theirs">{Math.round(theirs)}</span>
                             </div>
-                            <span style={{ padding: '2px 8px', borderRadius: Radius.full, minWidth: 42, textAlign: 'center', backgroundColor: simBg, fontSize: 11, fontWeight: 700, color: simColor }}>
+                            <span style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', minWidth: 42, textAlign: 'center', backgroundColor: simBg, fontSize: 11, fontWeight: 700, color: simColor }}>
                               {sim}%
                             </span>
                           </div>
@@ -148,11 +150,11 @@ export default function MatchesPage() {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
-                    <button style={S.chatBtn} onClick={() => navigate(`/chat/${p.id}`, { state: { partnerName: p.username } })}>
+                  <div className="matches-actions">
+                    <button className="matches-chat-btn" onClick={() => navigate(`/chat/${p.id}`, { state: { partnerName: p.username } })}>
                       💬 Chat
                     </button>
-                    <button style={S.unmatchBtn} onClick={() => handleUnmatch(p.id, p.username || `User #${p.id}`)}>
+                    <button className="matches-unmatch-btn" onClick={() => handleUnmatch(p.id, p.username || `User #${p.id}`)}>
                       Unmatch
                     </button>
                   </div>
@@ -165,17 +167,3 @@ export default function MatchesPage() {
     </div>
   );
 }
-
-const S = {
-  page:       { padding: '28px 32px 40px' },
-  header:     { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  headerTitle:{ fontSize: 24, fontWeight: 800, color: Colors.textPrimary, margin: 0 },
-  headerSub:  { fontSize: 13, color: Colors.textSecondary, margin: '2px 0 0' },
-  grid:       { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 16 },
-  card:       { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 20, border: `1px solid ${Colors.success}`, display: 'flex', flexDirection: 'column' },
-  avatar:     { width: 56, height: 56, borderRadius: '50%', backgroundColor: Colors.successDim, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 14, border: `2px solid ${Colors.success}`, flexShrink: 0 },
-  avatarImg:  { width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', marginRight: 14, border: `2px solid ${Colors.success}`, flexShrink: 0 },
-  comparison: { backgroundColor: Colors.bgCardLight, borderRadius: Radius.md, padding: 16, marginBottom: 16 },
-  chatBtn:    { flex: 1, backgroundColor: Colors.accent, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 700, color: Colors.black, border: 'none', cursor: 'pointer' },
-  unmatchBtn: { flex: 1, backgroundColor: 'transparent', border: `1.5px solid ${Colors.danger}`, borderRadius: Radius.md, padding: '12px 0', fontSize: 14, fontWeight: 600, color: Colors.danger, cursor: 'pointer' },
-};

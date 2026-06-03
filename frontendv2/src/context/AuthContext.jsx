@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
-  authLogin, authRegister, authMe,
+  authLogin, authRegister, authMe, authLogout,
   saveToken, loadToken, clearToken,
+  saveRefreshToken, clearRefreshToken,
   saveSession, clearSession,
 } from '../services/api';
 
@@ -32,8 +33,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const { access_token, user: userData } = await authLogin(email, password);
+    const { access_token, refresh_token, user: userData } = await authLogin(email, password);
     saveToken(access_token);
+    if (refresh_token) saveRefreshToken(refresh_token);
     setToken(access_token);
     setUser(userData);
     saveSession(userData);
@@ -41,8 +43,9 @@ export function AuthProvider({ children }) {
   };
 
   const signup = async (email, password, profileData) => {
-    const { access_token, user: userData } = await authRegister(email, password, profileData);
+    const { access_token, refresh_token, user: userData } = await authRegister(email, password, profileData);
     saveToken(access_token);
+    if (refresh_token) saveRefreshToken(refresh_token);
     setToken(access_token);
     setUser(userData);
     saveSession(userData);
@@ -61,7 +64,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try { await authLogout(); } catch {}
+    clearRefreshToken();
     setUser(null);
     setToken(null);
     clearToken();
