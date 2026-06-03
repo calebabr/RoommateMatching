@@ -7,7 +7,12 @@ from app.database import users_collection, counters_collection
 from app.auth.utils import hash_password, verify_password, create_access_token, validate_password_strength
 from app.auth.dependencies import get_current_user, _admin_ids
 from app.limiter import limiter
-from app.models import Preference, ALLOWED_LIFESTYLE_TAGS
+from app.models import Preference, ALLOWED_LIFESTYLE_TAGS, UserInDB
+from app.services.recommendationService import RecommendationService
+from app.services.userProfileService import UserProfileService
+
+_rec_service = RecommendationService()
+_profile_service = UserProfileService()
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -122,6 +127,16 @@ async def register(request: Request, body: RegisterRequest):
     await users_collection.insert_one(user_doc)
     user_doc.pop("_id", None)
     user_doc.pop("hashed_password", None)
+
+    # Recompute recommendations for new user and all existing users
+    try:
+        all_users = await _profile_service.get_all_active_users()
+        if len(all_users) >= 2:
+            user_dicts = [UserInDB(**u).toMatchDict() for u in all_users]
+            new_user_dict = UserInDB(**user_doc).toMatchDict()
+            await _rec_service.on_new_user(new_user_dict, user_dicts)
+    except Exception:
+        pass  # never block registration if recompute fails
 
     token = create_access_token({"sub": str(user_id)})
     return TokenResponse(access_token=token, user=user_doc)
