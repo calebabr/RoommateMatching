@@ -103,6 +103,9 @@ _Infrastructure is up. These are deployment config, data, and verification steps
 | P2.10 | `[PHASE-2]` Verify Sentry receives events — hit `GET /debug/sentry-test` on Render, confirm event appears in Sentry dashboard | — | High | 2026-06-01 |
 | P2.11 | `[PHASE-2]` Run `POST /api/admin/recompute` once on production DB to seed the recommendations collection | — | **Critical** | 2026-06-01 |
 | P2.12 | `[PHASE-2]` Smoke-test full user journey on production: register → discover → like → match → chat | — | **Critical** | 2026-06-01 |
+| P2.13 | `[PHASE-2]` Test profile photo persists after save — re-upload photo, then edit and save preferences; verify photo URL is not cleared. Fix deployed: `photoUrl` added to `_IMMUTABLE_FIELDS` in `userRoutes.py` (2026-06-03). | — | **Critical** | 2026-06-03 |
+| P2.14 | `[PHASE-2]` Verify recompute fires on registration — register a new account and confirm it appears in existing users' discovery feeds within a few seconds (no manual admin recompute needed). Also confirm registration + profile-save latency is acceptable; if sluggish, see P3B.8 (BackgroundTasks). | — | **Critical** | 2026-06-03 |
+| P2.15 | `[PHASE-2]` Deploy `frontendAdmin` to Vercel — root: `frontendAdmin`, install: `npm install && chmod +x node_modules/.bin/vite`, build: `npx vite build`, env: `VITE_API_BASE_URL=https://roommatematching.onrender.com/api`. Then add `ADMIN_FRONTEND_URL=<vercel-url>` to Render env vars and redeploy to update CORS. | — | **Critical** | 2026-06-03 |
 
 ---
 
@@ -131,6 +134,7 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | P3B.5 | `[PHASE-3]` Remove or update `userProfileService.mark_matched` / `unmatch_user` — use old single-int `matchedWith` format, no longer called | Backend Agent | Low | 2026-05-29 |
 | P3B.6 | `[PHASE-3]` Expose per-notification mark-read endpoint — `NotificationService.mark_read()` exists but has no route | Backend Agent | Low | 2026-05-29 |
 | P3B.7 | `[PHASE-3]` Consolidate `_normalize_matched_with()` — duplicated across `likeService.py`, `chatService.py`, `userProfileService.py` | Backend Agent | Low | 2026-05-29 |
+| P3B.8 | `[PHASE-3]` Move recommendation recompute to FastAPI BackgroundTasks — `on_new_user` currently runs synchronously, blocking registration and profile-save responses as O(N) DB writes; switching to `background_tasks.add_task(...)` returns the response instantly and runs recompute after; new user's discover feed may lag a few seconds but registration is unblocked. Revisit if P2.14 shows latency issues at beta scale. | Backend Agent | Medium | 2026-06-03 |
 
 #### Database
 
