@@ -266,6 +266,54 @@ The previous simple 401-redirect interceptor was replaced with a **queued refres
 
 ---
 
+## 12. Age Verification UI and ToS/Legal Pages (P2.27 + P2.26 — 2026-06-03)
+
+### Age Gate Modal (`App.jsx`)
+
+`AgeGateModal` is a full-screen blocking modal rendered in `AppRoutes` before any other route. It fires whenever `user.dateOfBirth` is falsy (i.e., existing users who registered before the age-gate was introduced). The user must enter their date of birth; the modal submits via `submitAge(userId, dateOfBirth)` from `api.js`. On `{"status":"banned"}` the modal shows a ban message and prevents further navigation. On `{"status":"ok"}` the modal closes and normal routing resumes.
+
+Early-return order in `AppRoutes`: age gate → ToS modal → normal routes.
+
+### ToS Modal (`App.jsx`)
+
+`ToSModal` is a second full-screen blocking modal that renders after the age gate passes but before normal routes. It fires whenever the stored user's `termsVersion` does not match `CURRENT_TERMS_VERSION` (set to `"2026-06-03"`). The modal displays a changelog banner listing the changes in `TERMS_CHANGELOG`. A checkbox (unchecked by default) must be ticked before "Accept & Continue" is enabled. On accept, calls `acceptTerms(userId, termsVersion)` from `api.js`. On success, calls `refreshUser()` and closes.
+
+Constants in `App.jsx`:
+- `CURRENT_TERMS_VERSION = "2026-06-03"`
+- `TERMS_CHANGELOG` — array of human-readable change descriptions shown in the modal banner
+
+### `SignupPage.jsx` — age verification and consent
+
+- Step 0 now includes a `dateOfBirth` date input placed after the Username field.
+- Client-side check blocks form progression if the calculated age is under 18 (error shown inline; the API is never called for underage submissions).
+- `dateOfBirth` is included in the signup API payload.
+- An `agreedToTerms` checkbox (unchecked by default) links to `/terms` and `/privacy`. Submission is blocked until checked. The `termsVersion: "2026-06-03"` string is sent in the signup payload.
+
+### Privacy Policy and Terms of Service pages
+
+Two new public pages accessible without auth:
+
+| Route | Page | File |
+|-------|------|------|
+| `/privacy` | Privacy Policy | `frontendv2/src/pages/PrivacyPolicyPage.jsx` |
+| `/terms` | Terms of Service | `frontendv2/src/pages/TermsOfServicePage.jsx` |
+
+Both use `frontendv2/src/styles/LegalPage.css` — dark-themed, `#E8A838` headings, `#1A1A1A` card sections.
+
+- `PrivacyPolicyPage.jsx` — 8-section policy covering data collection, storage, third-party services, retention, GDPR rights, and account deletion.
+- `TermsOfServicePage.jsx` — 10-section terms covering eligibility, conduct, DMCA, arbitration, and termination.
+
+Both routes are added to `App.jsx` outside the auth guard (public).
+
+### `api.js` additions
+
+| Function | Endpoint | Purpose |
+|----------|----------|---------|
+| `submitAge(userId, dateOfBirth)` | `POST /users/{userId}/submit-age` | Age gate for existing users without `dateOfBirth` |
+| `acceptTerms(userId, termsVersion)` | `POST /users/{userId}/accept-terms` | Records ToS acceptance for existing users |
+
+---
+
 ## 7. Notable Patterns
 
 - **Styling**: CSS custom properties in `theme.css` replace the `Colors`/`Radius` JavaScript constants for static values. Dynamic/computed values (score-based colors, toggle state, slider gradients, sidebar dimensions) remain as inline styles where JavaScript logic drives the value.

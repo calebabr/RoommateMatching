@@ -404,6 +404,58 @@ No database index on `refresh_token_hash`. A sparse index on this field should b
 
 ---
 
+## 18. Age Verification (P2.27 — 2026-06-03)
+
+### Helper (`auth/utils.py`)
+
+`calculate_age(dob_str: str) -> int` — shared utility; parses `YYYY-MM-DD`; returns integer age in years; raises `ValueError` on bad format. Used by both the register endpoint and the submit-age endpoint.
+
+### New Pydantic model (`models.py`)
+
+| Model | Fields |
+|-------|--------|
+| `SubmitAgeRequest` | `dateOfBirth: str` |
+
+### Registration changes (`authRoutes.py`)
+
+`RegisterRequest` gains `dateOfBirth: Optional[str]`. At register time:
+- If `dateOfBirth` is provided and the age is under 18, returns HTTP 400 (`"Must be 18 or older to register"`).
+- If the format is invalid, returns HTTP 400.
+- If age is 18+, stores `dateOfBirth` on the user document.
+- If omitted, registration proceeds without `dateOfBirth` (existing-user migration handled via submit-age endpoint).
+
+### New endpoint (`userRoutes.py`)
+
+| Endpoint | Rate limit | Behavior |
+|----------|-----------|---------|
+| `POST /api/users/{user_id}/submit-age` | 5/hour | Auth required; ownership check (`get_current_user_or_403`); parses `dateOfBirth`; if under 18 → sets `is_banned=True` + `ban_reason="User is under 18"` + returns `{"status":"banned","reason":"..."}` with HTTP 200; if 18+ → stores `dateOfBirth` + returns `{"status":"ok"}` |
+
+Returns HTTP 400 on invalid date format, 401 if unauthenticated, 403 if wrong user.
+
+---
+
+## 19. Privacy Policy, ToS Consent, and ToS Versioning (P2.26 — 2026-06-03)
+
+### New Pydantic model (`models.py`)
+
+| Model | Fields |
+|-------|--------|
+| `AcceptTermsRequest` | `termsVersion: str` |
+
+### Registration changes (`authRoutes.py`)
+
+`RegisterRequest` gains `termsVersion: Optional[str]`. When provided at registration, stores `termsVersion` and `termsAcceptedAt` (UTC ISO timestamp) on the user document.
+
+### New endpoint (`userRoutes.py`)
+
+| Endpoint | Rate limit | Behavior |
+|----------|-----------|---------|
+| `POST /api/users/{user_id}/accept-terms` | 10/hour | Auth required; ownership check; stores `termsVersion` + `termsAcceptedAt` (UTC ISO) on user document; returns `{"status":"ok"}` |
+
+Designed for existing users who log in after a new ToS version is published — the frontend ToS modal calls this endpoint to record acceptance without requiring re-registration.
+
+---
+
 ## 17. Security Audit (OWASP Top 10)
 
 **Session 2026-06-03 (Task P2.24):** A full OWASP Top 10 (2021) audit was conducted and documented at `backend/SECURITY_AUDIT_FINAL.md`.

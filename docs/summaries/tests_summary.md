@@ -2,7 +2,7 @@
 
 ## 1. Current State
 
-Twenty-one backend test files now exist: two legacy scripts, fourteen pytest modules in the root `backend/` directory, and five new pytest modules in `backend/tests/`. Unit tests, pytest fixtures, an isolated test database, a shared helpers module, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present. Total: 240 tests, all passing.
+Twenty-two backend test files now exist: two legacy scripts, fourteen pytest modules in the root `backend/` directory, and six new pytest modules in `backend/tests/`. Unit tests, pytest fixtures, an isolated test database, a shared helpers module, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present. Total: 252 tests, all passing.
 
 ## 2. Test Files
 
@@ -31,6 +31,7 @@ Twenty-one backend test files now exist: two legacy scripts, fourteen pytest mod
 | `backend/tests/test_report.py` | pytest | 14 | Create, reason enum validation, rate limit (5/day), auto-block, self-report 400, admin list/filter/resolve, non-admin 403; uses `helpers.py` test DB |
 | `backend/tests/test_deletion.py` | pytest | 15 | Soft-delete, restore (valid/invalid/expired token), export contents, hard-delete cascade, Cloudinary call, cleanup expired/non-expired, end-to-end DELETE endpoint; uses `helpers.py` test DB |
 | `backend/tests/test_token_refresh.py` | pytest | 8 | Token refresh and logout: login/register return refresh_token, valid refresh → 200 + new tokens, rotation (new token differs), invalid token 401, used/rotated token 401, logout-then-refresh 401, new access_token authenticates at /me |
+| `backend/tests/test_age_verification.py` | pytest | 12 | Register with adult DOB (ok), register underage (400), register without DOB (ok), submit-age adult (ok + dateOfBirth stored), submit-age underage (banned + is_banned=True), submit-age unauthenticated (401), submit-age wrong user (403), invalid date format (400), banned user cannot login (403), exactly-18 passes (ok), register invalid DOB format (400) |
 | `backend/app/test/` | JSON data only | — | `usersTest20.json`, `usersTest250.json`, `usersTest1000.json` — seed data, not automated tests |
 
 ## 3. Test Infrastructure
@@ -75,6 +76,7 @@ Twenty-one backend test files now exist: two legacy scripts, fourteen pytest mod
 - Deletion system tests — `test_deletion.py` (15 tests) covers soft-delete, restore (valid/invalid/expired), data export contents, hard-delete cascade, Cloudinary call, cleanup expired/non-expired accounts, and DELETE endpoint round-trip (2026-06-03)
 - Token refresh tests — `test_token_refresh.py` (8 tests) covers login/register returning refresh_token, valid refresh returning new tokens, token rotation correctness, invalid/used token 401, logout-then-refresh 401, and new access token authenticating at `/me` (2026-06-03)
 - Security headers test updated — `test_security_headers.py` stale `unsafe-inline` assertions removed; two `not in` assertions added confirming `unsafe-inline` absent from `script-src` and `style-src` after P3A.6 CSS migration (2026-06-03)
+- Age verification tests — `test_age_verification.py` (12 tests) covers register with valid adult DOB, underage rejection at register, missing DOB permitted, submit-age ok/banned paths, auth enforcement (401/403), invalid date format, exactly-18 boundary, and banned-user login block (2026-06-03)
 
 **Still TODO**
 - Unit-test `matchScore.py` directly without HTTP round-trips

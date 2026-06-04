@@ -2,11 +2,13 @@ import os
 import uuid
 import io
 import shutil
+from datetime import datetime
 from PIL import Image
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 import cloudinary
 import cloudinary.uploader
 from app.auth.dependencies import get_current_user, get_current_user_or_403, verify_match_exists, get_admin_user
+from app.auth.utils import calculate_age
 from app.database import users_collection, likes_collection, matches_collection, chat_collection
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
@@ -29,6 +31,8 @@ from app.models import (
     DeleteAccountRequest,
     RestoreAccountRequest,
     ResolveReportRequest,
+    SubmitAgeRequest,
+    AcceptTermsRequest,
 )
 
 router = APIRouter()
@@ -264,6 +268,69 @@ async def export_user_data(request: Request, user_id: int, _: dict = Depends(get
         return await deletionService.export_user_data(user_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+# --- Age Verification ---
+
+@router.post("/users/{user_id}/submit-age")
+@limiter.limit("5/hour")
+async def submit_age(
+    request: Request,
+    user_id: int,
+    body: SubmitAgeRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Submit date of birth for existing users who registered before age verification was added."""
+    if current_user["id"] != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    try:
+        age = calculate_age(body.dateOfBirth)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid dateOfBirth format. Use YYYY-MM-DD.")
+
+    if age < 18:
+        await users_collection.update_one(
+            {"id": user_id},
+            {"$set": {
+                "is_banned": True,
+                "ban_reason": "Account suspended: you must be at least 18 years old.",
+            }},
+        )
+        return {
+            "status": "banned",
+            "message": "Your account has been suspended because you do not meet the minimum age requirement of 18 years.",
+        }
+
+    await users_collection.update_one(
+        {"id": user_id},
+        {"$set": {"dateOfBirth": body.dateOfBirth}},
+    )
+    return {"status": "ok"}
+
+
+# --- Terms of Service ---
+
+@router.post("/users/{user_id}/accept-terms")
+@limiter.limit("10/hour")
+async def accept_terms(
+    request: Request,
+    user_id: int,
+    body: AcceptTermsRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Record that the user has accepted the specified version of the Terms of Service."""
+    if current_user["id"] != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    await users_collection.update_one(
+        {"id": user_id},
+        {"$set": {
+            "termsVersion": body.termsVersion,
+            "termsAcceptedAt": datetime.utcnow().isoformat(),
+        }},
+    )
+    return {"status": "ok"}
 
 
 # --- Chat ---
@@ -558,3 +625,4 @@ async def admin_resolve_report(request: Request, report_id: str, body: ResolveRe
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+

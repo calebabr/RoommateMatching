@@ -275,6 +275,18 @@ class ResolveReportRequest(BaseModel):
     status: Literal["actioned", "dismissed"] = "actioned"
 
 
+# --- Age Verification Models ---
+
+class SubmitAgeRequest(BaseModel):
+    dateOfBirth: str = Field(..., description="ISO date string YYYY-MM-DD")
+
+
+# --- Terms of Service Models ---
+
+class AcceptTermsRequest(BaseModel):
+    termsVersion: str  # e.g. "2026-06-03"
+
+
 # --- Notification Models ---
 
 class NotificationResponse(BaseModel):

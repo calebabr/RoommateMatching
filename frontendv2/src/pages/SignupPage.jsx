@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 
 function EyeIcon() {
   return (
@@ -18,7 +19,6 @@ function EyeOffIcon() {
     </svg>
   );
 }
-import { useNavigate } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import posthog from 'posthog-js';
@@ -33,14 +33,18 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const { signup } = useAuth();
   const [step, setStep]   = useState(0);
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
-  const [gender,   setGender]   = useState('');
-  const [bio,      setBio]      = useState('');
+  const [email,         setEmail]         = useState('');
+  const [password,      setPassword]      = useState('');
+  const [username,      setUsername]      = useState('');
+  const [gender,        setGender]        = useState('');
+  const [bio,           setBio]           = useState('');
+  const [dateOfBirth,   setDateOfBirth]   = useState('');
+  const [dobError,      setDobError]      = useState('');
   const [photoFile,    setPhotoFile]    = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [agreedToTerms,   setAgreedToTerms]   = useState(false);
+  const [termsError,      setTermsError]      = useState('');
   const [loading, setLoading] = useState(false);
   const [modal,   setModal]   = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -62,6 +66,15 @@ export default function SignupPage() {
     }, {})
   );
 
+  const calculateAge = (dobString) => {
+    const dob = new Date(dobString);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age;
+  };
+
   const updatePref = (key, field, val) =>
     setPreferences(prev => ({ ...prev, [key]: { ...prev[key], [field]: val } }));
 
@@ -74,13 +87,19 @@ export default function SignupPage() {
   };
 
   const handleCreate = async () => {
+    if (!agreedToTerms) { setTermsError('You must agree to the Terms of Service and Privacy Policy to continue.'); return; }
     if (!email.trim())    { setModal({ title: 'Missing Email', message: 'Please enter your email address.' }); return; }
     if (!password)        { setModal({ title: 'Missing Password', message: 'Please enter a password.' }); return; }
     if (!username.trim()) { setModal({ title: 'Missing Name', message: 'Please enter a username.' }); return; }
     if (!gender)          { setModal({ title: 'Missing Gender', message: 'Please select your gender.' }); return; }
+    if (!dateOfBirth)     { setModal({ title: 'Missing Date of Birth', message: 'Please enter your date of birth.' }); return; }
+    if (calculateAge(dateOfBirth) < 18) {
+      setModal({ title: 'Age Requirement', message: 'You must be at least 18 years old to sign up.' });
+      return;
+    }
     setLoading(true);
     try {
-      const profileData = { username: username.trim(), gender, bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
+      const profileData = { username: username.trim(), gender, bio: bio.trim(), lifestyleTags: selectedTags, dateOfBirth, termsVersion: "2026-06-03", ...preferences };
       const created = await signup(email.trim(), password, profileData);
       if (photoFile) {
         try { const r = await uploadPhoto(created.id, photoFile); created.photoUrl = r.photoUrl; }
@@ -151,6 +170,20 @@ export default function SignupPage() {
             </div>
 
             <div className="input-group">
+              <label className="form-label">Date of Birth</label>
+              <input
+                className="form-input"
+                type="date"
+                value={dateOfBirth}
+                onChange={e => { setDateOfBirth(e.target.value); setDobError(''); }}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+              />
+              {dobError && (
+                <p style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 4 }}>{dobError}</p>
+              )}
+            </div>
+
+            <div className="input-group">
               <label className="form-label">Gender</label>
               <p className="signup-gender-note">
                 You'll only be matched with roommates of the same gender
@@ -209,11 +242,16 @@ export default function SignupPage() {
             </div>
 
             <button
-              className={`signup-next-btn ${!email.trim() || !password || !username.trim() || !gender ? 'signup-next-btn--disabled' : ''}`}
+              className={`signup-next-btn ${!email.trim() || !password || !username.trim() || !gender || !dateOfBirth ? 'signup-next-btn--disabled' : ''}`}
               onClick={() => {
                 if (!email.trim())    { setModal({ title: 'Missing Email', message: 'Please enter your email address.' }); return; }
                 if (!password)        { setModal({ title: 'Missing Password', message: 'Please enter a password.' }); return; }
                 if (!username.trim()) { setModal({ title: 'Missing Name', message: 'Please enter a username.' }); return; }
+                if (!dateOfBirth)     { setModal({ title: 'Missing Date of Birth', message: 'Please enter your date of birth.' }); return; }
+                if (calculateAge(dateOfBirth) < 18) {
+                  setDobError('You must be at least 18 years old to sign up.');
+                  return;
+                }
                 if (!gender)          { setModal({ title: 'Missing Gender', message: 'Please select your gender.' }); return; }
                 setStep(1);
               }}
@@ -268,6 +306,30 @@ export default function SignupPage() {
               })}
             </div>
             <p className="signup-tag-count">{selectedTags.length} selected</p>
+
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '20px 0 4px' }}>
+              <input
+                id="agree-to-terms"
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={e => { setAgreedToTerms(e.target.checked); if (e.target.checked) setTermsError(''); }}
+                style={{ marginTop: 3, accentColor: '#E8A838', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
+              />
+              <label htmlFor="agree-to-terms" style={{ fontSize: 14, lineHeight: 1.5, color: '#A0A0A0', cursor: 'pointer' }}>
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#E8A838', textDecoration: 'underline' }}>
+                  Terms of Service
+                </Link>
+                {' '}and{' '}
+                <Link to="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#E8A838', textDecoration: 'underline' }}>
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+            {termsError && (
+              <p style={{ color: 'var(--color-danger)', fontSize: 13, margin: '4px 0 8px' }}>{termsError}</p>
+            )}
+
             <button
               className={`signup-next-btn ${loading ? 'signup-next-btn--disabled' : ''}`}
               onClick={handleCreate}

@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-03 by posthog-analytics_
+_Last updated: 2026-06-03 by age-verification-tos_
 
 ---
 
@@ -101,6 +101,8 @@ _Nothing currently in progress._
 | P3A.6 `[PHASE-3]` Full CSP unsafe-inline removal — 21 new CSS files in `frontendv2/src/styles/` (`theme.css`, `utilities.css`, 13 per-page, 5 per-component); `main.jsx` imports all; 18 source files migrated from `style={{...}}` to `className`; remaining inline styles are legitimately dynamic (toggle state, slider gradient, sidebar position, score-based colors); `backend/app/main.py` CSP updated: `'unsafe-inline'` removed from `style-src` and `script-src`; `test_security_headers.py` updated with `not in` assertions confirming absence. | Frontend Agent + Backend Agent + Tests Agent | 2026-06-03 |
 | P2.25 `[PHASE-2]` PostHog product analytics — `posthog-js` installed; guarded `posthog.init()` in `main.jsx` (no-op without `VITE_POSTHOG_API_KEY`); `identify` + `login`/`signup_completed`/`logout` in `AuthContext`; `signup_started` (once per session via ref, on Email field focus) in `SignupPage`; `photo_uploaded`, `profile_completed`, `account_deleted` in `ProfilePage`; `match_created` / `like_sent` in `UserDetailPage`; `message_sent` in `ChatPage`; env var is `VITE_POSTHOG_API_KEY` (spec originally said `VITE_POSTHOG_KEY`); `profile_skipped` and `email_verified` deferred (require P3FT.4 and P3FT.2 respectively) | Frontend Agent | 2026-06-03 |
 | P2.28 `[PHASE-2]` Clickable chat header — `ChatPage.jsx` `.chat-partner-info` div made clickable; clicking partner avatar or username navigates to `/user/:id`; pointer cursor + opacity hover effect via `headerHovered` state | Frontend Agent | 2026-06-03 |
+| P2.27 `[PHASE-2]` Age verification (18+) — `calculate_age()` helper in `auth/utils.py`; `dateOfBirth` field on `RegisterRequest` (400 if under 18); `POST /api/users/{id}/submit-age` (5/hr, auth+ownership, auto-ban under 18); `SubmitAgeRequest` model; `AgeGateModal` in `App.jsx` (fires when `user.dateOfBirth` falsy, calls `submitAge`); `dateOfBirth` date input in `SignupPage` step 0 with client-side age check; `submitAge` in `api.js`; 12 tests all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-03 |
+| P2.26 `[PHASE-2]` Privacy Policy, Terms of Service, consent checkbox, and ToS versioning — `PrivacyPolicyPage` at `/privacy` (8 sections), `TermsOfServicePage` at `/terms` (10 sections), `LegalPage.css` shared styles; `agreedToTerms` checkbox in `SignupPage` (unchecked by default, links to `/terms` + `/privacy`, sends `termsVersion: "2026-06-03"` in payload); `AcceptTermsRequest` model; `termsVersion` + `termsAcceptedAt` stored at registration; `POST /api/users/{id}/accept-terms` endpoint (10/hr); `CURRENT_TERMS_VERSION` + `TERMS_CHANGELOG` constants in `App.jsx`; `ToSModal` (blocking, changelog banner, checkbox guard, calls `acceptTerms`); early-return AppRoutes order: age gate → ToS modal → routes; `/privacy` and `/terms` public routes; `acceptTerms` in `api.js` | Backend Agent + Frontend Agent | 2026-06-03 |
 
 ---
 
@@ -118,10 +120,7 @@ _All Phase 1 tasks complete. See Completed table above._
 
 _Infrastructure is up. These are deployment config, data, and verification steps done before inviting any users._
 
-| ID | Task | Owner | Priority | Added |
-|----|------|-------|----------|-------|
-| P2.26 | `[PHASE-2]` Privacy Policy & Terms of Service — generate via Termly or iubenda; customize for photo storage, message storage, .edu email collection, third-party data sharing (Cloudinary, SendGrid, Sentry, PostHog, Atlas, Render, Vercel); add explicit consent checkbox (not pre-checked) to signup flow; include data retention policy, right to export, and account deletion rights | — | **Critical** | 2026-06-03 |
-| P2.27 | `[PHASE-2]` Age verification (18+) at signup — add `dateOfBirth` field; reject users under 18 at registration endpoint; add to `SignupPage`. **Existing user migration:** users without a `dateOfBirth` see a one-time modal on next app open requiring them to enter their date of birth; if under 18, account is automatically banned with a message explaining why; if 18+, they confirm and continue. Backend: store `dateOfBirth`, age-check on register, `POST /api/users/{id}/submit-age` for existing users, auto-ban logic. Frontend: age gate modal in `App.jsx` fires when `user.dateOfBirth` is missing. | Backend Agent + Frontend Agent | **Critical** | 2026-06-03 |
+_All Phase 2 tasks complete. See Completed table above._
 
 ---
 
@@ -224,3 +223,4 @@ _App is fully built. This phase is about confirming readiness and executing the 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
 | P4.1 | `[PHASE-4]` Load test before launch — Locust or k6 test: 500 concurrent users, mix of signup (5%), login (10%), discover + like/skip (60%), chat (20%), profile view (5%); targets: p95 < 500ms, error rate < 0.5%; run against staging; document bottlenecks and file fixes as new tasks | Backend Agent | High | 2026-06-03 |
+| P4.2 | `[PHASE-4]` Lawyer review of Privacy Policy and Terms of Service — the beta versions were drafted programmatically and cover standard clauses; have a lawyer review before campus-wide launch to ensure FERPA compliance (student data), COPPA compliance (age verification), and enforceability of the arbitration/dispute clauses | — | High | 2026-06-03 |

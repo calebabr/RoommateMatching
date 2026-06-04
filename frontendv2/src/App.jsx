@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { submitAge, acceptTerms } from './services/api';
 
 import LoginPage          from './pages/LoginPage';
 import SignupPage         from './pages/SignupPage';
@@ -15,9 +16,194 @@ import NotificationsPage   from './pages/NotificationsPage';
 import ForgotPasswordPage  from './pages/ForgotPasswordPage';
 import ResetPasswordPage   from './pages/ResetPasswordPage';
 import RestoreAccountPage  from './pages/RestoreAccountPage';
+import PrivacyPolicyPage   from './pages/PrivacyPolicyPage';
+import TermsOfServicePage  from './pages/TermsOfServicePage';
 
 const MAX_MATCHES = 5;
 const MOBILE_BP   = 768;
+
+const CURRENT_TERMS_VERSION = "2026-06-03";
+
+const TERMS_CHANGELOG = {
+  "2026-06-03": null, // Initial release — no changelog shown for first-time acceptance
+};
+
+function calculateAge(dobString) {
+  const dob = new Date(dobString);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
+
+function AgeGateModal() {
+  const { user, logout, refreshUser } = useAuth();
+  const [dob, setDob] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [banMessage, setBanMessage] = useState('');
+
+  const handleSubmit = useCallback(async () => {
+    if (!dob) { setError('Please enter your date of birth.'); return; }
+    if (calculateAge(dob) < 18) { setError('You must be at least 18 years old to use RoomMatch.'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      const result = await submitAge(user.id, dob);
+      if (result.status === 'banned') {
+        setBanMessage(result.message || 'Your account has been banned for age policy violation.');
+        setTimeout(() => logout(), 3000);
+      } else {
+        await refreshUser();
+      }
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [dob, user, logout, refreshUser]);
+
+  const maxDate = new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+    .toISOString().split('T')[0];
+
+  return (
+    <div className="modal-overlay" style={{ zIndex: 10000 }}>
+      <div className="modal-box">
+        <p className="modal-title">Age Verification Required</p>
+        {banMessage ? (
+          <p className="modal-message" style={{ color: 'var(--color-danger)' }}>{banMessage}</p>
+        ) : (
+          <>
+            <p className="modal-message">
+              RoomMatch requires all users to be 18 or older. Please enter your date of birth to continue.
+            </p>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
+                Date of Birth
+              </label>
+              <input
+                className="form-input"
+                type="date"
+                value={dob}
+                max={maxDate}
+                onChange={e => { setDob(e.target.value); setError(''); }}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+              {error && (
+                <p style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 6 }}>{error}</p>
+              )}
+            </div>
+            <div className="modal-buttons">
+              <button
+                className="modal-btn modal-btn-primary"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? 'Submitting…' : 'Submit'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ToSModal() {
+  const { user, refreshUser } = useAuth();
+  const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const isUpdate = TERMS_CHANGELOG[CURRENT_TERMS_VERSION] !== null;
+  const changelog = TERMS_CHANGELOG[CURRENT_TERMS_VERSION];
+
+  const handleAgree = useCallback(async () => {
+    if (!agreed) return;
+    setError('');
+    setLoading(true);
+    try {
+      await acceptTerms(user.id, CURRENT_TERMS_VERSION);
+      await refreshUser();
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [agreed, user, refreshUser]);
+
+  return (
+    <div className="modal-overlay" style={{ zIndex: 10000 }}>
+      <div className="modal-box">
+        {isUpdate && changelog && (
+          <div style={{
+            background: 'var(--color-warning-bg, rgba(232,168,56,0.15))',
+            border: '1px solid var(--color-warning, #E8A838)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            marginBottom: 16,
+            fontSize: 13,
+            color: 'var(--color-text, #fff)',
+          }}>
+            <strong>Terms Updated</strong> — {changelog}
+          </div>
+        )}
+        <p className="modal-title">
+          {isUpdate ? 'Our Terms Have Been Updated' : 'Terms of Service'}
+        </p>
+        <p className="modal-message">
+          Please review and accept our Terms of Service and Privacy Policy to continue using RoomMatch.
+        </p>
+        <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--color-accent, #E8A838)', textDecoration: 'underline', fontSize: 14 }}
+          >
+            Terms of Service
+          </a>
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--color-accent, #E8A838)', textDecoration: 'underline', fontSize: 14 }}
+          >
+            Privacy Policy
+          </a>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16 }}>
+          <input
+            id="tos-modal-agree"
+            type="checkbox"
+            checked={agreed}
+            onChange={e => { setAgreed(e.target.checked); setError(''); }}
+            style={{ marginTop: 3, accentColor: '#E8A838', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
+          />
+          <label
+            htmlFor="tos-modal-agree"
+            style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--color-text-secondary, #A0A0A0)', cursor: 'pointer' }}
+          >
+            I have read and agree to the Terms of Service and Privacy Policy
+          </label>
+        </div>
+        {error && (
+          <p style={{ color: 'var(--color-danger)', fontSize: 13, marginBottom: 12 }}>{error}</p>
+        )}
+        <div className="modal-buttons">
+          <button
+            className="modal-btn modal-btn-primary"
+            onClick={handleAgree}
+            disabled={!agreed || loading}
+          >
+            {loading ? 'Submitting…' : 'I Agree'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const TAB_ICONS = { Profile: '👤', Discover: '🔍', Likes: '💌', Matches: '🤝', Chat: '💬' };
 
@@ -176,26 +362,40 @@ function AppRoutes() {
         <Route path="/forgot-password"   element={<ForgotPasswordPage />} />
         <Route path="/reset-password"    element={<ResetPasswordPage />} />
         <Route path="/restore-account"   element={<RestoreAccountPage />} />
+        <Route path="/privacy"           element={<PrivacyPolicyPage />} />
+        <Route path="/terms"             element={<TermsOfServicePage />} />
         <Route path="*"                  element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
+  if (!user.dateOfBirth) {
+    return <AgeGateModal />;
+  }
+
+  if (user.termsVersion !== CURRENT_TERMS_VERSION) {
+    return <ToSModal />;
+  }
+
   return (
-    <Routes>
-      <Route path="/" element={<SidebarLayout />}>
-        <Route index                        element={<Navigate to="/profile" replace />} />
-        <Route path="profile"               element={<ProfilePage />} />
-        <Route path="discover"              element={<DiscoverPage />} />
-        <Route path="likes"                 element={<LikesPage />} />
-        <Route path="matches"               element={<MatchesPage />} />
-        <Route path="chat"                  element={<ChatListPage />} />
-        <Route path="chat/:partnerId"       element={<ChatPage />} />
-        <Route path="user/:userId"          element={<UserDetailPage />} />
-        <Route path="notifications"         element={<NotificationsPage />} />
-        <Route path="*"                     element={<Navigate to="/profile" replace />} />
-      </Route>
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms"   element={<TermsOfServicePage />} />
+        <Route path="/" element={<SidebarLayout />}>
+          <Route index                        element={<Navigate to="/profile" replace />} />
+          <Route path="profile"               element={<ProfilePage />} />
+          <Route path="discover"              element={<DiscoverPage />} />
+          <Route path="likes"                 element={<LikesPage />} />
+          <Route path="matches"               element={<MatchesPage />} />
+          <Route path="chat"                  element={<ChatListPage />} />
+          <Route path="chat/:partnerId"       element={<ChatPage />} />
+          <Route path="user/:userId"          element={<UserDetailPage />} />
+          <Route path="notifications"         element={<NotificationsPage />} />
+          <Route path="*"                     element={<Navigate to="/profile" replace />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 

@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from pymongo import ReturnDocument
 from app.database import users_collection, counters_collection
-from app.auth.utils import hash_password, verify_password, create_access_token, validate_password_strength
+from app.auth.utils import hash_password, verify_password, create_access_token, validate_password_strength, calculate_age
 from app.auth.dependencies import get_current_user, _admin_ids
 from app.limiter import limiter
 from app.models import Preference, ALLOWED_LIFESTYLE_TAGS, UserInDB
@@ -35,6 +35,8 @@ class RegisterRequest(BaseModel):
     smokingScore: Optional[Preference] = Preference(value=0.0, isDealBreaker=False)
     sharedSpaceScore: Optional[Preference] = Preference(value=5.0, isDealBreaker=False)
     communicationScore: Optional[Preference] = Preference(value=5.0, isDealBreaker=False)
+    dateOfBirth: Optional[str] = None  # ISO date string YYYY-MM-DD
+    termsVersion: Optional[str] = None  # e.g. "2026-06-03"
 
     @field_validator("gender", mode="before")
     @classmethod
@@ -113,6 +115,14 @@ async def register(request: Request, body: RegisterRequest):
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
 
+    if body.dateOfBirth is not None:
+        try:
+            age = calculate_age(body.dateOfBirth)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid dateOfBirth format. Use YYYY-MM-DD.")
+        if age < 18:
+            raise HTTPException(status_code=400, detail="You must be at least 18 years old to register.")
+
     try:
         validate_password_strength(body.password)
     except ValueError as e:
@@ -142,6 +152,11 @@ async def register(request: Request, body: RegisterRequest):
         "sharedSpaceScore": body.sharedSpaceScore.model_dump(),
         "communicationScore": body.communicationScore.model_dump(),
     }
+    if body.dateOfBirth is not None:
+        user_doc["dateOfBirth"] = body.dateOfBirth
+    if body.termsVersion is not None:
+        user_doc["termsVersion"] = body.termsVersion
+        user_doc["termsAcceptedAt"] = datetime.utcnow().isoformat()
 
     await users_collection.insert_one(user_doc)
     user_doc.pop("_id", None)

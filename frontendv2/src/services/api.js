@@ -153,6 +153,14 @@ export const getNotifications         = (userId) => api.get(`/users/${userId}/no
 export const getUnreadNotificationCount = (userId) => api.get(`/users/${userId}/notifications/unread-count`).then(r => r.data);
 export const markNotificationsRead    = (userId) => api.post(`/users/${userId}/notifications/mark-read`).then(r => r.data);
 
+// ── Age verification ───────────────────────────────────────────────────────
+export const submitAge = (userId, dateOfBirth) =>
+  api.post(`/users/${userId}/submit-age`, { dateOfBirth }).then(r => r.data);
+
+// ── Terms of Service ───────────────────────────────────────────────────────
+export const acceptTerms = (userId, termsVersion) =>
+  api.post(`/users/${userId}/accept-terms`, { termsVersion }).then(r => r.data);
+
 // ── Health ─────────────────────────────────────────────────────────────────
 export const healthCheck = () => api.get('/health').then(r => r.data);
 
