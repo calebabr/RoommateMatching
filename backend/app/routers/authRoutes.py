@@ -109,7 +109,7 @@ async def _get_next_id() -> int:
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("3/hour")
+@limiter.limit("10/hour")
 async def register(request: Request, body: RegisterRequest):
     existing = await users_collection.find_one({"email": body.email.lower()})
     if existing:

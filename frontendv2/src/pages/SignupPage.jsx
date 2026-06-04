@@ -246,7 +246,8 @@ export default function SignupPage() {
               onClick={() => {
                 if (!email.trim())    { setModal({ title: 'Missing Email', message: 'Please enter your email address.' }); return; }
                 if (!password)        { setModal({ title: 'Missing Password', message: 'Please enter a password.' }); return; }
-                if (!username.trim()) { setModal({ title: 'Missing Name', message: 'Please enter a username.' }); return; }
+                if (password.length < 8) { setModal({ title: 'Password Too Weak', message: 'Password must be at least 8 characters long.' }); return; }
+                if (username.trim().length === 0) { setModal({ title: 'Missing Name', message: 'Please enter a username.' }); return; }
                 if (!dateOfBirth)     { setModal({ title: 'Missing Date of Birth', message: 'Please enter your date of birth.' }); return; }
                 if (calculateAge(dateOfBirth) < 18) {
                   setDobError('You must be at least 18 years old to sign up.');
