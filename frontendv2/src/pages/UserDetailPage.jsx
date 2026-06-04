@@ -240,7 +240,7 @@ export default function UserDetailPage() {
                     );
                   })}
                   {profile.religionTag && (
-                    <span className="tag-pill tag-pill-neutral" style={{ fontSize: 12 }}>
+                    <span className="tag-pill" style={{ fontSize: 12, background: 'rgba(139,92,246,0.2)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }}>
                       {profile.religionTag}
                     </span>
                   )}
@@ -251,7 +251,7 @@ export default function UserDetailPage() {
                 <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {profile.major && (
                     <p style={{ fontSize: 13, color: 'var(--color-text-secondary, #A0A0A0)', margin: 0 }}>
-                      {profile.major}
+                      Major: {profile.major}
                     </p>
                   )}
                   {profile.graduationSeason && profile.graduationYear && (

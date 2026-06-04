@@ -37,6 +37,10 @@ export default function TermsOfServicePage() {
             <li>Not create accounts on behalf of other people</li>
             <li>Notify us immediately if you suspect unauthorized use of your account</li>
           </ul>
+          <p>
+            Users may optionally provide their academic major and graduation year for display
+            on their profile to help potential roommates learn more about them.
+          </p>
         </div>
 
         <div className="legal-section">

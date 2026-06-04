@@ -79,3 +79,27 @@
   margin-left: 8px;
   flex-shrink: 0;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .notifications-header-title {
+    font-size: 20px;
+  }
+
+  /* Remove spacer on mobile so header doesn't compress the title */
+  .notifications-header-spacer {
+    display: none;
+  }
+
+  .notifications-list {
+    max-width: 100%;
+  }
+
+  .notifications-item {
+    padding: 14px 12px;
+  }
+
+  .notifications-message {
+    font-size: 13px;
+  }
+}

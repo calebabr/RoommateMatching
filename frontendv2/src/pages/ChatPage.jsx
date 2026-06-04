@@ -19,7 +19,7 @@ function formatMessageTime(dateStr) {
   return `${d}d ago`;
 }
 
-function formatSeenTime(dateStr) {
+function formatSeenTime(dateStr, _tick) {
   if (!dateStr) return '';
   const utc = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
   const diff = Math.floor((Date.now() - new Date(utc)) / 60000);
@@ -39,6 +39,7 @@ export default function ChatPage() {
   const { user, refreshUser } = useAuth();
   const [messages,          setMessages]          = useState([]);
   const [partnerLastReadAt, setPartnerLastReadAt] = useState(null);
+  const [tick,              setTick]              = useState(0);
   const [newMsgDividerAt,   setNewMsgDividerAt]   = useState(null);
   const [partner,  setPartner]  = useState(state?.partnerName ? { id: parseInt(partnerId), username: state.partnerName } : null);
   const [input,    setInput]    = useState('');
@@ -95,6 +96,12 @@ export default function ChatPage() {
     }, 3000);
     return () => { active = false; clearInterval(pollRef.current); };
   }, [user?.id, partnerIdNum]);
+
+  // Tick every 30s to force re-render of relative time strings (e.g. "just now" → "1m ago")
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -212,7 +219,7 @@ export default function ChatPage() {
                 {isLastSent && showSeen && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px 4px', marginTop: -4 }}>
                     <span style={{ fontSize: 11, color: 'var(--color-text-secondary, #A0A0A0)' }}>
-                      Seen {formatSeenTime(partnerLastReadAt)}
+                      Seen {formatSeenTime(partnerLastReadAt, tick)}
                     </span>
                   </div>
                 )}

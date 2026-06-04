@@ -78,6 +78,14 @@ You are always spawned as part of a multi-agent team but you start **idle**. Do 
 
 When done, message the team lead confirming what you updated.
 
+## Standing Rules
+
+**TASKS.md format:** When a task is completed, move it to the Completed table and **delete it from the backlog entirely**. Never use strikethrough (~~text~~) on backlog entries. Strikethrough clutters the backlog and makes remaining work hard to scan.
+
+**ToS/Privacy review:** Any sprint that adds new user-facing data collection, new required or prompted fields, or changes how user data is used must include a ToS/Privacy review. Check whether `PrivacyPolicyPage.jsx` and `TermsOfServicePage.jsx` need text updates. If the change is minor/informational, update text only (no version bump). If new explicit consent is needed, also bump `CURRENT_TERMS_VERSION` in `App.jsx` and add a `TERMS_CHANGELOG` entry — this re-prompts all users on next login. Flag this in the sprint summary whenever it applies.
+
+**README:** The `README.md` at the project root must be kept current. Flag in the sprint summary if any changes in the sprint (new endpoints, new env vars, new setup steps, new collections) are not yet reflected in README.md.
+
 **Structure of `docs/TASKS.md`:**
 
 ```markdown

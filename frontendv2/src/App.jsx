@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { submitAge, acceptTerms, getUnreadChats } from './services/api';
+import { submitAge, acceptTerms, getUnreadChats, updateUser } from './services/api';
+import LegalModal from './components/LegalModal';
 
 import LoginPage          from './pages/LoginPage';
 import SignupPage         from './pages/SignupPage';
@@ -27,6 +28,20 @@ const CURRENT_TERMS_VERSION = "2026-06-03";
 const TERMS_CHANGELOG = {
   "2026-06-03": null, // Initial release — no changelog shown for first-time acceptance
 };
+
+const MAJOR_OPTIONS = [
+  'Accounting', 'Aerospace Engineering', 'Architecture', 'Biology',
+  'Business Administration', 'Chemical Engineering', 'Chemistry',
+  'Civil Engineering', 'Communications', 'Computer Science',
+  'Criminal Justice', 'Economics', 'Education', 'Electrical Engineering',
+  'English', 'Finance', 'Graphic Design', 'History', 'Industrial Engineering',
+  'Information Systems', 'Kinesiology', 'Marketing', 'Mathematics',
+  'Mechanical Engineering', 'Nursing', 'Philosophy', 'Physics',
+  'Political Science', 'Psychology', 'Public Health', 'Sociology',
+  'Software Engineering', 'Statistics', 'Theater', 'Undecided', 'Other',
+];
+const GRADUATION_SEASONS = ['Spring', 'Summer', 'Fall'];
+const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
 
 function calculateAge(dobString) {
   const dob = new Date(dobString);
@@ -115,6 +130,7 @@ function ToSModal() {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [legalModal, setLegalModal] = useState(null); // 'terms' | 'privacy' | null
 
   const isUpdate = TERMS_CHANGELOG[CURRENT_TERMS_VERSION] !== null;
   const changelog = TERMS_CHANGELOG[CURRENT_TERMS_VERSION];
@@ -134,7 +150,9 @@ function ToSModal() {
   }, [agreed, user, refreshUser]);
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 10000 }}>
+    <>
+      {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
+      <div className="modal-overlay" style={{ zIndex: 10000 }}>
       <div className="modal-box">
         {isUpdate && changelog && (
           <div style={{
@@ -156,22 +174,18 @@ function ToSModal() {
           Please review and accept our Terms of Service and Privacy Policy to continue using RoomMatch.
         </p>
         <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <a
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--color-accent, #E8A838)', textDecoration: 'underline', fontSize: 14 }}
+          <button
+            onClick={() => setLegalModal('terms')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-accent, #E8A838)', textDecoration: 'underline', fontSize: 14, textAlign: 'left', padding: 0 }}
           >
             Terms of Service
-          </a>
-          <a
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--color-accent, #E8A838)', textDecoration: 'underline', fontSize: 14 }}
+          </button>
+          <button
+            onClick={() => setLegalModal('privacy')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-accent, #E8A838)', textDecoration: 'underline', fontSize: 14, textAlign: 'left', padding: 0 }}
           >
             Privacy Policy
-          </a>
+          </button>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16 }}>
           <input
@@ -198,6 +212,119 @@ function ToSModal() {
             disabled={!agreed || loading}
           >
             {loading ? 'Submitting…' : 'I Agree'}
+          </button>
+        </div>
+      </div>
+    </div>
+    </>
+  );
+}
+
+function ProfileCompletionModal({ onDismiss }) {
+  const { user, refreshUser } = useAuth();
+  const [major, setMajor] = useState('');
+  const [majorOther, setMajorOther] = useState('');
+  const [graduationSeason, setGraduationSeason] = useState('');
+  const [graduationYear, setGraduationYear] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = useCallback(async () => {
+    if (!major && !graduationSeason && !graduationYear) {
+      setError('Please fill in at least one field.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const resolvedMajor = major === 'Other' ? (majorOther.trim() ? `Other: ${majorOther.trim()}` : '') : major;
+      await updateUser(user.id, {
+        major: resolvedMajor || undefined,
+        graduationSeason: graduationSeason || undefined,
+        graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
+      });
+      await refreshUser();
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Could not save. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [major, majorOther, graduationSeason, graduationYear, user, refreshUser]);
+
+  return (
+    <div className="modal-overlay" style={{ zIndex: 9000 }}>
+      <div className="modal-box">
+        <p className="modal-title">Complete Your Profile</p>
+        <p className="modal-message">
+          Add your major and graduation year so potential roommates can learn more about you.
+        </p>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
+            Major (optional)
+          </label>
+          <select
+            className="form-input"
+            value={major}
+            onChange={e => { setMajor(e.target.value); if (e.target.value !== 'Other') setMajorOther(''); }}
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          >
+            <option value="">Select your major...</option>
+            {MAJOR_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          {major === 'Other' && (
+            <input
+              className="form-input"
+              style={{ marginTop: 8, width: '100%', boxSizing: 'border-box' }}
+              placeholder="Enter your major"
+              value={majorOther}
+              onChange={e => setMajorOther(e.target.value)}
+            />
+          )}
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
+            Graduation (optional)
+          </label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ flex: 1 }}
+              value={graduationSeason}
+              onChange={e => setGraduationSeason(e.target.value)}
+            >
+              <option value="">Season</option>
+              {GRADUATION_SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select
+              className="form-input"
+              style={{ flex: 1 }}
+              value={graduationYear}
+              onChange={e => setGraduationYear(e.target.value)}
+            >
+              <option value="">Year</option>
+              {GRADUATION_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {error && <p style={{ color: 'var(--color-danger)', fontSize: 13, marginBottom: 10 }}>{error}</p>}
+
+        <div className="modal-buttons">
+          <button
+            className="modal-btn modal-btn-primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            className="modal-btn"
+            onClick={onDismiss}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
+          >
+            Skip for now
           </button>
         </div>
       </div>
@@ -246,6 +373,19 @@ function SidebarLayout() {
     const interval = setInterval(fetchUnread, 10000);
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  // Immediately clear badge when a chat is opened
+  useEffect(() => {
+    const match = location.pathname.match(/^\/chat\/(\d+)/);
+    if (match) {
+      const openedPartnerId = parseInt(match[1], 10);
+      setUnreadChatPartnerIds(prev => {
+        const next = prev.filter(id => id !== openedPartnerId);
+        setUnreadChatCount(next.length);
+        return next;
+      });
+    }
+  }, [location.pathname]);
 
   const tabs = [
     { path: '/profile',  label: 'Profile'  },
@@ -386,6 +526,7 @@ function SidebarLayout() {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const [profileCompletionDismissed, setProfileCompletionDismissed] = useState(false);
 
   if (loading) {
     return (
@@ -421,8 +562,14 @@ function AppRoutes() {
     return <ToSModal />;
   }
 
+  const needsProfileCompletion = !user.major || !user.graduationYear;
+  const showProfileCompletion = needsProfileCompletion && !profileCompletionDismissed;
+
   return (
     <>
+      {showProfileCompletion && (
+        <ProfileCompletionModal onDismiss={() => setProfileCompletionDismissed(true)} />
+      )}
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms"   element={<TermsOfServicePage />} />

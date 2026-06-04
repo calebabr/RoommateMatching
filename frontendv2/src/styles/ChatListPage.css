@@ -66,3 +66,14 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .chatlist-list {
+    max-width: 100%;
+  }
+
+  .chatlist-card {
+    padding: 14px 12px;
+  }
+}

@@ -346,3 +346,54 @@
   cursor: pointer;
   padding: 0;
 }
+
+/* ── Mobile responsive overrides (≤768px) ── */
+@media (max-width: 768px) {
+  /* Page container — reduce horizontal padding on small screens */
+  .page-container {
+    padding: 16px 16px 40px;
+  }
+
+  /* Page header — smaller font on mobile */
+  .page-header-title {
+    font-size: 20px;
+  }
+
+  /* pref-grid — ensure single column on very small screens */
+  .pref-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Two-col layout — stack vertically on mobile */
+  .two-col-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Left column no longer fixed width when stacked */
+  .col-left-280 {
+    width: 100%;
+  }
+
+  /* Inline modal — full-width on mobile */
+  .inline-modal {
+    max-width: 100%;
+    border-radius: var(--radius-md);
+  }
+
+  /* Empty state — reduce padding */
+  .empty-state {
+    padding: 40px 16px;
+  }
+
+  /* Auth scroll — tighten padding */
+  .auth-scroll {
+    padding: 0 16px 40px;
+  }
+
+  /* auth brand padding */
+  .auth-brand {
+    padding-top: 40px;
+    margin-bottom: 28px;
+  }
+}

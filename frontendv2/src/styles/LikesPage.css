@@ -151,3 +151,22 @@
   color: var(--color-danger);
   margin: 0 0 8px;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  /* Single column on mobile — override minmax(340px) */
+  .likes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .likes-card {
+    padding: 16px;
+  }
+
+  /* Action buttons — ensure 44px touch target */
+  .likes-like-back-btn,
+  .likes-view-btn,
+  .likes-cancel-btn {
+    min-height: 44px;
+  }
+}

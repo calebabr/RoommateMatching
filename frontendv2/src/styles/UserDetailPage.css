@@ -391,3 +391,42 @@
   color: var(--color-text-primary);
   margin: 0 0 16px;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .userdetail-page {
+    padding: 16px 16px 60px;
+  }
+
+  /* Two-col layout becomes single col — left column goes full width */
+  .userdetail-left-col {
+    width: 100%;
+  }
+
+  .userdetail-username {
+    font-size: 22px;
+  }
+
+  /* Pref grid — single column on mobile */
+  .userdetail-pref-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Action buttons — ensure 44px touch target */
+  .userdetail-like-btn,
+  .userdetail-block-btn,
+  .userdetail-report-btn {
+    min-height: 44px;
+  }
+
+  /* Report select/textarea — 16px to prevent iOS auto-zoom */
+  .report-select,
+  .report-textarea {
+    font-size: 16px;
+  }
+
+  /* Block/report modal actions — stack on very small screens */
+  .userdetail-modal-actions {
+    flex-wrap: wrap;
+  }
+}

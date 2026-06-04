@@ -209,3 +209,32 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  /* Single column on mobile — override minmax(380px) that forces overflow */
+  .discover-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-card {
+    padding: 16px;
+  }
+
+  /* Refresh button — full width on mobile */
+  .discover-refresh-btn {
+    padding: 10px 14px;
+    min-height: 44px;
+  }
+
+  /* Input font-size to prevent iOS auto-zoom */
+  .discover-username {
+    font-size: 16px;
+  }
+
+  /* Action buttons — ensure 44px touch target */
+  .discover-like-btn,
+  .discover-pass-btn {
+    min-height: 44px;
+  }
+}

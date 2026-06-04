@@ -26,6 +26,7 @@ export default function PrivacyPolicyPage() {
             <li>Date of birth and gender</li>
             <li>Profile photo</li>
             <li>Lifestyle preferences (sleep schedule, cleanliness, noise tolerance, and more)</li>
+            <li>Academic major, expected graduation season and year</li>
             <li>Chat messages sent between matched users</li>
             <li>Usage and analytics data (pages visited, features used, session activity)</li>
           </ul>

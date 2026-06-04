@@ -160,3 +160,25 @@
   color: var(--color-danger);
   cursor: pointer;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  /* Single column on mobile — override minmax(400px) */
+  .matches-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .matches-card {
+    padding: 16px;
+  }
+
+  .matches-username {
+    font-size: 18px;
+  }
+
+  /* Action buttons — ensure 44px touch target */
+  .matches-chat-btn,
+  .matches-unmatch-btn {
+    min-height: 44px;
+  }
+}

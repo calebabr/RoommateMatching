@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-04 by docs-agent (sprint-cancel-like-matchscore-tests-profile-pause-skip)_
+_Last updated: 2026-06-04 by docs-agent (ux-polish-mobile-fixes)_
 
 ---
 
@@ -114,6 +114,15 @@ _Nothing currently in progress._
 | P3T.1 `[PHASE-3]` matchScore.py unit tests — weight calculations, boundary values, simultaneous dealbreakers; test file at `backend/tests/test_match_score.py` | Tests Agent | 2026-06-04 |
 | P3FT.3 `[PHASE-3]` Profile pause and deactivation — `POST /users/{id}/pause` + `POST /users/{id}/unpause` (no password); `POST /users/{id}/deactivate` (requires password, sets `is_deactivated` + `deactivatedAt`) + `POST /users/{id}/reactivate`; paused users hidden from discover/likes-received; deactivated users hidden everywhere including existing matches; frontend: pause toggle and deactivate flow with password confirmation in `ProfilePage`; 2026-06-04 |  Backend Agent + Frontend Agent + Tests Agent | 2026-06-04 |
 | P3FT.4 `[PHASE-3]` Skip/pass button + swipes collection — `POST /api/users/{user_id}/skip/{skipped_user_id}` (upsert with TTL, 60/min); `swipes_collection` in `database.py`; `GET /top-matches` filters skipped IDs; frontend: Skip button on `DiscoverPage` beside Like; `skipUser(userId, skippedUserId)` in `api.js`; 30-day TTL index on `skipped_at`; tests all passing | Backend Agent + Frontend Agent + DB Agent + Tests Agent | 2026-06-04 |
+| Unread badge immediate clear on chat open — `useEffect` on `location.pathname` in `App.jsx` filters partner from `unreadChatPartnerIds` state immediately on `/chat/:id` navigation; no longer waits for 10-second poll | Frontend Agent | 2026-06-04 |
+| "Seen" receipt real-time tick update — `tick` state in `ChatPage.jsx` increments every 30s; forces `formatSeenTime` re-renders so relative timestamps update without a full poll; `setPartnerLastReadAt` called on every poll response | Frontend Agent | 2026-06-04 |
+| Terms/Privacy converted to in-app LegalModal — new `LegalModal.jsx` component (scrollable, dark-themed, 85vh, full text inline); all `<a href="/terms">` and `<a href="/privacy">` navigation links replaced with LegalModal-opening buttons in `App.jsx`, `NotificationBell.jsx`, `SignupPage.jsx` | Frontend Agent | 2026-06-04 |
+| Feedback modal aesthetic improvements — FeedbackModal in `NotificationBell.jsx` restyled: accent-colored title, dark textarea with focus ring, ghost cancel button, filled accent submit button, centered success state | Frontend Agent | 2026-06-04 |
+| Religion tag purple color — religion tag pills now use soft purple palette (`rgba(139,92,246,0.2)` bg, `#a78bfa` text, `rgba(139,92,246,0.3)` border) in `ProfilePage.jsx` and `UserDetailPage.jsx` | Frontend Agent | 2026-06-04 |
+| Major "Major: " label prefix — `major` field prefixed with `"Major: "` in display mode in `ProfilePage.jsx` and `UserDetailPage.jsx` | Frontend Agent | 2026-06-04 |
+| ProfileCompletionModal soft prompt — new inline component in `App.jsx`; fires when user is missing `major` or graduation fields; Save calls `updateUser`; "Skip for now" dismisses for session | Frontend Agent | 2026-06-04 |
+| PrivacyPolicyPage + TermsOfServicePage text updated for major/graduation data — Privacy adds major/graduation to collected data list; ToS Section 2 notes fields are optional | Frontend Agent | 2026-06-04 |
+| Full mobile responsiveness audit — `@media (max-width: 768px)` blocks in 11 CSS files; grid overflows fixed on Discover/Likes/Matches; ChatPage keyboard/scroll fixed (flex+min-height, safe-area insets, 16px inputs, iOS zoom prevention); 44px touch targets everywhere; Modal converted to bottom-sheet; two-column layouts stack to single column | Frontend Agent | 2026-06-04 |
 
 ---
 
@@ -153,6 +162,7 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 |----|------|-------|----------|-------|
 | P3FT.2 | `[PHASE-3]` Email verification on signup (absorbs P3A.3) — generate 32-byte cryptographically random token (24h expiry) on register; store `email_verification_token_hash` + `email_verification_expires` + `is_email_verified: false` on user; send token via SendGrid; block login (403 "email not verified") until verified; `POST /api/auth/verify-email` endpoint; resend endpoint (rate-limited 3/hr per email); unverified banner in frontend; `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL` env vars | Backend Agent + Frontend Agent | High | 2026-06-03 |
 | P3FT.8 | `[PHASE-3]` Email & admin notifications for account state changes — when a user pauses, deactivates, or deletes their account, send them a confirmation email and notify admins of deactivations/deletions; depends on SendGrid setup (P3FT.2); add after email infrastructure is in place | Backend Agent | Medium | 2026-06-04 |
+| P3FT.9 | `[PHASE-3]` Real-time typing indicator in chat — show "User is typing..." animation in ChatPage when the other user is actively typing; options: (a) fast-polling approach with a POST /chat/{partner_id}/typing endpoint that sets a TTL flag in Redis/DB, polled every 1–2s; (b) WebSocket upgrade (see P3F.1); implement (a) first as a lightweight solution | Backend Agent + Frontend Agent | Medium | 2026-06-04 |
 | P3FT.5 | `[PHASE-3]` Auto-moderation on uploads and bios — photos: Cloudinary moderation add-on (or AWS Rekognition fallback) flags explicit/violent content → set `pending_review`, hide from discover until admin approves; bios: OpenAI moderation endpoint on create/update → `pending_review` if flagged; usernames: `better-profanity` filter at signup; admin queue endpoint for pending content | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
 | P3FT.6 | `[PHASE-3]` Match email notifications — on mutual match, send both users a SendGrid email with: match preview (name, photo, 1-2 lifestyle tags), deep link to chat, unsubscribe link; `emailOnMatch` user preference toggle (default true); respect SendGrid 100/day free-tier cap with graceful fallback | Backend Agent | Medium | 2026-06-03 |
 | P3FT.7 | `[PHASE-3]` Admin audit log — immutable append-only `admin_audit_log` collection; fields: timestamp, adminUserId, action, targetUserId, targetResourceId, reason, ipAddress; every admin endpoint writes an entry before returning; `GET /admin/audit-log` (admin-only, paginated); no update/delete endpoints | Backend Agent + Frontend Agent | Medium | 2026-06-03 |

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadNotificationCount, submitFeedback } from '../services/api';
+import LegalModal from './LegalModal';
 
 function FeedbackModal({ onClose }) {
   const [message, setMessage] = useState('');
@@ -20,9 +21,12 @@ function FeedbackModal({ onClose }) {
   return (
     <div className="modal-overlay" style={{ zIndex: 10000 }}>
       <div className="modal-box" style={{ maxWidth: 480, width: '90%' }}>
-        <p className="modal-title">Send Feedback</p>
+        <p className="modal-title" style={{ color: 'var(--color-accent, #E8A838)', fontSize: 20, fontWeight: 700 }}>Send Feedback</p>
         {status === 'success' ? (
-          <p style={{ color: 'var(--color-success, #22aa55)', fontSize: 15, textAlign: 'center', padding: '8px 0' }}>Thanks for your feedback!</p>
+          <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <span style={{ fontSize: 32 }}>&#10003;</span>
+            <p style={{ color: 'var(--color-success, #22aa55)', fontSize: 15, marginTop: 8 }}>Thanks for your feedback!</p>
+          </div>
         ) : (
           <>
             <textarea
@@ -31,13 +35,55 @@ function FeedbackModal({ onClose }) {
               value={message}
               onChange={e => setMessage(e.target.value.slice(0, MAX))}
               rows={5}
-              style={{ width: '100%', resize: 'vertical', marginBottom: 4 }}
+              style={{
+                width: '100%',
+                resize: 'vertical',
+                marginBottom: 4,
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 8,
+                color: '#fff',
+                padding: '10px 12px',
+                fontSize: 14,
+                boxSizing: 'border-box',
+                outline: 'none',
+              }}
+              onFocus={e => { e.target.style.outline = '1px solid #E8A838'; }}
+              onBlur={e => { e.target.style.outline = 'none'; }}
             />
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'right', marginBottom: 12 }}>{message.length}/{MAX}</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'right', marginBottom: 12 }}>{message.length}/{MAX}</p>
             {status === 'error' && <p style={{ color: '#e55', fontSize: 13, marginBottom: 8 }}>Something went wrong. Please try again.</p>}
             <div className="modal-actions">
-              <button className="modal-btn modal-btn--cancel" onClick={onClose}>Cancel</button>
-              <button className="modal-btn modal-btn--confirm" onClick={handleSubmit} disabled={!message.trim()}>Submit</button>
+              <button
+                onClick={onClose}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: 8,
+                  color: '#fff',
+                  padding: '8px 20px',
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!message.trim()}
+                style={{
+                  background: message.trim() ? '#E8A838' : 'rgba(232,168,56,0.35)',
+                  border: 'none',
+                  borderRadius: 8,
+                  color: message.trim() ? '#1a1a1a' : 'rgba(26,26,26,0.5)',
+                  padding: '8px 20px',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: message.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Submit
+              </button>
             </div>
           </>
         )}
@@ -51,6 +97,7 @@ export default function NotificationBell() {
   const { user }  = useAuth();
   const [count, setCount] = useState(0);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [legalModal, setLegalModal] = useState(null); // 'terms' | 'privacy' | null
   const timerRef = useRef(null);
 
   const fetchCount = async () => {
@@ -80,13 +127,14 @@ export default function NotificationBell() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <button style={linkStyle} onClick={() => setFeedbackOpen(true)}>Feedback</button>
-      <a href="/terms" target="_blank" rel="noopener noreferrer" style={linkStyle}>Terms</a>
-      <a href="/privacy" target="_blank" rel="noopener noreferrer" style={linkStyle}>Privacy</a>
+      <button style={linkStyle} onClick={() => setLegalModal('terms')}>Terms</button>
+      <button style={linkStyle} onClick={() => setLegalModal('privacy')}>Privacy</button>
       <button className="notif-bell-btn" onClick={() => navigate('/notifications')}>
         <span className="notif-bell-icon">🔔</span>
         {count > 0 && <span className="notif-bell-badge">{count > 99 ? '99+' : count}</span>}
       </button>
       {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
+      {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
     </div>
   );
 }

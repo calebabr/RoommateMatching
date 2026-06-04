@@ -625,3 +625,56 @@
   background-color: #fb923c;
   color: var(--color-white);
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 16px 16px 60px;
+  }
+
+  .profile-topbar {
+    margin-bottom: 16px;
+  }
+
+  .profile-topbar-title {
+    font-size: 20px;
+  }
+
+  /* Input font-size 16px prevents iOS auto-zoom */
+  .profile-input {
+    font-size: 16px;
+  }
+
+  /* Save/Cancel buttons — already flex, fine on mobile; ensure min height */
+  .profile-save-btn,
+  .profile-cancel-btn {
+    min-height: 44px;
+  }
+
+  /* Danger zone row — stack label and button on very small screens */
+  .danger-zone-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .danger-action-btn {
+    width: 100%;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  /* Profile logout buttons — already full-width, ensure touch target */
+  .profile-logout-btn {
+    min-height: 44px;
+  }
+
+  /* Blocked user row — shrink unblock btn to not overflow */
+  .blocked-user-row {
+    flex-wrap: wrap;
+  }
+
+  /* Deactivated banner — stack on mobile */
+  .profile-deactivated-banner {
+    padding: 12px 16px;
+  }
+}

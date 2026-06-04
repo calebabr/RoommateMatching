@@ -346,13 +346,13 @@ export default function ProfilePage() {
                     <span key={tag} className="tag-pill tag-pill-accent" style={{ fontSize: 11 }}>{tag}</span>
                   ))}
                   {user.religionTag && (
-                    <span className="tag-pill tag-pill-neutral" style={{ fontSize: 11 }}>{user.religionTag}</span>
+                    <span className="tag-pill" style={{ fontSize: 11, background: 'rgba(139,92,246,0.2)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }}>{user.religionTag}</span>
                   )}
                 </div>
               )}
               {!(user.lifestyleTags || []).length && user.religionTag && (
                 <div className="profile-tags">
-                  <span className="tag-pill tag-pill-neutral" style={{ fontSize: 11 }}>{user.religionTag}</span>
+                  <span className="tag-pill" style={{ fontSize: 11, background: 'rgba(139,92,246,0.2)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }}>{user.religionTag}</span>
                 </div>
               )}
 
@@ -360,7 +360,7 @@ export default function ProfilePage() {
                 <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {user.major && (
                     <p style={{ fontSize: 13, color: 'var(--color-text-secondary, #A0A0A0)', margin: 0 }}>
-                      {user.major}
+                      Major: {user.major}
                     </p>
                   )}
                   {user.graduationSeason && user.graduationYear && (

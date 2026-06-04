@@ -65,3 +65,22 @@
   color: var(--color-text-secondary);
   border: 1.5px solid var(--color-border);
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 16px;
+    align-items: flex-end; /* slide up from bottom on mobile */
+  }
+
+  .modal-box {
+    max-width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm);
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
+  }
+
+  .modal-btn {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}

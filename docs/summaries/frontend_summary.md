@@ -353,6 +353,85 @@ Both routes are added to `App.jsx` outside the auth guard (public).
 
 ---
 
+## 14. UX Polish and Mobile Responsiveness (2026-06-04)
+
+### Unread Badge Immediate Clear (`App.jsx`)
+
+A `useEffect` watching `location.pathname` was added. When the user navigates to `/chat/:id`, the partner ID is extracted and immediately filtered out of `unreadChatPartnerIds` state — the nav badge drops to zero without waiting for the next 10-second poll cycle.
+
+### "Seen" Receipt Real-Time Update (`ChatPage.jsx`)
+
+A `tick` state counter was added that increments every 30 seconds via `setInterval`. It is passed as a dependency to the `formatSeenTime` helper, forcing re-renders of relative time strings (e.g. "Seen just now" → "Seen 1m ago") without a full poll. The polling loop was confirmed at 3-second intervals; `setPartnerLastReadAt` is called on every poll response so the seen timestamp updates as soon as the partner reads.
+
+### LegalModal Component (new — `frontendv2/src/components/LegalModal.jsx`)
+
+A new scrollable in-app modal for legal text. Props: `type` (`"terms"` | `"privacy"`) and `onClose`. Renders the full Terms of Service or Privacy Policy text inline. Styled dark-themed, `85vh` max-height, `680px` max-width, `X` button top-right, Close button at bottom. No navigation or new tab involved.
+
+All previous `<a href="/terms">` and `<a href="/privacy">` links were replaced with buttons that open `LegalModal`:
+- `frontendv2/src/App.jsx` — ToSModal acceptance links
+- `frontendv2/src/components/NotificationBell.jsx` — Terms/Privacy links in footer area
+- `frontendv2/src/pages/SignupPage.jsx` — consent checkbox links
+
+### Feedback Modal Aesthetic Improvements (`NotificationBell.jsx`)
+
+The FeedbackModal (rendered inside `NotificationBell`) was restyled:
+- Title uses accent color
+- Textarea: dark background with visible focus ring
+- Cancel button: ghost style
+- Submit button: filled accent style
+- Success state: centered layout
+
+### Religion Tag Color (`ProfilePage.jsx`, `UserDetailPage.jsx`)
+
+Religion tag pills now render with a soft purple palette:
+- Background: `rgba(139, 92, 246, 0.2)`
+- Text: `#a78bfa`
+- Border: `rgba(139, 92, 246, 0.3)`
+
+Applied consistently in both `ProfilePage` display mode and `UserDetailPage` public profile view.
+
+### Major Label Prefix (`ProfilePage.jsx`, `UserDetailPage.jsx`)
+
+The `major` field now renders with a `"Major: "` prefix label in both the profile view and the public user detail view, making the field identity unambiguous when displayed next to other plain-text profile fields.
+
+### Profile Completion Modal (`App.jsx`)
+
+`ProfileCompletionModal` is a new inline component in `App.jsx`. It fires when the authenticated user is missing `major` or both graduation fields. The modal presents dropdowns for major (using `MAJOR_OPTIONS` constant) and graduation season/year (using `GRADUATION_SEASONS` / `GRADUATION_YEARS` constants). Two actions:
+- **Save** — calls `updateUser` with the filled values; closes modal on success
+- **Skip for now** — dismisses for the session (does not persist; reappears on next login)
+
+The three constants (`MAJOR_OPTIONS`, `GRADUATION_SEASONS`, `GRADUATION_YEARS`) are defined at the top of `App.jsx` and shared with the modal.
+
+### ToS / Privacy Text Updates (`PrivacyPolicyPage.jsx`, `TermsOfServicePage.jsx`)
+
+- `PrivacyPolicyPage.jsx` — "academic major, expected graduation season and year" added to the collected data list.
+- `TermsOfServicePage.jsx` — Section 2 now includes a sentence about the optional nature of the major and graduation year fields.
+
+### Full Mobile Responsiveness Audit (11 CSS files)
+
+`@media (max-width: 768px)` blocks added to 11 CSS files:
+
+| File | Key changes |
+|------|-------------|
+| `utilities.css` | Mobile overrides for `page-container`, `page-header-title`, `pref-grid`, `two-col-layout`, `col-left-280`, `inline-modal`, `empty-state`, `auth-scroll`, `auth-brand` |
+| `App.css` | Min-height 48px topbar; 44px touch target on hamburger button |
+| `ChatPage.css` | `flex:1 + min-height:0` on `.chat-page` fixes keyboard/scroll; `-webkit-overflow-scrolling + overscroll-behavior` on messages; `safe-area-inset-bottom` on input bar; `16px` input font (prevents iOS auto-zoom); 44px send button; tighter padding |
+| `ProfilePage.css` | Mobile padding reduction; 16px form font; Danger Zone section stacks vertically; 44px touch targets on all action buttons |
+| `DiscoverPage.css` | Single-column grid (replaces `minmax(380px)` that caused horizontal overflow) |
+| `LikesPage.css` | Single-column grid (replaces `minmax(340px)`) |
+| `MatchesPage.css` | Single-column grid (replaces `minmax(400px)`) |
+| `ChatListPage.css` | Full-width conversation list; tighter card padding |
+| `UserDetailPage.css` | Two-column layout stacks to single column; pref-grid single column; 44px buttons; 16px font on report inputs |
+| `NotificationsPage.css` | Smaller page title; spacer hidden; full-width list |
+| `Modal.css` | Bottom-sheet style on mobile; full-width; safe-area padding; 44px buttons |
+
+**Deferred gaps:**
+- SignupPage graduation selects remain side-by-side on mobile (acceptable at current field count)
+- ChatPage auto-scroll-to-bottom on keyboard open requires a JS `visualViewport` resize listener — CSS-only fix is insufficient
+- ProfilePage has some remaining inline styles that could benefit from JSX-level responsive classes
+
+---
+
 ## 7. Notable Patterns
 
 - **Styling**: CSS custom properties in `theme.css` replace the `Colors`/`Radius` JavaScript constants for static values. Dynamic/computed values (score-based colors, toggle state, slider gradients, sidebar dimensions) remain as inline styles where JavaScript logic drives the value.

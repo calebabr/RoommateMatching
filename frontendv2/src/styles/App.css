@@ -174,3 +174,19 @@
   margin-top: 12px;
   margin-bottom: 0;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  /* Mobile topbar — ensure minimum touch height */
+  .mobile-topbar {
+    min-height: 48px;
+  }
+
+  .mobile-topbar-menu-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

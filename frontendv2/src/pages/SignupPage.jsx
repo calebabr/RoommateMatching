@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import LegalModal from '../components/LegalModal';
 
 function EyeIcon() {
   return (
@@ -70,6 +71,7 @@ export default function SignupPage() {
   const [graduationYear,    setGraduationYear]    = useState('');
   const [agreedToTerms,   setAgreedToTerms]   = useState(false);
   const [termsError,      setTermsError]      = useState('');
+  const [legalModal,      setLegalModal]      = useState(null); // 'terms' | 'privacy' | null
   const [loading, setLoading] = useState(false);
   const [modal,   setModal]   = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -410,6 +412,7 @@ export default function SignupPage() {
               </div>
             </div>
 
+            {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '20px 0 4px' }}>
               <input
                 id="agree-to-terms"
@@ -420,13 +423,21 @@ export default function SignupPage() {
               />
               <label htmlFor="agree-to-terms" style={{ fontSize: 14, lineHeight: 1.5, color: '#A0A0A0', cursor: 'pointer' }}>
                 I agree to the{' '}
-                <Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#E8A838', textDecoration: 'underline' }}>
+                <button
+                  type="button"
+                  onClick={() => setLegalModal('terms')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E8A838', textDecoration: 'underline', fontSize: 14, padding: 0 }}
+                >
                   Terms of Service
-                </Link>
+                </button>
                 {' '}and{' '}
-                <Link to="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#E8A838', textDecoration: 'underline' }}>
+                <button
+                  type="button"
+                  onClick={() => setLegalModal('privacy')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#E8A838', textDecoration: 'underline', fontSize: 14, padding: 0 }}
+                >
                   Privacy Policy
-                </Link>
+                </button>
               </label>
             </div>
             {termsError && (
