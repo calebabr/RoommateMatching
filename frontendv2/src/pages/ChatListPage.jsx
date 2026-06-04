@@ -7,7 +7,8 @@ import Spinner from '../components/Spinner';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+  const utc = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+  const diff = Math.floor((Date.now() - new Date(utc)) / 60000);
   if (diff < 1)  return 'just now';
   if (diff < 60) return `${diff}m ago`;
   const h = Math.floor(diff / 60);

@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [saving,  setSaving]  = useState(false);
   const [modal,   setModal]   = useState(null);
   const [bio,     setBio]     = useState(user?.bio || '');
+  const [username, setUsername] = useState(user?.username || '');
   const [photoFile,    setPhotoFile]    = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [selectedTags, setSelectedTags] = useState(user?.lifestyleTags || []);
@@ -83,7 +84,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { username: user.username, gender: user.gender || 'male', bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
+      const payload = { username: username.trim() || user.username, gender: user.gender || 'male', bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
       await updateUser(user.id, payload);
       if (photoFile) {
         await uploadPhoto(user.id, photoFile);
@@ -243,7 +244,15 @@ export default function ProfilePage() {
               <>
                 <div className="profile-section">
                   <p className="profile-section-title">Profile Info</p>
-                  <label className="profile-label">Bio</label>
+                  <label className="profile-label">Name</label>
+                  <input
+                    className="profile-input"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    maxLength={30}
+                    placeholder="Your name"
+                  />
+                  <label className="profile-label" style={{ marginTop: 12 }}>Bio</label>
                   <textarea
                     className="profile-input"
                     style={{ minHeight: 80, resize: 'vertical', paddingTop: 14 }}

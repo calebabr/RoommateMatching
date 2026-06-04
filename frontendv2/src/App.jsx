@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { submitAge, acceptTerms, submitFeedback } from './services/api';
+import { submitAge, acceptTerms } from './services/api';
 
 import LoginPage          from './pages/LoginPage';
 import SignupPage         from './pages/SignupPage';
@@ -207,75 +207,6 @@ function ToSModal() {
 
 const TAB_ICONS = { Profile: '👤', Discover: '🔍', Likes: '💌', Matches: '🤝', Chat: '💬' };
 
-const MAX_FEEDBACK_CHARS = 2000;
-
-function FeedbackModal({ onClose }) {
-  const [message, setMessage] = useState('');
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
-
-  const handleSubmit = useCallback(async () => {
-    if (!message.trim()) return;
-    setStatus('loading');
-    try {
-      await submitFeedback(message.trim());
-      setStatus('success');
-      setTimeout(() => onClose(), 2000);
-    } catch {
-      setStatus('error');
-    }
-  }, [message, onClose]);
-
-  return (
-    <div className="modal-overlay" style={{ zIndex: 10000 }}>
-      <div className="modal-box" style={{ maxWidth: 480, width: '90%' }}>
-        <p className="modal-title">Send Feedback</p>
-        {status === 'success' ? (
-          <p style={{ color: 'var(--color-success, #22aa55)', fontSize: 15, textAlign: 'center', padding: '8px 0' }}>
-            Thanks for your feedback!
-          </p>
-        ) : (
-          <>
-            {status === 'error' && (
-              <p style={{ color: 'var(--color-danger)', fontSize: 13, marginBottom: 10 }}>
-                Something went wrong. Please try again.
-              </p>
-            )}
-            <div style={{ marginBottom: 16 }}>
-              <textarea
-                className="form-input"
-                placeholder="Describe the bug or share a suggestion..."
-                value={message}
-                onChange={e => setMessage(e.target.value.slice(0, MAX_FEEDBACK_CHARS))}
-                rows={6}
-                style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 120 }}
-              />
-              <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', textAlign: 'right', marginTop: 4 }}>
-                {message.length} / {MAX_FEEDBACK_CHARS}
-              </p>
-            </div>
-            <div className="modal-buttons">
-              <button
-                className="modal-btn modal-btn-secondary"
-                onClick={onClose}
-                disabled={status === 'loading'}
-              >
-                Cancel
-              </button>
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleSubmit}
-                disabled={!message.trim() || status === 'loading'}
-              >
-                {status === 'loading' ? 'Sending…' : 'Submit'}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function SidebarLayout() {
   const { user } = useAuth();
   const location = useLocation();
@@ -286,7 +217,6 @@ function SidebarLayout() {
   const [isMobile,       setIsMobile]       = useState(() => window.innerWidth < MOBILE_BP);
   const [sidebarOpen,    setSidebarOpen]    = useState(() => window.innerWidth >= MOBILE_BP);
   const [collapsed,      setCollapsed]      = useState(false);
-  const [feedbackOpen,   setFeedbackOpen]   = useState(false);
 
   useEffect(() => {
     const onResize = () => {
@@ -386,25 +316,7 @@ function SidebarLayout() {
             );
           })}
 
-          {/* Feedback button */}
-          {(() => {
-            const iconOnly = collapsed && !isMobile;
-            return (
-              <button
-                className={`sidebar-nav-item ${iconOnly ? 'sidebar-nav-item--collapsed' : 'sidebar-nav-item--expanded'} sidebar-nav-item--inactive`}
-                onClick={() => setFeedbackOpen(true)}
-                title={iconOnly ? 'Send Feedback' : undefined}
-                style={{ marginTop: 'auto' }}
-              >
-                <span className="sidebar-nav-icon">📝</span>
-                {!iconOnly && 'Send Feedback'}
-              </button>
-            );
-          })()}
         </nav>
-
-        {/* Feedback modal */}
-        {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
       </aside>
 
       {/* ── Main content ── */}

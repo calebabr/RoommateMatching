@@ -123,7 +123,9 @@ _All Phase 1 tasks complete. See Completed table above._
 
 _Infrastructure is up. These are deployment config, data, and verification steps done before inviting any users._
 
-_All Phase 2 tasks complete. See Completed table above._
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P2.29 | `[PHASE-2]` Cancel a pending like — allow users to withdraw a like they sent before it becomes a match; backend: `DELETE /api/users/{user_id}/like/{liked_user_id}` removes the like doc from the `likes` collection (only if no match exists yet); frontend: "Sent Likes" section in `LikesPage` showing outgoing pending likes with a Cancel button per entry; `cancelLike(userId, likedUserId)` added to `api.js` | Backend Agent + Frontend Agent | High | 2026-06-03 |
 
 ---
 
