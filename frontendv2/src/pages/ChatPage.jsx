@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
+import posthog from 'posthog-js';
 import { getChatMessages, sendChatMessage, getUser, getPhotoUrl, unmatchUser } from '../services/api';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
@@ -21,6 +22,7 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const { partnerId } = useParams();
   const { state } = useLocation();
+  const [headerHovered, setHeaderHovered] = useState(false);
   const { user, refreshUser } = useAuth();
   const [messages, setMessages] = useState([]);
   const [partner,  setPartner]  = useState(state?.partnerName ? { id: parseInt(partnerId), username: state.partnerName } : null);
@@ -61,6 +63,7 @@ export default function ChatPage() {
     setInput('');
     try {
       await sendChatMessage(user.id, partnerIdNum, text);
+      posthog.capture('message_sent');
       await loadMessages();
     } catch (err) {
       setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not send message.' });
@@ -96,7 +99,13 @@ export default function ChatPage() {
       {/* Header */}
       <div className="chat-header">
         <button className="chat-back-btn" onClick={() => navigate(-1)}>←</button>
-        <div className="chat-partner-info">
+        <div
+          className="chat-partner-info"
+          onClick={() => navigate(`/user/${partnerIdNum}`)}
+          onMouseEnter={() => setHeaderHovered(true)}
+          onMouseLeave={() => setHeaderHovered(false)}
+          style={{ cursor: 'pointer', opacity: headerHovered ? 0.85 : 1, transition: 'opacity 0.15s ease' }}
+        >
           {partnerPhoto ? (
             <img src={partnerPhoto} alt="" className="chat-partner-avatar-img" />
           ) : (

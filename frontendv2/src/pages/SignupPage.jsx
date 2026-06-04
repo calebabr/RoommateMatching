@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 function EyeIcon() {
   return (
@@ -21,6 +21,7 @@ function EyeOffIcon() {
 import { useNavigate } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
+import posthog from 'posthog-js';
 import { uploadPhoto, setApiBase } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import SliderPicker from '../components/SliderPicker';
@@ -45,6 +46,14 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const signupStartedFired = useRef(false);
+
+  const handleSignupStarted = useCallback(() => {
+    if (!signupStartedFired.current) {
+      signupStartedFired.current = true;
+      posthog.capture('signup_started');
+    }
+  }, []);
 
   const [preferences, setPreferences] = useState(
     CATEGORIES.reduce((acc, cat) => {
@@ -118,7 +127,7 @@ export default function SignupPage() {
 
             <div className="input-group">
               <label className="form-label">Email</label>
-              <input className="form-input" placeholder="you@example.com" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+              <input className="form-input" placeholder="you@example.com" type="email" value={email} onChange={e => setEmail(e.target.value)} onFocus={handleSignupStarted} />
             </div>
 
             <div className="input-group">

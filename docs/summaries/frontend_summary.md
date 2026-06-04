@@ -227,6 +227,45 @@ The previous simple 401-redirect interceptor was replaced with a **queued refres
 
 ---
 
+## 11. PostHog Product Analytics (P2.25 — 2026-06-03)
+
+`posthog-js` was installed and wired across five frontend files. PostHog initializes in `main.jsx` only when `VITE_POSTHOG_API_KEY` is set (`capture_pageview: false`, `person_profiles: 'identified_only'`), so local dev with no key is a complete no-op.
+
+### Initialization
+
+`frontendv2/src/main.jsx` — guarded `posthog.init(import.meta.env.VITE_POSTHOG_API_KEY, { api_host: 'https://us.i.posthog.com', capture_pageview: false, person_profiles: 'identified_only' })` runs before `ReactDOM.createRoot`. No-op if the env var is absent.
+
+### Identity management (`AuthContext.jsx`)
+
+| Action | PostHog call |
+|--------|-------------|
+| `login()` success | `posthog.identify(user.id)` + `posthog.capture('login', { method: 'email' })` |
+| `signup()` success | `posthog.identify(user.id)` + `posthog.capture('signup_completed')` |
+| `logout()` | `posthog.capture('logout')` + `posthog.reset()` |
+
+### Events by file
+
+| File | Event | Trigger |
+|------|-------|---------|
+| `SignupPage.jsx` | `signup_started` | `onFocus` on the Email field (first field); fires exactly once per signup session via a `signupStartedFired` ref |
+| `ProfilePage.jsx` | `photo_uploaded` | After successful photo upload response |
+| `ProfilePage.jsx` | `profile_completed` | After successful profile save |
+| `ProfilePage.jsx` | `account_deleted` | Immediately before calling `logout()` in `handleDeleteAccount` |
+| `UserDetailPage.jsx` | `match_created` | In `handleLike()` when API returns `status === 'matched'`; payload `{ matched_user_id }` |
+| `UserDetailPage.jsx` | `like_sent` | In `handleLike()` when API does not return `matched`; payload `{ target_user_id }` |
+| `ChatPage.jsx` | `message_sent` | After successful `sendChatMessage` call in `handleSend` |
+
+### Not yet implemented
+
+- `profile_skipped` — requires the Skip button from P3FT.4
+- `email_verified` — requires the SendGrid flow from P3FT.2
+
+### Env var
+
+`VITE_POSTHOG_API_KEY` (note: original spec said `VITE_POSTHOG_KEY` — the actual implementation uses `VITE_POSTHOG_API_KEY`). Set on the Vercel project under Environment Variables.
+
+---
+
 ## 7. Notable Patterns
 
 - **Styling**: CSS custom properties in `theme.css` replace the `Colors`/`Radius` JavaScript constants for static values. Dynamic/computed values (score-based colors, toggle state, slider gradients, sidebar dimensions) remain as inline styles where JavaScript logic drives the value.

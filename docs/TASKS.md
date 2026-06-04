@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-03 by csp-token-refresh_
+_Last updated: 2026-06-03 by posthog-analytics_
 
 ---
 
@@ -99,6 +99,8 @@ _Nothing currently in progress._
 | P3B.11 `[PHASE-3]` Backend layout cleanup — 19 `test_*.py` moved from `backend/` root → `backend/tests/`; root `conftest.py` deleted (fixture already in `tests/conftest.py`); 5 `SECURITY_*.md` reports moved to `docs/security/`; `usersTest500.json` moved to `backend/app/test/`; `testpaths = tests` added to `pytest.ini` | Orchestrator | 2026-06-03 |
 | P3A.1 `[PHASE-3]` Token refresh mechanism — backend: `_generate_refresh_token` helper, `POST /api/auth/refresh` (10/hr, rotates token), `POST /api/auth/logout` (10/hr, `$unset` clears refresh hash), `TokenResponse.refresh_token`, `RefreshRequest` model; login + register now issue 30d refresh tokens. Frontend: `saveRefreshToken`/`loadRefreshToken`/`clearRefreshToken` in `api.js`, `authRefresh`/`authLogout` API functions, queued 401 interceptor with `_isRefreshing` flag + `_refreshQueue`; `AuthContext` login/signup save refresh_token, logout is async + calls server-side logout. 8 tests all passing. | Auth Agent + Frontend Agent + Tests Agent | 2026-06-03 |
 | P3A.6 `[PHASE-3]` Full CSP unsafe-inline removal — 21 new CSS files in `frontendv2/src/styles/` (`theme.css`, `utilities.css`, 13 per-page, 5 per-component); `main.jsx` imports all; 18 source files migrated from `style={{...}}` to `className`; remaining inline styles are legitimately dynamic (toggle state, slider gradient, sidebar position, score-based colors); `backend/app/main.py` CSP updated: `'unsafe-inline'` removed from `style-src` and `script-src`; `test_security_headers.py` updated with `not in` assertions confirming absence. | Frontend Agent + Backend Agent + Tests Agent | 2026-06-03 |
+| P2.25 `[PHASE-2]` PostHog product analytics — `posthog-js` installed; guarded `posthog.init()` in `main.jsx` (no-op without `VITE_POSTHOG_API_KEY`); `identify` + `login`/`signup_completed`/`logout` in `AuthContext`; `signup_started` (once per session via ref, on Email field focus) in `SignupPage`; `photo_uploaded`, `profile_completed`, `account_deleted` in `ProfilePage`; `match_created` / `like_sent` in `UserDetailPage`; `message_sent` in `ChatPage`; env var is `VITE_POSTHOG_API_KEY` (spec originally said `VITE_POSTHOG_KEY`); `profile_skipped` and `email_verified` deferred (require P3FT.4 and P3FT.2 respectively) | Frontend Agent | 2026-06-03 |
+| P2.28 `[PHASE-2]` Clickable chat header — `ChatPage.jsx` `.chat-partner-info` div made clickable; clicking partner avatar or username navigates to `/user/:id`; pointer cursor + opacity hover effect via `headerHovered` state | Frontend Agent | 2026-06-03 |
 
 ---
 
@@ -118,8 +120,8 @@ _Infrastructure is up. These are deployment config, data, and verification steps
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P2.23 | `[PHASE-2]` Email domain validator at signup — restrict to `.edu` emails (configurable via `ALLOWED_EMAIL_DOMAINS` env var); block disposable email providers using `disposable-email-domains` package; normalize emails (lowercase, strip whitespace); server-side only; return friendly error "Please sign up with your @auburn.edu address." | Backend Agent | **Critical** | 2026-06-03 |
-| P2.25 | `[PHASE-2]` PostHog product analytics — install `posthog-js` in frontend; capture key events: signup_started, signup_completed, email_verified, profile_completed, photo_uploaded, like_sent (formerly "swipe_right" — app uses a Like button, not gestures), profile_skipped (formerly "swipe_left" — requires Skip button from P3FT.4 before this event fires), match_created, message_sent, login, logout, account_deleted; identify users by user ID after login; pull `POSTHOG_API_KEY` / `VITE_POSTHOG_KEY` from env vars | Frontend Agent | Medium | 2026-06-03 |
+| P2.26 | `[PHASE-2]` Privacy Policy & Terms of Service — generate via Termly or iubenda; customize for photo storage, message storage, .edu email collection, third-party data sharing (Cloudinary, SendGrid, Sentry, PostHog, Atlas, Render, Vercel); add explicit consent checkbox (not pre-checked) to signup flow; include data retention policy, right to export, and account deletion rights | — | **Critical** | 2026-06-03 |
+| P2.27 | `[PHASE-2]` Age verification (18+) at signup — add `dateOfBirth` field; reject users under 18 at registration endpoint; add to `SignupPage`. **Existing user migration:** users without a `dateOfBirth` see a one-time modal on next app open requiring them to enter their date of birth; if under 18, account is automatically banned with a message explaining why; if 18+, they confirm and continue. Backend: store `dateOfBirth`, age-check on register, `POST /api/users/{id}/submit-age` for existing users, auto-ban logic. Frontend: age gate modal in `App.jsx` fires when `user.dateOfBirth` is missing. | Backend Agent + Frontend Agent | **Critical** | 2026-06-03 |
 
 ---
 
@@ -131,17 +133,17 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3A.2 | `[PHASE-3]` Add `.edu` email restriction at registration — **will NOT be enforced during beta**; goes in after beta to limit pool to college students | Backend Agent | Medium | 2026-06-01 |
+| P3A.2 | `[PHASE-3]` Add `.edu` email restriction at registration — **will NOT be enforced during beta**; goes in after beta to limit pool to college students; restrict to `.edu` emails (configurable via `ALLOWED_EMAIL_DOMAINS` env var); block disposable email providers using `disposable-email-domains` package; normalize emails (lowercase, strip whitespace); return friendly error "Please sign up with your @auburn.edu address." | Backend Agent | Medium | 2026-06-01 |
 | P3A.3 | `[PHASE-3]` ~~Add email verification on registration~~ — **merged into P3FT.2**; P3FT.2 now covers the full flow (token infra + SendGrid delivery + login block). Do not implement P3A.3 separately. | — | — | merged 2026-06-03 |
 | P3A.4 | `[PHASE-3]` Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
 | P3A.5 | `[PHASE-3]` Fix NOTE-1: `limit` parameter on `GET /users/{id}/chat/{partner_id}` is unbounded — clamp to max 200 | Backend Agent | Low | 2026-05-29 |
-| P3A.7 | `[PHASE-3]` Privacy Policy and Terms of Service — generate via Termly or iubenda; customize for photo storage, message storage, .edu email collection, third-party data sharing (Cloudinary, SendGrid, Sentry, PostHog, Atlas, Render, Vercel); add explicit consent checkbox (not pre-checked) to signup flow; include data retention policy, right to export, and account deletion rights | — | **Critical** | 2026-06-03 |
+| P3A.7 | `[PHASE-3]` ~~Privacy Policy and Terms of Service~~ — **moved to P2.26** | — | — | moved 2026-06-03 |
 
 #### Features
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3FT.1 | `[PHASE-3]` Age verification (18+) at signup — add `dateOfBirth` field; reject users under 18 at registration endpoint; display-layer note in ToS; add to `SignupPage`. **Existing user migration:** users without a `dateOfBirth` on file see a one-time modal on next app open requiring them to enter their date of birth before proceeding; if under 18, their account is automatically banned (with a message explaining why) until they reach 18; if 18+, they confirm and continue normally. Backend: store `dateOfBirth`, add age-check on register, add `POST /api/users/{id}/submit-age` endpoint for existing users, auto-ban logic. Frontend: age gate modal in `App.jsx` that fires when `user.dateOfBirth` is missing. | Backend Agent + Frontend Agent | High | 2026-06-03 |
+| P3FT.1 | `[PHASE-3]` ~~Age verification (18+) at signup~~ — **moved to P2.27** | — | — | moved 2026-06-03 |
 | P3FT.2 | `[PHASE-3]` Email verification on signup (absorbs P3A.3) — generate 32-byte cryptographically random token (24h expiry) on register; store `email_verification_token_hash` + `email_verification_expires` + `is_email_verified: false` on user; send token via SendGrid; block login (403 "email not verified") until verified; `POST /api/auth/verify-email` endpoint; resend endpoint (rate-limited 3/hr per email); unverified banner in frontend; `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL` env vars | Backend Agent + Frontend Agent | High | 2026-06-03 |
 | P3FT.3 | `[PHASE-3]` Profile pause and deactivation — "Pause" toggle: hidden from discover, still in existing matches/chats, reversible; "Deactivate": hidden from everyone including matches, reversible within 30 days then auto-soft-deletes; both require password re-entry and send confirmation email | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
 | P3FT.4 | `[PHASE-3]` Rejection cooldown — **Note: the app has no swipe gestures; "swipe left/right" is Tinder shorthand.** This task requires two parts: (1) add a Skip/Pass button to DiscoverPage (Frontend Agent) so users can explicitly reject a profile — currently no such action exists; (2) track skips in a new `swipes` collection or extend `likes`; suppress skipped profiles from that user's discover feed for 30 days via TTL index + discover query filter (Backend Agent + DB Agent) | Backend Agent + Frontend Agent + DB Agent | Medium | 2026-06-03 |

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
+import posthog from 'posthog-js';
 import { getUser, getMatchScore, sendLike, getLikesSent, getPhotoUrl, blockUser, reportUser } from '../services/api';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
@@ -61,9 +62,11 @@ export default function UserDetailPage() {
       const result = await sendLike(user.id, userIdNum);
       if (result.status === 'matched') {
         setAlreadyMatched(true);
+        posthog.capture('match_created', { matched_user_id: userIdNum });
         setModal({ title: '🎉 Match!', message: `You and ${profile?.username || 'this user'} are now roommate matches!` });
       } else {
         setAlreadyLiked(true);
+        posthog.capture('like_sent', { target_user_id: userIdNum });
         setModal({ title: 'Like Sent!', message: "They'll see your interest." });
       }
     } catch (err) {

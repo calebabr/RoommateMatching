@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from '@sentry/react';
+import posthog from 'posthog-js';
 import './index.css';
 import './styles/theme.css';
 import './styles/utilities.css';
@@ -24,6 +25,15 @@ import './styles/Toggle.css';
 import './styles/NotificationBell.css';
 import './styles/Spinner.css';
 import App from './App.jsx';
+
+const _posthogKey = import.meta.env.VITE_POSTHOG_API_KEY;
+if (_posthogKey) {
+  posthog.init(_posthogKey, {
+    api_host: 'https://us.i.posthog.com',
+    person_profiles: 'identified_only',
+    capture_pageview: false,
+  });
+}
 
 const _sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 if (_sentryDsn) {

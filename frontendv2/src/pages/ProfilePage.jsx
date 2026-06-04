@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
+import posthog from 'posthog-js';
 import { updateUser, uploadPhoto, getPhotoUrl, getBlockedUsers, unblockUser, exportUserData, deleteAccount } from '../services/api';
 import SliderPicker from '../components/SliderPicker';
 import Toggle from '../components/Toggle';
@@ -84,9 +85,13 @@ export default function ProfilePage() {
     try {
       const payload = { username: user.username, gender: user.gender || 'male', bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
       await updateUser(user.id, payload);
-      if (photoFile) { await uploadPhoto(user.id, photoFile); }
+      if (photoFile) {
+        await uploadPhoto(user.id, photoFile);
+        posthog.capture('photo_uploaded');
+      }
       await refreshUser();
       setEditing(false); setPhotoFile(null); setPhotoPreview(null);
+      posthog.capture('profile_completed');
       setModal({ title: 'Saved', message: 'Your profile has been updated.' });
     } catch (err) {
       const detail = err?.response?.data?.detail;
@@ -152,6 +157,7 @@ export default function ProfilePage() {
       setShowDeleteModal(false);
       setDeletePassword('');
       setRestoreToken(result.restore_token || null);
+      posthog.capture('account_deleted');
       await logout();
       if (!result.restore_token) navigate('/login');
     } catch (err) {

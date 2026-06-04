@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import posthog from 'posthog-js';
 import {
   authLogin, authRegister, authMe, authLogout,
   saveToken, loadToken, clearToken,
@@ -39,6 +40,8 @@ export function AuthProvider({ children }) {
     setToken(access_token);
     setUser(userData);
     saveSession(userData);
+    posthog.identify(userData.id.toString());
+    posthog.capture('login', { method: 'email' });
     return userData;
   };
 
@@ -49,6 +52,8 @@ export function AuthProvider({ children }) {
     setToken(access_token);
     setUser(userData);
     saveSession(userData);
+    posthog.identify(userData.id.toString());
+    posthog.capture('signup_completed');
     return userData;
   };
 
@@ -66,6 +71,8 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try { await authLogout(); } catch {}
+    posthog.capture('logout');
+    posthog.reset();
     clearRefreshToken();
     setUser(null);
     setToken(null);
