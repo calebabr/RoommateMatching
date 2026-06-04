@@ -225,7 +225,7 @@ export default function UserDetailPage() {
                 <p className="userdetail-bio">{profile.bio}</p>
               )}
 
-              {theirTags.length > 0 && (
+              {(theirTags.length > 0 || profile.religionTag) && (
                 <div className="userdetail-tags">
                   {theirTags.map(tag => {
                     const shared = sharedTags.includes(tag);
@@ -239,6 +239,26 @@ export default function UserDetailPage() {
                       </span>
                     );
                   })}
+                  {profile.religionTag && (
+                    <span className="tag-pill tag-pill-neutral" style={{ fontSize: 12 }}>
+                      {profile.religionTag}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {(profile.major || (profile.graduationSeason && profile.graduationYear)) && (
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {profile.major && (
+                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary, #A0A0A0)', margin: 0 }}>
+                      {profile.major}
+                    </p>
+                  )}
+                  {profile.graduationSeason && profile.graduationYear && (
+                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary, #A0A0A0)', margin: 0 }}>
+                      Graduating {profile.graduationSeason} {profile.graduationYear}
+                    </p>
+                  )}
                 </div>
               )}
 

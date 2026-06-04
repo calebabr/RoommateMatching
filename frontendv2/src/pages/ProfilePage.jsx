@@ -21,6 +21,26 @@ function EyeOffIcon() {
 import { useNavigate } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
+
+const RELIGION_OPTIONS = [
+  'Christian', 'Catholic', 'Muslim', 'Jewish', 'Hindu',
+  'Buddhist', 'Agnostic', 'Atheist', 'Spiritual', 'Other', 'Prefer not to say',
+];
+
+const MAJOR_OPTIONS = [
+  'Accounting', 'Aerospace Engineering', 'Architecture', 'Biology',
+  'Business Administration', 'Chemical Engineering', 'Chemistry',
+  'Civil Engineering', 'Communications', 'Computer Science',
+  'Criminal Justice', 'Economics', 'Education', 'Electrical Engineering',
+  'English', 'Finance', 'Graphic Design', 'History', 'Industrial Engineering',
+  'Information Systems', 'Kinesiology', 'Marketing', 'Mathematics',
+  'Mechanical Engineering', 'Nursing', 'Philosophy', 'Physics',
+  'Political Science', 'Psychology', 'Public Health', 'Sociology',
+  'Software Engineering', 'Statistics', 'Theater', 'Undecided', 'Other',
+];
+
+const GRADUATION_SEASONS = ['Spring', 'Summer', 'Fall'];
+const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
 import { useAuth } from '../context/AuthContext';
 import posthog from 'posthog-js';
 import { updateUser, uploadPhoto, getPhotoUrl, getBlockedUsers, unblockUser, exportUserData, deleteAccount } from '../services/api';
@@ -39,7 +59,18 @@ export default function ProfilePage() {
   const [username, setUsername] = useState(user?.username || '');
   const [photoFile,    setPhotoFile]    = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
-  const [selectedTags, setSelectedTags] = useState(user?.lifestyleTags || []);
+  const [selectedTags,     setSelectedTags]     = useState(user?.lifestyleTags || []);
+  const [religionTag,      setReligionTag]      = useState(user?.religionTag || '');
+  const [major,            setMajor]            = useState(() => {
+    const m = user?.major || '';
+    return m.startsWith('Other: ') ? 'Other' : m;
+  });
+  const [majorOther,       setMajorOther]       = useState(() => {
+    const m = user?.major || '';
+    return m.startsWith('Other: ') ? m.slice(7) : '';
+  });
+  const [graduationSeason, setGraduationSeason] = useState(user?.graduationSeason || '');
+  const [graduationYear,   setGraduationYear]   = useState(user?.graduationYear ? String(user.graduationYear) : '');
   const fileInputRef   = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -84,7 +115,18 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { username: username.trim() || user.username, gender: user.gender || 'male', bio: bio.trim(), lifestyleTags: selectedTags, ...preferences };
+      const resolvedMajor = major === 'Other' ? (majorOther.trim() ? `Other: ${majorOther.trim()}` : '') : major;
+      const payload = {
+        username: username.trim() || user.username,
+        gender: user.gender || 'male',
+        bio: bio.trim(),
+        lifestyleTags: selectedTags,
+        religionTag: religionTag || undefined,
+        major: resolvedMajor || undefined,
+        graduationSeason: graduationSeason || undefined,
+        graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
+        ...preferences,
+      };
       await updateUser(user.id, payload);
       if (photoFile) {
         await uploadPhoto(user.id, photoFile);
@@ -107,6 +149,12 @@ export default function ProfilePage() {
     setEditing(false); setPhotoFile(null); setPhotoPreview(null);
     setBio(user?.bio || '');
     setSelectedTags(user?.lifestyleTags || []);
+    setReligionTag(user?.religionTag || '');
+    const m = user?.major || '';
+    setMajor(m.startsWith('Other: ') ? 'Other' : m);
+    setMajorOther(m.startsWith('Other: ') ? m.slice(7) : '');
+    setGraduationSeason(user?.graduationSeason || '');
+    setGraduationYear(user?.graduationYear ? String(user.graduationYear) : '');
     setPreferences(CATEGORIES.reduce((acc, cat) => {
       acc[cat.key] = { value: user?.[cat.key]?.value ?? Math.round((cat.max - cat.min) / 2), isDealBreaker: user?.[cat.key]?.isDealBreaker ?? false };
       return acc;
@@ -225,6 +273,29 @@ export default function ProfilePage() {
                   {(user.lifestyleTags || []).map(tag => (
                     <span key={tag} className="tag-pill tag-pill-accent" style={{ fontSize: 11 }}>{tag}</span>
                   ))}
+                  {user.religionTag && (
+                    <span className="tag-pill tag-pill-neutral" style={{ fontSize: 11 }}>{user.religionTag}</span>
+                  )}
+                </div>
+              )}
+              {!(user.lifestyleTags || []).length && user.religionTag && (
+                <div className="profile-tags">
+                  <span className="tag-pill tag-pill-neutral" style={{ fontSize: 11 }}>{user.religionTag}</span>
+                </div>
+              )}
+
+              {(user.major || (user.graduationSeason && user.graduationYear)) && (
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {user.major && (
+                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary, #A0A0A0)', margin: 0 }}>
+                      {user.major}
+                    </p>
+                  )}
+                  {user.graduationSeason && user.graduationYear && (
+                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary, #A0A0A0)', margin: 0 }}>
+                      Graduating {user.graduationSeason} {user.graduationYear}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -279,6 +350,70 @@ export default function ProfilePage() {
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                <div className="profile-section">
+                  <p className="profile-section-title">Religion</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-secondary, #A0A0A0)', marginBottom: 10 }}>Optional — select one</p>
+                  <div className="profile-lifestyle-tags">
+                    {RELIGION_OPTIONS.map(opt => {
+                      const sel = religionTag === opt;
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => setReligionTag(sel ? '' : opt)}
+                          className={`profile-tag-btn ${sel ? 'profile-tag-btn--selected' : ''}`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="profile-section">
+                  <p className="profile-section-title">Major</p>
+                  <select
+                    className="profile-input"
+                    value={major}
+                    onChange={e => { setMajor(e.target.value); if (e.target.value !== 'Other') setMajorOther(''); }}
+                  >
+                    <option value="">Select your major...</option>
+                    {MAJOR_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  {major === 'Other' && (
+                    <input
+                      className="profile-input"
+                      style={{ marginTop: 8 }}
+                      placeholder="Enter your major"
+                      value={majorOther}
+                      onChange={e => setMajorOther(e.target.value)}
+                    />
+                  )}
+                </div>
+
+                <div className="profile-section">
+                  <p className="profile-section-title">Graduation</p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <select
+                      className="profile-input"
+                      style={{ flex: 1 }}
+                      value={graduationSeason}
+                      onChange={e => setGraduationSeason(e.target.value)}
+                    >
+                      <option value="">Season</option>
+                      {GRADUATION_SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <select
+                      className="profile-input"
+                      style={{ flex: 1 }}
+                      value={graduationYear}
+                      onChange={e => setGraduationYear(e.target.value)}
+                    >
+                      <option value="">Year</option>
+                      {GRADUATION_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
                   </div>
                 </div>
               </>

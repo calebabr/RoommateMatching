@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getChatConversations, getUser, getPhotoUrl } from '../services/api';
+import { getChatConversations, getUser, getPhotoUrl, getUnreadChats } from '../services/api';
 import NotificationBell from '../components/NotificationBell';
 import Spinner from '../components/Spinner';
 
@@ -21,6 +21,7 @@ export default function ChatListPage() {
   const { user, refreshUser } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [unreadPartnerIds, setUnreadPartnerIds] = useState([]);
 
   useEffect(() => {
     let active = true;
@@ -28,7 +29,11 @@ export default function ChatListPage() {
       setLoading(true);
       await refreshUser();
       try {
-        const convos = await getChatConversations(user.id);
+        const [convos, unreadData] = await Promise.all([
+          getChatConversations(user.id),
+          getUnreadChats(user.id).catch(() => ({ unread_partner_ids: [] })),
+        ]);
+        if (active) setUnreadPartnerIds(unreadData?.unread_partner_ids || []);
         const enriched = await Promise.all(
           convos.map(async (c) => {
             try { const p = await getUser(c.partnerId); return { ...c, profile: p }; }
@@ -72,6 +77,7 @@ export default function ChatListPage() {
               const p = item.profile;
               const photoSrc = getPhotoUrl(p?.photoUrl);
               const lastMsg = item.lastMessage;
+              const hasUnread = unreadPartnerIds.includes(p?.id);
               return (
                 <div key={item.partnerId} className="chatlist-card" onClick={() => navigate(`/chat/${p.id}`, { state: { partnerName: p.username } })}>
                   {photoSrc ? (
@@ -83,13 +89,24 @@ export default function ChatListPage() {
                   )}
                   <div className="chatlist-info">
                     <div className="chatlist-info-row">
-                      <span className="chatlist-username">{p?.username || `User #${p?.id}`}</span>
+                      <span className="chatlist-username" style={hasUnread ? { fontWeight: 700 } : {}}>{p?.username || `User #${p?.id}`}</span>
                       {lastMsg && <span className="chatlist-time">{timeAgo(lastMsg.createdAt)}</span>}
                     </div>
                     <p className="chatlist-preview">
                       {lastMsg ? (lastMsg.fromUser === user.id ? `You: ${lastMsg.content}` : lastMsg.content) : 'No messages yet — say hello!'}
                     </p>
                   </div>
+                  {hasUnread && (
+                    <span style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      background: 'var(--color-accent, #4A90E2)',
+                      flexShrink: 0,
+                      alignSelf: 'center',
+                      marginLeft: 8,
+                    }} />
+                  )}
                 </div>
               );
             })}

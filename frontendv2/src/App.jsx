@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { submitAge, acceptTerms } from './services/api';
+import { submitAge, acceptTerms, getUnreadChats } from './services/api';
 
 import LoginPage          from './pages/LoginPage';
 import SignupPage         from './pages/SignupPage';
@@ -217,6 +217,8 @@ function SidebarLayout() {
   const [isMobile,       setIsMobile]       = useState(() => window.innerWidth < MOBILE_BP);
   const [sidebarOpen,    setSidebarOpen]    = useState(() => window.innerWidth >= MOBILE_BP);
   const [collapsed,      setCollapsed]      = useState(false);
+  const [unreadChatCount,      setUnreadChatCount]      = useState(0);
+  const [unreadChatPartnerIds, setUnreadChatPartnerIds] = useState([]);
 
   useEffect(() => {
     const onResize = () => {
@@ -227,6 +229,23 @@ function SidebarLayout() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchUnread = async () => {
+      try {
+        const data = await getUnreadChats(user.id);
+        const ids = data?.unread_partner_ids || [];
+        setUnreadChatCount(ids.length);
+        setUnreadChatPartnerIds(ids);
+      } catch {
+        // silently ignore
+      }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 10000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   const tabs = [
     { path: '/profile',  label: 'Profile'  },
@@ -303,6 +322,7 @@ function SidebarLayout() {
               location.pathname === tab.path ||
               (tab.path === '/chat' && location.pathname.startsWith('/chat'));
             const iconOnly = collapsed && !isMobile;
+            const isChat = tab.label === 'Chat';
             return (
               <button
                 key={tab.path}
@@ -310,7 +330,30 @@ function SidebarLayout() {
                 onClick={() => { navigate(tab.path); if (isMobile) setSidebarOpen(false); }}
                 title={iconOnly ? tab.label : undefined}
               >
-                <span className="sidebar-nav-icon">{TAB_ICONS[tab.label]}</span>
+                <span className="sidebar-nav-icon" style={{ position: 'relative', display: 'inline-block' }}>
+                  {TAB_ICONS[tab.label]}
+                  {isChat && unreadChatCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: -4,
+                      right: -6,
+                      background: '#e53e3e',
+                      color: '#fff',
+                      borderRadius: '50%',
+                      minWidth: 16,
+                      height: 16,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 3px',
+                      lineHeight: 1,
+                    }}>
+                      {unreadChatCount}
+                    </span>
+                  )}
+                </span>
                 {!iconOnly && tab.label}
               </button>
             );

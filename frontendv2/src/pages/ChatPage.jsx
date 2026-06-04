@@ -3,19 +3,32 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { useAuth } from '../context/AuthContext';
 import posthog from 'posthog-js';
-import { getChatMessages, sendChatMessage, getUser, getPhotoUrl, unmatchUser } from '../services/api';
+import { getChatMessages, sendChatMessage, getUser, getPhotoUrl, unmatchUser, markChatRead } from '../services/api';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 
-function formatTime(dateStr) {
+function formatMessageTime(dateStr) {
   if (!dateStr) return '';
-  const s = typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+') ? dateStr + 'Z' : dateStr;
-  const d = new Date(s);
-  const h = d.getHours();
-  const m = d.getMinutes().toString().padStart(2, '0');
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${m} ${ampm}`;
+  const utc = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+  const diff = Math.floor((Date.now() - new Date(utc)) / 60000);
+  if (diff < 1) return 'just now';
+  if (diff < 60) return `${diff}m ago`;
+  const h = Math.floor(diff / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function formatSeenTime(dateStr) {
+  if (!dateStr) return '';
+  const utc = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+  const diff = Math.floor((Date.now() - new Date(utc)) / 60000);
+  if (diff < 1) return 'just now';
+  if (diff < 60) return `${diff}m ago`;
+  const h = Math.floor(diff / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
 }
 
 export default function ChatPage() {
@@ -24,20 +37,41 @@ export default function ChatPage() {
   const { state } = useLocation();
   const [headerHovered, setHeaderHovered] = useState(false);
   const { user, refreshUser } = useAuth();
-  const [messages, setMessages] = useState([]);
+  const [messages,          setMessages]          = useState([]);
+  const [partnerLastReadAt, setPartnerLastReadAt] = useState(null);
+  const [newMsgDividerAt,   setNewMsgDividerAt]   = useState(null);
   const [partner,  setPartner]  = useState(state?.partnerName ? { id: parseInt(partnerId), username: state.partnerName } : null);
   const [input,    setInput]    = useState('');
   const [loading,  setLoading]  = useState(true);
   const [sending,  setSending]  = useState(false);
   const [modal,    setModal]    = useState(null);
-  const bottomRef = useRef(null);
-  const pollRef   = useRef(null);
+  const bottomRef      = useRef(null);
+  const pollRef        = useRef(null);
+  const myLastReadRef  = useRef(null);
+  const initialLoadRef = useRef(true);
   const partnerIdNum = parseInt(partnerId, 10);
 
-  const loadMessages = async () => {
+  const loadMessages = async (isInit = false) => {
     if (!user?.id || !partnerIdNum) return;
-    try { const msgs = await getChatMessages(user.id, partnerIdNum); setMessages(msgs); }
-    catch {}
+    try {
+      const data = await getChatMessages(user.id, partnerIdNum);
+      // Backend now returns { messages: [...], partner_last_read_at: string|null }
+      // Fallback: if it's still a plain array (legacy), handle gracefully
+      const msgs = Array.isArray(data) ? data : (data.messages || []);
+      const pLastRead = Array.isArray(data) ? null : (data.partner_last_read_at || null);
+      setMessages(msgs);
+      setPartnerLastReadAt(pLastRead);
+      if (isInit) {
+        // Determine "new messages" divider: first partner message after my last read
+        const myLastRead = myLastReadRef.current;
+        if (myLastRead) {
+          const firstNew = msgs.find(
+            m => m.fromUser !== user.id && m.createdAt && m.createdAt > myLastRead
+          );
+          if (firstNew) setNewMsgDividerAt(firstNew.id);
+        }
+      }
+    } catch {}
   };
 
   useEffect(() => {
@@ -45,10 +79,20 @@ export default function ChatPage() {
     (async () => {
       setLoading(true);
       try { const p = await getUser(partnerIdNum); if (active) setPartner(p); } catch {}
-      await loadMessages();
+      // Snapshot "now" before marking as read, so we can compute new-msg divider
+      myLastReadRef.current = new Date().toISOString();
+      // Mark as read on open
+      markChatRead(user.id, partnerIdNum).catch(() => {});
+      await loadMessages(true);
+      initialLoadRef.current = false;
       if (active) setLoading(false);
     })();
-    pollRef.current = setInterval(() => { if (active) loadMessages(); }, 3000);
+    pollRef.current = setInterval(async () => {
+      if (!active) return;
+      await loadMessages(false);
+      // Mark as read again whenever new messages arrive from partner
+      markChatRead(user.id, partnerIdNum).catch(() => {});
+    }, 3000);
     return () => { active = false; clearInterval(pollRef.current); };
   }, [user?.id, partnerIdNum]);
 
@@ -131,19 +175,52 @@ export default function ChatPage() {
             <p className="chat-empty-title">Say hello!</p>
             <p className="chat-empty-desc">Start the conversation with your new roommate.</p>
           </div>
-        ) : (
-          messages.map(msg => {
+        ) : (() => {
+          // Find last message sent by me
+          const myMessages = messages.filter(m => m.fromUser === user.id);
+          const lastSentMsg = myMessages.length > 0 ? myMessages[myMessages.length - 1] : null;
+          // "Seen" receipt: partner has read past my last sent message
+          const showSeen = lastSentMsg && partnerLastReadAt && lastSentMsg.createdAt <= partnerLastReadAt;
+
+          return messages.map((msg) => {
             const isMe = msg.fromUser === user.id;
+            const isLastSent = isMe && lastSentMsg && msg.id === lastSentMsg.id;
+            const showDivider = newMsgDividerAt && msg.id === newMsgDividerAt;
             return (
-              <div key={msg.id} className={`chat-message-row ${isMe ? 'chat-message-row--mine' : 'chat-message-row--theirs'}`}>
-                <div className={`chat-bubble ${isMe ? 'chat-bubble--mine' : 'chat-bubble--theirs'}`}>
-                  <p className={`chat-bubble-text ${isMe ? 'chat-bubble-text--mine' : 'chat-bubble-text--theirs'}`}>{msg.content}</p>
-                  <p className={`chat-bubble-time ${isMe ? 'chat-bubble-time--mine' : 'chat-bubble-time--theirs'}`}>{formatTime(msg.createdAt)}</p>
+              <React.Fragment key={msg.id}>
+                {showDivider && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    margin: '8px 0',
+                    padding: '0 12px',
+                  }}>
+                    <div style={{ flex: 1, height: 1, background: 'var(--color-border, rgba(255,255,255,0.12))' }} />
+                    <span style={{ fontSize: 11, color: 'var(--color-text-secondary, #A0A0A0)', whiteSpace: 'nowrap' }}>
+                      New messages
+                    </span>
+                    <div style={{ flex: 1, height: 1, background: 'var(--color-border, rgba(255,255,255,0.12))' }} />
+                  </div>
+                )}
+                <div className={`chat-message-row ${isMe ? 'chat-message-row--mine' : 'chat-message-row--theirs'}`}>
+                  <div className={`chat-bubble ${isMe ? 'chat-bubble--mine' : 'chat-bubble--theirs'}`}>
+                    <p className={`chat-bubble-text ${isMe ? 'chat-bubble-text--mine' : 'chat-bubble-text--theirs'}`}>{msg.content}</p>
+                    <p className={`chat-bubble-time ${isMe ? 'chat-bubble-time--mine' : 'chat-bubble-time--theirs'}`}>{formatMessageTime(msg.createdAt)}</p>
+                  </div>
                 </div>
-              </div>
+                {isLastSent && showSeen && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px 4px', marginTop: -4 }}>
+                    <span style={{ fontSize: 11, color: 'var(--color-text-secondary, #A0A0A0)' }}>
+                      Seen {formatSeenTime(partnerLastReadAt)}
+                    </span>
+                  </div>
+                )}
+              </React.Fragment>
             );
-          })
-        )}
+          });
+        })()}
+
         <div ref={bottomRef} />
       </div>
 

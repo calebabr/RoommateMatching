@@ -71,6 +71,9 @@ class FullAsyncMongoWrapper:
     async def create_index(self, key_or_list, **kwargs):
         return self._collection.create_index(key_or_list, **kwargs)
 
+    async def count_documents(self, filter=None, **kwargs):
+        return self._collection.count_documents(filter or {}, **kwargs)
+
     async def find_one_and_update(self, filter, update, return_document=None, **kwargs):
         """Simulate find_one_and_update with return_document=True behaviour."""
         self._collection.update_one(filter, update)

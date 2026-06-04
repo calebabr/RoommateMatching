@@ -23,6 +23,26 @@ import { Colors } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import posthog from 'posthog-js';
 import { uploadPhoto, setApiBase } from '../services/api';
+
+const RELIGION_OPTIONS = [
+  'Christian', 'Catholic', 'Muslim', 'Jewish', 'Hindu',
+  'Buddhist', 'Agnostic', 'Atheist', 'Spiritual', 'Other', 'Prefer not to say',
+];
+
+const MAJOR_OPTIONS = [
+  'Accounting', 'Aerospace Engineering', 'Architecture', 'Biology',
+  'Business Administration', 'Chemical Engineering', 'Chemistry',
+  'Civil Engineering', 'Communications', 'Computer Science',
+  'Criminal Justice', 'Economics', 'Education', 'Electrical Engineering',
+  'English', 'Finance', 'Graphic Design', 'History', 'Industrial Engineering',
+  'Information Systems', 'Kinesiology', 'Marketing', 'Mathematics',
+  'Mechanical Engineering', 'Nursing', 'Philosophy', 'Physics',
+  'Political Science', 'Psychology', 'Public Health', 'Sociology',
+  'Software Engineering', 'Statistics', 'Theater', 'Undecided', 'Other',
+];
+
+const GRADUATION_SEASONS = ['Spring', 'Summer', 'Fall'];
+const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
 import { useAuth } from '../context/AuthContext';
 import SliderPicker from '../components/SliderPicker';
 import Toggle from '../components/Toggle';
@@ -42,7 +62,12 @@ export default function SignupPage() {
   const [dobError,      setDobError]      = useState('');
   const [photoFile,    setPhotoFile]    = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedTags,      setSelectedTags]      = useState([]);
+  const [religionTag,       setReligionTag]       = useState('');
+  const [major,             setMajor]             = useState('');
+  const [majorOther,        setMajorOther]        = useState('');
+  const [graduationSeason,  setGraduationSeason]  = useState('');
+  const [graduationYear,    setGraduationYear]    = useState('');
   const [agreedToTerms,   setAgreedToTerms]   = useState(false);
   const [termsError,      setTermsError]      = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,7 +124,20 @@ export default function SignupPage() {
     }
     setLoading(true);
     try {
-      const profileData = { username: username.trim(), gender, bio: bio.trim(), lifestyleTags: selectedTags, dateOfBirth, termsVersion: "2026-06-03", ...preferences };
+      const resolvedMajor = major === 'Other' ? (majorOther.trim() ? `Other: ${majorOther.trim()}` : '') : major;
+      const profileData = {
+        username: username.trim(),
+        gender,
+        bio: bio.trim(),
+        lifestyleTags: selectedTags,
+        religionTag: religionTag || undefined,
+        major: resolvedMajor || undefined,
+        graduationSeason: graduationSeason || undefined,
+        graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
+        dateOfBirth,
+        termsVersion: "2026-06-03",
+        ...preferences,
+      };
       const created = await signup(email.trim(), password, profileData);
       if (photoFile) {
         try { const r = await uploadPhoto(created.id, photoFile); created.photoUrl = r.photoUrl; }
@@ -217,6 +255,51 @@ export default function SignupPage() {
             </div>
 
             <div className="input-group">
+              <label className="form-label">Major (optional)</label>
+              <select
+                className="form-input"
+                value={major}
+                onChange={e => { setMajor(e.target.value); if (e.target.value !== 'Other') setMajorOther(''); }}
+              >
+                <option value="">Select your major...</option>
+                {MAJOR_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              {major === 'Other' && (
+                <input
+                  className="form-input"
+                  style={{ marginTop: 8 }}
+                  placeholder="Enter your major"
+                  value={majorOther}
+                  onChange={e => setMajorOther(e.target.value)}
+                />
+              )}
+            </div>
+
+            <div className="input-group">
+              <label className="form-label">Graduation (optional)</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select
+                  className="form-input"
+                  style={{ flex: 1 }}
+                  value={graduationSeason}
+                  onChange={e => setGraduationSeason(e.target.value)}
+                >
+                  <option value="">Season</option>
+                  {GRADUATION_SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <select
+                  className="form-input"
+                  style={{ flex: 1 }}
+                  value={graduationYear}
+                  onChange={e => setGraduationYear(e.target.value)}
+                >
+                  <option value="">Year</option>
+                  {GRADUATION_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="input-group">
               <label className="form-label">Profile Photo (optional)</label>
               <input ref={fileInputRef}    type="file" accept="image/*"          onChange={handleFileChange} style={{ display: 'none' }} />
               <input ref={cameraInputRef}  type="file" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
@@ -307,6 +390,25 @@ export default function SignupPage() {
               })}
             </div>
             <p className="signup-tag-count">{selectedTags.length} selected</p>
+
+            <div style={{ marginTop: 28, marginBottom: 8 }}>
+              <p className="signup-title" style={{ fontSize: 18, marginBottom: 4 }}>Religion</p>
+              <p className="signup-subtitle" style={{ fontSize: 13, marginBottom: 12 }}>Optional — select one that applies to you</p>
+              <div className="signup-tag-row">
+                {RELIGION_OPTIONS.map(opt => {
+                  const sel = religionTag === opt;
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => setReligionTag(sel ? '' : opt)}
+                      className={`signup-tag-btn ${sel ? 'signup-tag-btn--selected' : ''}`}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '20px 0 4px' }}>
               <input

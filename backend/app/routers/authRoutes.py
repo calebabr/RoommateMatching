@@ -37,6 +37,10 @@ class RegisterRequest(BaseModel):
     communicationScore: Optional[Preference] = Preference(value=5.0, isDealBreaker=False)
     dateOfBirth: Optional[str] = None  # ISO date string YYYY-MM-DD
     termsVersion: Optional[str] = None  # e.g. "2026-06-03"
+    religionTag: Optional[str] = None
+    major: Optional[str] = None
+    graduationSeason: Optional[str] = None
+    graduationYear: Optional[int] = None
 
     @field_validator("gender", mode="before")
     @classmethod
@@ -157,6 +161,14 @@ async def register(request: Request, body: RegisterRequest):
     if body.termsVersion is not None:
         user_doc["termsVersion"] = body.termsVersion
         user_doc["termsAcceptedAt"] = datetime.utcnow().isoformat()
+    if body.religionTag is not None:
+        user_doc["religionTag"] = body.religionTag
+    if body.major is not None:
+        user_doc["major"] = body.major
+    if body.graduationSeason is not None:
+        user_doc["graduationSeason"] = body.graduationSeason
+    if body.graduationYear is not None:
+        user_doc["graduationYear"] = body.graduationYear
 
     await users_collection.insert_one(user_doc)
     user_doc.pop("_id", None)

@@ -147,6 +147,8 @@ export const getMatchScore = (user1Id, user2Id) =>
 export const getChatConversations = (userId)                  => api.get(`/users/${userId}/chat/conversations`).then(r => r.data);
 export const sendChatMessage      = (userId, partnerId, content) => api.post(`/users/${userId}/chat/${partnerId}`, { content }).then(r => r.data);
 export const getChatMessages      = (userId, partnerId, limit = 100) => api.get(`/users/${userId}/chat/${partnerId}`, { params: { limit } }).then(r => r.data);
+export const markChatRead         = (userId, partnerId)       => api.post(`/chat/${partnerId}/mark-read`).then(r => r.data);
+export const getUnreadChats       = (userId)                  => api.get(`/users/${userId}/unread-chats`).then(r => r.data);
 
 // ── Notifications ──────────────────────────────────────────────────────────
 export const getNotifications         = (userId) => api.get(`/users/${userId}/notifications`).then(r => r.data);

@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-03 by beta-admin-readiness_
+_Last updated: 2026-06-04 by docs-agent (sprint-profile-fields-and-chat-receipts)_
 
 ---
 
@@ -106,6 +106,10 @@ _Nothing currently in progress._
 | P3AD.1 `[PHASE-3]` Sentry error viewer in admin dashboard — `GET /api/admin/errors` backend proxy to Sentry REST API (last 25 issues, 7d window); admin-gated, 30/min rate limit; graceful `{"error":"Sentry not configured","issues":[]}` if env vars absent; `ErrorsPage.jsx` replaced placeholder with table (Title/Level/Status/First Seen/Last Seen/Times Seen), colour-coded level pills, Sentry permalink links, warning banner when unconfigured. **Requires `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` on Render to show live data.** | Backend Agent + Frontend Agent | 2026-06-03 |
 | P3AD.2 `[PHASE-3]` User feedback system — `feedback_collection` in `database.py`; `FeedbackCreate` model; `POST /api/feedback` (auth, 10/hr) + `GET /api/admin/feedback` (admin, 60/min, username joined); `submitFeedback(message)` in `api.js`; `FeedbackModal` + "Send Feedback" sidebar button in `App.jsx` (textarea, 2000-char limit + counter, success/error states); `adminGetFeedback` in `adminApi.js`; `FeedbackPage.jsx` replaced placeholder with table (User/Message/Submitted); 6 tests all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-03 |
 | P3AD.4 `[PHASE-3]` Reported conversation moderation — `conversation_reports_collection` in `database.py`; `ConversationReportCreate` + `ResolveConversationReport` models; `POST /api/chat/{partner_id}/report` (auth, 5/hr, verifies match) + 3 admin endpoints (list, messages, resolve with dismiss/ban actions); `adminGetConversationReports`, `adminGetReportMessages`, `adminResolveConversationReport` in `adminApi.js`; `ReportsPage.jsx` (new page: pending reports table, expandable message thread, Dismiss/Ban with confirm dialog); `/reports` route in `App.jsx`; Reports nav item in `Sidebar.jsx`; removed stale "(P3AD.1)"/"(P3AD.2)" labels from sidebar; 10 tests all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-03 |
+| Chat read receipts (iMessage-style) — new `chat_read_status` MongoDB collection; `POST /api/chat/{partner_id}/mark-read` (upsert, 60/min) + `GET /api/users/{user_id}/unread-chats` (returns `{unread_count, unread_partner_ids}`, 60/min); `GET /chat/{partner_id}` now returns `{messages, partner_last_read_at}`; `timezone` import bug fix in `userRoutes.py`; frontend: unread badge on Chat nav icon (polls 10s in `App.jsx`), blue dot + bold username for unread convos in `ChatListPage`, mark-read on open/poll + "New messages" divider + "Seen [time]" receipt + relative timestamps in `ChatPage`; `markChatRead` + `getUnreadChats` added to `api.js`; 9 tests in `test_chat_read_receipts.py` all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-04 |
+| Religion tag — optional `religionTag` field on `RegisterRequest`/`UserCreate`; single-select pill section in `SignupPage` Step 2; edit + display in `ProfilePage`; display in `UserDetailPage`; display-only, no scoring impact | Backend Agent + Frontend Agent | 2026-06-04 |
+| Major field — optional `major` field on `RegisterRequest`/`UserCreate`; dropdown + "Other" free-text in `SignupPage` Step 0; edit + display in `ProfilePage`; display in `UserDetailPage`; display-only, no scoring impact | Backend Agent + Frontend Agent | 2026-06-04 |
+| Graduation year & season — optional `graduationSeason` (string) + `graduationYear` (int) fields on `RegisterRequest`/`UserCreate`; dual season/year dropdowns in `SignupPage` Step 0; edit + display in `ProfilePage`; display in `UserDetailPage`; display-only, no scoring impact | Backend Agent + Frontend Agent | 2026-06-04 |
 
 ---
 

@@ -27,6 +27,10 @@ class UserCreate(BaseModel):
     bio: Optional[str] = Field("", max_length=500)
     photoUrl: Optional[str] = ""
     lifestyleTags: Optional[List[str]] = Field(default_factory=list, max_length=10)
+    religionTag: Optional[str] = None
+    major: Optional[str] = None
+    graduationSeason: Optional[str] = None
+    graduationYear: Optional[int] = None
     sleepScoreWD: Preference
     sleepScoreWE: Preference
     cleanlinessScore: Preference

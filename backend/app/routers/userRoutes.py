@@ -2,7 +2,7 @@ import os
 import uuid
 import io
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from PIL import Image
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 import cloudinary
@@ -17,6 +17,7 @@ from app.database import (
     chat_collection,
     feedback_collection,
     conversation_reports_collection,
+    chat_read_status_collection,
 )
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
@@ -367,9 +368,58 @@ async def send_chat_message(request: Request, user_id: int, partner_id: int, mes
 @limiter.limit("60/minute")
 async def get_chat_messages(request: Request, user_id: int, partner_id: int, limit: int = 100, _: dict = Depends(get_current_user_or_403), __: None = Depends(verify_match_exists)):
     try:
-        return await chatService.get_messages(user_id, partner_id, limit)
+        messages = await chatService.get_messages(user_id, partner_id, limit)
+        # Look up when the PARTNER last read this conversation
+        partner_read_status = await chat_read_status_collection.find_one(
+            {"user_id": partner_id, "partner_id": user_id}
+        )
+        partner_last_read_at = partner_read_status["last_read_at"] if partner_read_status else None
+        return {"messages": messages, "partner_last_read_at": partner_last_read_at}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# --- Chat Read Receipts ---
+
+@router.post("/chat/{partner_id}/mark-read")
+@limiter.limit("60/minute")
+async def mark_chat_read(request: Request, partner_id: int, current_user: dict = Depends(get_current_user)):
+    """Mark a conversation with a partner as read up to now."""
+    user_id = current_user["id"]
+    await chat_read_status_collection.update_one(
+        {"user_id": user_id, "partner_id": partner_id},
+        {"$set": {"user_id": user_id, "partner_id": partner_id, "last_read_at": datetime.now(timezone.utc)}},
+        upsert=True,
+    )
+    return {"status": "ok"}
+
+
+@router.get("/users/{user_id}/unread-chats")
+@limiter.limit("60/minute")
+async def get_unread_chats(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Return unread chat count and list of partner IDs with unread messages."""
+    # Get all match partner IDs for this user
+    match_docs = await matches_collection.find(
+        {"$or": [{"user1_id": user_id}, {"user2_id": user_id}]}
+    ).to_list(length=None)
+    partner_ids = [
+        doc["user2_id"] if doc["user1_id"] == user_id else doc["user1_id"]
+        for doc in match_docs
+    ]
+
+    unread_partner_ids = []
+    for partner_id in partner_ids:
+        read_status = await chat_read_status_collection.find_one(
+            {"user_id": user_id, "partner_id": partner_id}
+        )
+        query = {"fromUser": partner_id, "toUser": user_id}
+        if read_status:
+            query["createdAt"] = {"$gt": read_status["last_read_at"]}
+        count = await chat_collection.count_documents(query)
+        if count > 0:
+            unread_partner_ids.append(partner_id)
+
+    return {"unread_count": len(unread_partner_ids), "unread_partner_ids": unread_partner_ids}
+
 
 # --- Notifications ---
 
