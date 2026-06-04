@@ -144,19 +144,14 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
 | P3A.2 | `[PHASE-3]` Add `.edu` email restriction at registration — **will NOT be enforced during beta**; goes in after beta to limit pool to college students; restrict to `.edu` emails (configurable via `ALLOWED_EMAIL_DOMAINS` env var); block disposable email providers using `disposable-email-domains` package; normalize emails (lowercase, strip whitespace); return friendly error "Please sign up with your @auburn.edu address." | Backend Agent | Medium | 2026-06-01 |
-| P3A.3 | `[PHASE-3]` ~~Add email verification on registration~~ — **merged into P3FT.2**; P3FT.2 now covers the full flow (token infra + SendGrid delivery + login block). Do not implement P3A.3 separately. | — | — | merged 2026-06-03 |
 | P3A.4 | `[PHASE-3]` Replace sequential integer user IDs with UUIDs to reduce enumeration risk | Auth Agent | Medium | 2026-05-29 |
 | P3A.5 | `[PHASE-3]` Fix NOTE-1: `limit` parameter on `GET /users/{id}/chat/{partner_id}` is unbounded — clamp to max 200 | Backend Agent | Low | 2026-05-29 |
-| P3A.7 | `[PHASE-3]` ~~Privacy Policy and Terms of Service~~ — **moved to P2.26** | — | — | moved 2026-06-03 |
 
 #### Features
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3FT.1 | `[PHASE-3]` ~~Age verification (18+) at signup~~ — **moved to P2.27** | — | — | moved 2026-06-03 |
 | P3FT.2 | `[PHASE-3]` Email verification on signup (absorbs P3A.3) — generate 32-byte cryptographically random token (24h expiry) on register; store `email_verification_token_hash` + `email_verification_expires` + `is_email_verified: false` on user; send token via SendGrid; block login (403 "email not verified") until verified; `POST /api/auth/verify-email` endpoint; resend endpoint (rate-limited 3/hr per email); unverified banner in frontend; `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL` env vars | Backend Agent + Frontend Agent | High | 2026-06-03 |
-| P3FT.3 | `[PHASE-3]` ~~Profile pause and deactivation~~ — **completed 2026-06-04**; see Completed table | — | — | completed 2026-06-04 |
-| P3FT.4 | `[PHASE-3]` ~~Skip/pass button + swipes collection~~ — **completed 2026-06-04**; see Completed table | — | — | completed 2026-06-04 |
 | P3FT.8 | `[PHASE-3]` Email & admin notifications for account state changes — when a user pauses, deactivates, or deletes their account, send them a confirmation email and notify admins of deactivations/deletions; depends on SendGrid setup (P3FT.2); add after email infrastructure is in place | Backend Agent | Medium | 2026-06-04 |
 | P3FT.5 | `[PHASE-3]` Auto-moderation on uploads and bios — photos: Cloudinary moderation add-on (or AWS Rekognition fallback) flags explicit/violent content → set `pending_review`, hide from discover until admin approves; bios: OpenAI moderation endpoint on create/update → `pending_review` if flagged; usernames: `better-profanity` filter at signup; admin queue endpoint for pending content | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
 | P3FT.6 | `[PHASE-3]` Match email notifications — on mutual match, send both users a SendGrid email with: match preview (name, photo, 1-2 lifestyle tags), deep link to chat, unsubscribe link; `emailOnMatch` user preference toggle (default true); respect SendGrid 100/day free-tier cap with graceful fallback | Backend Agent | Medium | 2026-06-03 |
@@ -212,7 +207,6 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3T.1 | `[PHASE-3]` ~~Write unit tests for `matchScore.py`~~ — **completed 2026-06-04**; see Completed table | — | — | completed 2026-06-04 |
 | P3T.2 | `[PHASE-3]` Add notification creation tests — like-received and match-created events should trigger notifications | Tests Agent | Medium | 2026-05-29 |
 | P3T.3 | `[PHASE-3]` Add gender-gate test — users should only see same-gender recommendations | Tests Agent | Medium | 2026-05-29 |
 | P3T.4 | `[PHASE-3]` Add MAX_MATCHES cap test — enforce that 5-match limit is respected | Tests Agent | Medium | 2026-05-29 |

@@ -100,6 +100,7 @@ _Last updated: YYYY-MM-DD by [session slug]_
 
 **Rules:**
 - Move items from Backlog → In Progress → Completed as work advances; never delete completed items
+- When a task is completed: **move it to the Completed table AND remove it from the backlog entirely** — do NOT use strikethrough (~~text~~) on backlog entries; strikethrough clutters the backlog and makes it hard to scan remaining work
 - Every task must have an owner (the agent responsible) and a date
 - In Progress items must include enough context for a new session to resume without re-reading the full conversation
 - Backlog items collected from agent Gaps/TODOs sections should be added here so nothing is lost between sessions
