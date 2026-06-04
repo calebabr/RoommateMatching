@@ -122,6 +122,22 @@ async def lifespan(app: FastAPI):
             logging.getLogger(__name__).info(f"Startup cleanup: hard-deleted {deleted_count} expired accounts")
     except Exception:
         pass  # Never block startup if cleanup fails
+    # Hard-delete deactivated accounts older than 30 days
+    try:
+        from datetime import datetime, timezone, timedelta
+        from app.database import users_collection as _users_col
+        cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+        result = await _users_col.delete_many({
+            "is_deactivated": True,
+            "deactivatedAt": {"$lt": cutoff},
+        })
+        if result.deleted_count:
+            import logging
+            logging.getLogger(__name__).info(
+                f"Startup cleanup: hard-deleted {result.deleted_count} deactivated accounts older than 30 days"
+            )
+    except Exception:
+        pass  # Never block startup if cleanup fails
     yield
 
 app = FastAPI(title="RoomMatch API", lifespan=lifespan)

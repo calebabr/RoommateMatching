@@ -109,9 +109,13 @@ export const reportUser = (userId, reportedId, reason, description) =>
   api.post(`/users/${userId}/report/${reportedId}`, { reason, description }).then(r => r.data);
 
 // ── Account deletion / restore / export ───────────────────────────────────
-export const deleteAccount  = (userId, password) => api.delete(`/users/${userId}`, { data: { password } }).then(r => r.data);
-export const restoreAccount = (token)            => api.post('/auth/restore-account', { token }).then(r => r.data);
-export const exportUserData = (userId)           => api.get(`/users/${userId}/export`).then(r => r.data);
+export const deleteAccount     = (userId, password) => api.delete(`/users/${userId}`, { data: { password } }).then(r => r.data);
+export const restoreAccount    = (token)            => api.post('/auth/restore-account', { token }).then(r => r.data);
+export const exportUserData    = (userId)           => api.get(`/users/${userId}/export`).then(r => r.data);
+export const pauseProfile      = (userId)           => api.post(`/users/${userId}/pause`).then(r => r.data);
+export const unpauseProfile    = (userId)           => api.post(`/users/${userId}/unpause`).then(r => r.data);
+export const deactivateProfile = (userId, password) => api.post(`/users/${userId}/deactivate`, { password }).then(r => r.data);
+export const reactivateProfile = (userId)           => api.post(`/users/${userId}/reactivate`).then(r => r.data);
 
 export const uploadPhoto = async (userId, file) => {
   const formData = new FormData();
@@ -136,8 +140,10 @@ export const getTopMatches = (userId) => api.get(`/users/${userId}/top-matches`)
 export const sendLike         = (userId, toUserId) => api.post(`/users/${userId}/like`, { toUser: toUserId }).then(r => r.data);
 export const getLikesReceived = (userId)           => api.get(`/users/${userId}/likes-received`).then(r => r.data);
 export const getLikesSent     = (userId)           => api.get(`/users/${userId}/likes-sent`).then(r => r.data);
+export const cancelLike       = (userId, likedUserId) => api.delete(`/users/${userId}/like/${likedUserId}`).then(r => r.data);
 export const getMatches       = (userId)           => api.get(`/users/${userId}/matches`).then(r => r.data);
 export const unmatchUser      = (userId, partnerId)=> api.post(`/users/${userId}/unmatch/${partnerId}`).then(r => r.data);
+export const skipUser         = (userId, skippedUserId) => api.post(`/users/${userId}/skip/${skippedUserId}`).then(r => r.data);
 
 // ── Match Score ────────────────────────────────────────────────────────────
 export const getMatchScore = (user1Id, user2Id) =>

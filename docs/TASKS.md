@@ -1,6 +1,6 @@
 # RoomMatch Task Tracker
 
-_Last updated: 2026-06-04 by docs-agent (sprint-profile-fields-and-chat-receipts)_
+_Last updated: 2026-06-04 by docs-agent (sprint-cancel-like-matchscore-tests-profile-pause-skip)_
 
 ---
 
@@ -110,6 +110,10 @@ _Nothing currently in progress._
 | Religion tag — optional `religionTag` field on `RegisterRequest`/`UserCreate`; single-select pill section in `SignupPage` Step 2; edit + display in `ProfilePage`; display in `UserDetailPage`; display-only, no scoring impact | Backend Agent + Frontend Agent | 2026-06-04 |
 | Major field — optional `major` field on `RegisterRequest`/`UserCreate`; dropdown + "Other" free-text in `SignupPage` Step 0; edit + display in `ProfilePage`; display in `UserDetailPage`; display-only, no scoring impact | Backend Agent + Frontend Agent | 2026-06-04 |
 | Graduation year & season — optional `graduationSeason` (string) + `graduationYear` (int) fields on `RegisterRequest`/`UserCreate`; dual season/year dropdowns in `SignupPage` Step 0; edit + display in `ProfilePage`; display in `UserDetailPage`; display-only, no scoring impact | Backend Agent + Frontend Agent | 2026-06-04 |
+| P2.29 `[PHASE-2]` Cancel pending like — `DELETE /api/users/{user_id}/like/{liked_user_id}` removes like doc from `likes` collection (blocks if match exists, 404 if not found); frontend: "Sent Likes" section in `LikesPage` with Cancel button per entry; `cancelLike(userId, likedUserId)` added to `api.js`; tests all passing | Backend Agent + Frontend Agent + Tests Agent | 2026-06-04 |
+| P3T.1 `[PHASE-3]` matchScore.py unit tests — weight calculations, boundary values, simultaneous dealbreakers; test file at `backend/tests/test_match_score.py` | Tests Agent | 2026-06-04 |
+| P3FT.3 `[PHASE-3]` Profile pause and deactivation — `POST /users/{id}/pause` + `POST /users/{id}/unpause` (no password); `POST /users/{id}/deactivate` (requires password, sets `is_deactivated` + `deactivatedAt`) + `POST /users/{id}/reactivate`; paused users hidden from discover/likes-received; deactivated users hidden everywhere including existing matches; frontend: pause toggle and deactivate flow with password confirmation in `ProfilePage`; 2026-06-04 |  Backend Agent + Frontend Agent + Tests Agent | 2026-06-04 |
+| P3FT.4 `[PHASE-3]` Skip/pass button + swipes collection — `POST /api/users/{user_id}/skip/{skipped_user_id}` (upsert with TTL, 60/min); `swipes_collection` in `database.py`; `GET /top-matches` filters skipped IDs; frontend: Skip button on `DiscoverPage` beside Like; `skipUser(userId, skippedUserId)` in `api.js`; 30-day TTL index on `skipped_at`; tests all passing | Backend Agent + Frontend Agent + DB Agent + Tests Agent | 2026-06-04 |
 
 ---
 
@@ -127,9 +131,7 @@ _All Phase 1 tasks complete. See Completed table above._
 
 _Infrastructure is up. These are deployment config, data, and verification steps done before inviting any users._
 
-| ID | Task | Owner | Priority | Added |
-|----|------|-------|----------|-------|
-| P2.29 | `[PHASE-2]` Cancel a pending like — allow users to withdraw a like they sent before it becomes a match; backend: `DELETE /api/users/{user_id}/like/{liked_user_id}` removes the like doc from the `likes` collection (only if no match exists yet); frontend: "Sent Likes" section in `LikesPage` showing outgoing pending likes with a Cancel button per entry; `cancelLike(userId, likedUserId)` added to `api.js` | Backend Agent + Frontend Agent | High | 2026-06-03 |
+_All Phase 2 tasks complete. See Completed table above._
 
 ---
 
@@ -153,11 +155,28 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 |----|------|-------|----------|-------|
 | P3FT.1 | `[PHASE-3]` ~~Age verification (18+) at signup~~ — **moved to P2.27** | — | — | moved 2026-06-03 |
 | P3FT.2 | `[PHASE-3]` Email verification on signup (absorbs P3A.3) — generate 32-byte cryptographically random token (24h expiry) on register; store `email_verification_token_hash` + `email_verification_expires` + `is_email_verified: false` on user; send token via SendGrid; block login (403 "email not verified") until verified; `POST /api/auth/verify-email` endpoint; resend endpoint (rate-limited 3/hr per email); unverified banner in frontend; `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL` env vars | Backend Agent + Frontend Agent | High | 2026-06-03 |
-| P3FT.3 | `[PHASE-3]` Profile pause and deactivation — "Pause" toggle: hidden from discover, still in existing matches/chats, reversible; "Deactivate": hidden from everyone including matches, reversible within 30 days then auto-soft-deletes; both require password re-entry and send confirmation email | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
-| P3FT.4 | `[PHASE-3]` Rejection cooldown — **Note: the app has no swipe gestures; "swipe left/right" is Tinder shorthand.** This task requires two parts: (1) add a Skip/Pass button to DiscoverPage (Frontend Agent) so users can explicitly reject a profile — currently no such action exists; (2) track skips in a new `swipes` collection or extend `likes`; suppress skipped profiles from that user's discover feed for 30 days via TTL index + discover query filter (Backend Agent + DB Agent) | Backend Agent + Frontend Agent + DB Agent | Medium | 2026-06-03 |
+| P3FT.3 | `[PHASE-3]` ~~Profile pause and deactivation~~ — **completed 2026-06-04**; see Completed table | — | — | completed 2026-06-04 |
+| P3FT.4 | `[PHASE-3]` ~~Skip/pass button + swipes collection~~ — **completed 2026-06-04**; see Completed table | — | — | completed 2026-06-04 |
+| P3FT.8 | `[PHASE-3]` Email & admin notifications for account state changes — when a user pauses, deactivates, or deletes their account, send them a confirmation email and notify admins of deactivations/deletions; depends on SendGrid setup (P3FT.2); add after email infrastructure is in place | Backend Agent | Medium | 2026-06-04 |
 | P3FT.5 | `[PHASE-3]` Auto-moderation on uploads and bios — photos: Cloudinary moderation add-on (or AWS Rekognition fallback) flags explicit/violent content → set `pending_review`, hide from discover until admin approves; bios: OpenAI moderation endpoint on create/update → `pending_review` if flagged; usernames: `better-profanity` filter at signup; admin queue endpoint for pending content | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
 | P3FT.6 | `[PHASE-3]` Match email notifications — on mutual match, send both users a SendGrid email with: match preview (name, photo, 1-2 lifestyle tags), deep link to chat, unsubscribe link; `emailOnMatch` user preference toggle (default true); respect SendGrid 100/day free-tier cap with graceful fallback | Backend Agent | Medium | 2026-06-03 |
 | P3FT.7 | `[PHASE-3]` Admin audit log — immutable append-only `admin_audit_log` collection; fields: timestamp, adminUserId, action, targetUserId, targetResourceId, reason, ipAddress; every admin endpoint writes an entry before returning; `GET /admin/audit-log` (admin-only, paginated); no update/delete endpoints | Backend Agent + Frontend Agent | Medium | 2026-06-03 |
+
+#### Email Notifications (requires P3FT.2 SendGrid setup)
+
+| ID | Task | Owner | Priority | Added |
+|----|------|-------|----------|-------|
+| P3EM.1 | `[PHASE-3]` Email: match created — send email to both users when a mutual match is confirmed; include match preview (name, photo, 1–2 lifestyle tags) and deep link to chat; depends on P3FT.2 (SendGrid) | Backend Agent | Medium | 2026-06-04 |
+| P3EM.2 | `[PHASE-3]` Email: like received — send email to recipient user when someone likes them; optional and potentially noisy; recommend an `emailOnLike` user preference toggle (default false); depends on P3FT.2 (SendGrid) | Backend Agent | Low | 2026-06-04 |
+| P3EM.3 | `[PHASE-3]` Email: account deletion confirmation — send user a "your account has been scheduled for deletion, restore within 7 days at [link]" email on soft-delete; currently the restore token is returned in the API response body only; depends on P3FT.2 (SendGrid) | Backend Agent | Medium | 2026-06-04 |
+| P3EM.4 | `[PHASE-3]` Email: account deactivation confirmation — send user a "your account is deactivated; reactivate within 30 days before it is permanently deleted" email on deactivation; depends on P3FT.2 (SendGrid) | Backend Agent | Medium | 2026-06-04 |
+| P3EM.5 | `[PHASE-3]` Email: account pause confirmation — send user a brief "your profile is now paused and hidden from discover" confirmation; optional, low priority; depends on P3FT.2 (SendGrid) | Backend Agent | Low | 2026-06-04 |
+| P3EM.6 | `[PHASE-3]` Email: password reset token — currently the plain reset token is returned in the `POST /api/auth/forgot-password` response body (dev/MVP mode); replace with SendGrid delivery so the token is emailed to the user in production; depends on P3FT.2 (SendGrid) | Backend Agent | High | 2026-06-04 |
+| P3EM.7 | `[PHASE-3]` Email: account restored after soft-delete — send user a "welcome back, your account has been restored" email on successful `POST /api/auth/restore-account`; depends on P3FT.2 (SendGrid) | Backend Agent | Medium | 2026-06-04 |
+| P3EM.8 | `[PHASE-3]` Email: admin alert when a user is banned — notify admin email list when `POST /api/admin/ban/{user_id}` is called, including triggering admin ID, banned user ID/username, and timestamp; depends on P3FT.2 (SendGrid) | Backend Agent | Medium | 2026-06-04 |
+| P3EM.9 | `[PHASE-3]` Email: admin alert when a conversation report is filed — notify admin email list when `POST /api/chat/{partner_id}/report` is submitted, including reporter/reported usernames and report reason; depends on P3FT.2 (SendGrid) | Backend Agent | Medium | 2026-06-04 |
+
+---
 
 #### Backend Cleanup
 
@@ -193,7 +212,7 @@ _Beta is live with 100–500 users. Fix bugs surfaced by real usage; add feature
 
 | ID | Task | Owner | Priority | Added |
 |----|------|-------|----------|-------|
-| P3T.1 | `[PHASE-3]` Write unit tests for `matchScore.py` in isolation (weight calculations, boundary values, simultaneous dealbreakers) | Tests Agent | High | 2026-05-29 |
+| P3T.1 | `[PHASE-3]` ~~Write unit tests for `matchScore.py`~~ — **completed 2026-06-04**; see Completed table | — | — | completed 2026-06-04 |
 | P3T.2 | `[PHASE-3]` Add notification creation tests — like-received and match-created events should trigger notifications | Tests Agent | Medium | 2026-05-29 |
 | P3T.3 | `[PHASE-3]` Add gender-gate test — users should only see same-gender recommendations | Tests Agent | Medium | 2026-05-29 |
 | P3T.4 | `[PHASE-3]` Add MAX_MATCHES cap test — enforce that 5-match limit is respected | Tests Agent | Medium | 2026-05-29 |

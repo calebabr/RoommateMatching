@@ -43,7 +43,7 @@ const GRADUATION_SEASONS = ['Spring', 'Summer', 'Fall'];
 const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
 import { useAuth } from '../context/AuthContext';
 import posthog from 'posthog-js';
-import { updateUser, uploadPhoto, getPhotoUrl, getBlockedUsers, unblockUser, exportUserData, deleteAccount } from '../services/api';
+import { updateUser, uploadPhoto, getPhotoUrl, getBlockedUsers, unblockUser, exportUserData, deleteAccount, pauseProfile, unpauseProfile, deactivateProfile, reactivateProfile } from '../services/api';
 import SliderPicker from '../components/SliderPicker';
 import Toggle from '../components/Toggle';
 import NotificationBell from '../components/NotificationBell';
@@ -88,6 +88,18 @@ export default function ProfilePage() {
 
   // Danger zone — export
   const [exporting,        setExporting]        = useState(false);
+
+  // Danger zone — pause
+  const [pausing,          setPausing]          = useState(false);
+
+  // Danger zone — deactivate
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivatePassword,  setDeactivatePassword]  = useState('');
+  const [deactivating,        setDeactivating]        = useState(false);
+  const [showDeactivatePassword, setShowDeactivatePassword] = useState(false);
+
+  // Reactivate (edge case: deactivated user still logged in)
+  const [reactivating,     setReactivating]     = useState(false);
 
   const navigate = useNavigate();
 
@@ -216,6 +228,50 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePauseToggle = async () => {
+    setPausing(true);
+    try {
+      if (user.is_paused) {
+        await unpauseProfile(user.id);
+      } else {
+        await pauseProfile(user.id);
+      }
+      await refreshUser();
+    } catch (err) {
+      setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not update pause status.' });
+    } finally {
+      setPausing(false);
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (!deactivatePassword.trim()) return;
+    setDeactivating(true);
+    try {
+      await deactivateProfile(user.id, deactivatePassword);
+      setShowDeactivateModal(false);
+      setDeactivatePassword('');
+      posthog.capture('account_deactivated');
+      await logout();
+    } catch (err) {
+      setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not deactivate account. Check your password.' });
+    } finally {
+      setDeactivating(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setReactivating(true);
+    try {
+      await reactivateProfile(user.id);
+      await refreshUser();
+    } catch (err) {
+      setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not reactivate account.' });
+    } finally {
+      setReactivating(false);
+    }
+  };
+
   if (!user) return null;
 
   const displayPhotoUrl = photoPreview || getPhotoUrl(user.photoUrl);
@@ -227,6 +283,22 @@ export default function ProfilePage() {
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} onConfirm={modal.onConfirm} confirmText={modal.confirmText} danger={modal.danger} />}
       <input ref={fileInputRef}   type="file" accept="image/*"           onChange={handleFileChange} style={{ display: 'none' }} />
       <input ref={cameraInputRef} type="file" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
+
+      {/* Deactivated-while-logged-in banner */}
+      {user.is_deactivated && (
+        <div className="profile-deactivated-banner">
+          <span className="profile-deactivated-banner-text">
+            Your account is deactivated. Reactivate to make your profile visible again.
+          </span>
+          <button
+            className="profile-reactivate-btn"
+            onClick={handleReactivate}
+            disabled={reactivating}
+          >
+            {reactivating ? '...' : 'Reactivate'}
+          </button>
+        </div>
+      )}
 
       <div className="profile-page">
         {/* Top bar */}
@@ -512,6 +584,47 @@ export default function ProfilePage() {
                     {exporting ? '...' : 'Export Data'}
                   </button>
                 </div>
+
+                {/* Pause Profile */}
+                <div className="danger-zone-row danger-zone-row--bordered">
+                  <div>
+                    <p className="danger-action-label">
+                      {user.is_paused ? 'Profile Paused' : 'Pause Profile'}
+                    </p>
+                    <p className="danger-action-desc">
+                      Pausing hides you from Discover and Liked You. Your existing matches and chats remain.
+                    </p>
+                    {user.is_paused && (
+                      <p className="danger-paused-notice">
+                        Your profile is paused — you're hidden from new users.
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    className={`danger-action-btn ${user.is_paused ? 'danger-action-btn--unpause' : 'danger-action-btn--pause'}`}
+                    onClick={handlePauseToggle}
+                    disabled={pausing}
+                  >
+                    {pausing ? '...' : user.is_paused ? 'Unpause' : 'Pause Profile'}
+                  </button>
+                </div>
+
+                {/* Deactivate Account */}
+                <div className="danger-zone-row danger-zone-row--bordered">
+                  <div>
+                    <p className="danger-action-label">Deactivate Account</p>
+                    <p className="danger-action-desc">
+                      Hides your profile from everyone. You can reactivate within 30 days.
+                    </p>
+                  </div>
+                  <button
+                    className="danger-action-btn danger-action-btn--warning"
+                    onClick={() => setShowDeactivateModal(true)}
+                  >
+                    Deactivate
+                  </button>
+                </div>
+
                 <div className="danger-zone-row danger-zone-row--bordered">
                   <div>
                     <p className="danger-action-label text-danger">Delete Account</p>
@@ -569,6 +682,53 @@ export default function ProfilePage() {
               <button
                 className="delete-cancel-btn"
                 onClick={() => { setShowDeleteModal(false); setDeletePassword(''); }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deactivate account confirmation modal */}
+      {showDeactivateModal && (
+        <div className="overlay-bg" onClick={() => { setShowDeactivateModal(false); setDeactivatePassword(''); }}>
+          <div className="inline-modal delete-modal" onClick={e => e.stopPropagation()}>
+            <p className="delete-modal-title">Deactivate Account</p>
+            <p className="delete-modal-desc">
+              Deactivating hides your profile from everyone, including your matches. You can reactivate within 30 days. After 30 days your account is permanently deleted.
+            </p>
+            <label className="delete-modal-label">Enter your password to confirm</label>
+            <div className="profile-input-wrapper">
+              <input
+                type={showDeactivatePassword ? 'text' : 'password'}
+                className="delete-modal-input"
+                value={deactivatePassword}
+                onChange={e => setDeactivatePassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleDeactivateAccount()}
+                placeholder="Password"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowDeactivatePassword(p => !p)}
+                className="password-toggle-btn"
+                aria-label={showDeactivatePassword ? 'Hide password' : 'Show password'}
+              >
+                {showDeactivatePassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+            <div className="delete-modal-actions">
+              <button
+                className={`deactivate-confirm-btn ${(!deactivatePassword.trim() || deactivating) ? 'delete-confirm-btn--disabled' : ''}`}
+                onClick={handleDeactivateAccount}
+                disabled={!deactivatePassword.trim() || deactivating}
+              >
+                {deactivating ? '...' : 'Deactivate Account'}
+              </button>
+              <button
+                className="delete-cancel-btn"
+                onClick={() => { setShowDeactivateModal(false); setDeactivatePassword(''); }}
               >
                 Cancel
               </button>

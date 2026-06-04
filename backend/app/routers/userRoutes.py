@@ -18,6 +18,7 @@ from app.database import (
     feedback_collection,
     conversation_reports_collection,
     chat_read_status_collection,
+    swipes_collection,
 )
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
@@ -38,6 +39,7 @@ from app.models import (
     ChatMessageCreate,
     ReportCreate,
     DeleteAccountRequest,
+    DeactivateRequest,
     RestoreAccountRequest,
     ResolveReportRequest,
     SubmitAgeRequest,
@@ -149,9 +151,21 @@ async def get_top_matches(request: Request, user_id: int, _: dict = Depends(get_
     matches = await recommendationService.get_top_matches(user_id)
     if not matches:
         raise HTTPException(status_code=404, detail="No recommendations yet. Run /admin/recompute first.")
-    # Filter out blocked users and soft-deleted users from recommendations
+    # Filter out blocked, deactivated, paused, and skipped users from recommendations
     blocked_ids = await blockService.get_blocked_ids(user_id)
-    matches = [m for m in matches if m["user_id"] not in blocked_ids]
+    skipped_docs = await swipes_collection.find({"user_id": user_id}, {"skipped_user_id": 1}).to_list(length=None)
+    skipped_ids = {doc["skipped_user_id"] for doc in skipped_docs}
+    excluded_ids = blocked_ids | skipped_ids
+    candidate_ids = [m["user_id"] for m in matches if m["user_id"] not in excluded_ids]
+    # Exclude deactivated and paused users
+    if candidate_ids:
+        deactivated_or_paused = await users_collection.find(
+            {"id": {"$in": candidate_ids}, "$or": [{"is_deactivated": True}, {"is_paused": True}]},
+            {"id": 1}
+        ).to_list(length=None)
+        hidden_ids = {doc["id"] for doc in deactivated_or_paused}
+        excluded_ids = excluded_ids | hidden_ids
+    matches = [m for m in matches if m["user_id"] not in excluded_ids]
     return TopMatchesResponse(userId=user_id, matches=matches)
 
 # --- Likes and Matching ---
@@ -173,7 +187,16 @@ async def like_user(request: Request, user_id: int, body: LikeRequest, _: dict =
 async def get_likes_received(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
     likes = await likeService.get_likes_received(user_id)
     blocked_ids = await blockService.get_blocked_ids(user_id)
-    return [like for like in likes if like.get("fromUser") not in blocked_ids]
+    # Filter blocked users; also hide likes from paused or deactivated users
+    from_user_ids = [like.get("fromUser") for like in likes if like.get("fromUser") not in blocked_ids]
+    hidden_ids: set = set()
+    if from_user_ids:
+        hidden_docs = await users_collection.find(
+            {"id": {"$in": from_user_ids}, "$or": [{"is_deactivated": True}, {"is_paused": True}]},
+            {"id": 1}
+        ).to_list(length=None)
+        hidden_ids = {doc["id"] for doc in hidden_docs}
+    return [like for like in likes if like.get("fromUser") not in blocked_ids and like.get("fromUser") not in hidden_ids]
 
 @router.get("/users/{user_id}/likes-sent")
 @limiter.limit("60/minute")
@@ -187,10 +210,22 @@ async def get_likes_sent(request: Request, user_id: int, _: dict = Depends(get_c
 async def get_matches(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
     matches = await likeService.get_matches(user_id)
     blocked_ids = await blockService.get_blocked_ids(user_id)
+    partner_ids = [
+        m["user2_id"] if m["user1_id"] == user_id else m["user1_id"]
+        for m in matches
+    ]
+    # Deactivated users are hidden from everyone including existing matches; paused users still show in matches
+    deactivated_ids: set = set()
+    if partner_ids:
+        deactivated_docs = await users_collection.find(
+            {"id": {"$in": partner_ids}, "is_deactivated": True},
+            {"id": 1}
+        ).to_list(length=None)
+        deactivated_ids = {doc["id"] for doc in deactivated_docs}
     filtered = []
     for m in matches:
         partner_id = m["user2_id"] if m["user1_id"] == user_id else m["user1_id"]
-        if partner_id not in blocked_ids:
+        if partner_id not in blocked_ids and partner_id not in deactivated_ids:
             filtered.append(m)
     return filtered
 
@@ -209,6 +244,104 @@ async def unmatch_user(request: Request, user_id: int, partner_id: int, _: dict 
         return {"message": "Unmatched successfully"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- P2.29: Cancel a pending like ---
+
+@router.delete("/users/{user_id}/like/{liked_user_id}")
+@limiter.limit("30/minute")
+async def cancel_like(request: Request, user_id: int, liked_user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Cancel a pending (pre-match) like sent from user_id to liked_user_id."""
+    # Check if already matched
+    match_doc = await matches_collection.find_one({
+        "$or": [
+            {"user1_id": user_id, "user2_id": liked_user_id},
+            {"user1_id": liked_user_id, "user2_id": user_id},
+        ]
+    })
+    if match_doc:
+        raise HTTPException(status_code=409, detail="Cannot cancel a like that has already matched")
+
+    result = await likes_collection.delete_one({"fromUser": user_id, "toUser": liked_user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Like not found")
+
+    return {"message": "Like cancelled"}
+
+
+# --- P3FT.3: Profile pause ---
+
+@router.post("/users/{user_id}/pause")
+@limiter.limit("10/hour")
+async def pause_profile(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Pause this user's profile — hides them from discover/recommendations and liked-you lists."""
+    result = await users_collection.update_one({"id": user_id}, {"$set": {"is_paused": True}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "Profile paused"}
+
+
+@router.post("/users/{user_id}/unpause")
+@limiter.limit("10/hour")
+async def unpause_profile(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Unpause this user's profile — makes them visible in discover again."""
+    result = await users_collection.update_one({"id": user_id}, {"$set": {"is_paused": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "Profile unpaused"}
+
+
+# --- P3FT.3: Account deactivation ---
+
+@router.post("/users/{user_id}/deactivate")
+@limiter.limit("5/hour")
+async def deactivate_account(request: Request, user_id: int, body: DeactivateRequest, _: dict = Depends(get_current_user_or_403)):
+    """Deactivate account — profile becomes invisible to everyone until reactivated. Requires password."""
+    from app.auth.utils import verify_password
+    user = await users_collection.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    hashed_pw = user.get("hashed_password", "")
+    if not hashed_pw or not verify_password(body.password, hashed_pw):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+
+    await users_collection.update_one(
+        {"id": user_id},
+        {"$set": {"is_deactivated": True, "deactivatedAt": datetime.now(timezone.utc)}},
+    )
+    return {"message": "Account deactivated"}
+
+
+@router.post("/users/{user_id}/reactivate")
+@limiter.limit("5/hour")
+async def reactivate_account(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Reactivate a previously deactivated account."""
+    result = await users_collection.update_one(
+        {"id": user_id},
+        {"$set": {"is_deactivated": False}, "$unset": {"deactivatedAt": ""}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "Account reactivated"}
+
+
+# --- P3FT.4: Skip/pass ---
+
+@router.post("/users/{user_id}/skip/{skipped_user_id}")
+@limiter.limit("60/minute")
+async def skip_user(request: Request, user_id: int, skipped_user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Record that user_id has skipped/passed on skipped_user_id. TTL = 30 days."""
+    if user_id == skipped_user_id:
+        raise HTTPException(status_code=400, detail="Cannot skip yourself")
+
+    await swipes_collection.update_one(
+        {"user_id": user_id, "skipped_user_id": skipped_user_id},
+        {"$set": {"user_id": user_id, "skipped_user_id": skipped_user_id, "skipped_at": datetime.now(timezone.utc)}},
+        upsert=True,
+    )
+    return {"message": "Skipped"}
+
 
 # --- Block ---
 

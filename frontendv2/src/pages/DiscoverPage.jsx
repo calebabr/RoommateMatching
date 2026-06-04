@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getTopMatches, sendLike, getLikesSent, getUser, getPhotoUrl } from '../services/api';
+import { getTopMatches, sendLike, getLikesSent, skipUser, getUser, getPhotoUrl } from '../services/api';
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
@@ -16,6 +16,7 @@ export default function DiscoverPage() {
   const [loading,   setLoading]   = useState(true);
   const [refreshing,setRefreshing]= useState(false);
   const [likingId,  setLikingId]  = useState(null);
+  const [passingId, setPassingId] = useState(null);
   const [modal,     setModal]     = useState(null);
 
   const loadMatches = async () => {
@@ -53,6 +54,18 @@ export default function DiscoverPage() {
     } catch (err) {
       setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not send like.' });
     } finally { setLikingId(null); }
+  };
+
+  const handlePass = async (targetId) => {
+    setPassingId(targetId);
+    try {
+      await skipUser(user.id, targetId);
+      setMatchProfiles(prev => prev.filter(p => p.id !== targetId));
+    } catch (err) {
+      setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not pass on this profile.' });
+    } finally {
+      setPassingId(null);
+    }
   };
 
   if (loading) return (
@@ -168,15 +181,24 @@ export default function DiscoverPage() {
                     })}
                   </div>
 
-                  {pending ? (
-                    <div className="discover-pending">
-                      <span className="discover-pending-text">✓ Pending</span>
-                    </div>
-                  ) : (
-                    <button className="discover-like-btn" onClick={() => handleLike(item.id)} disabled={likingId === item.id}>
-                      {likingId === item.id ? <Spinner size={16} color={Colors.black} /> : '♥ Like'}
+                  <div className="discover-card-actions">
+                    {pending ? (
+                      <div className="discover-pending" style={{ flex: 1 }}>
+                        <span className="discover-pending-text">✓ Pending</span>
+                      </div>
+                    ) : (
+                      <button className="discover-like-btn" onClick={() => handleLike(item.id)} disabled={likingId === item.id || passingId === item.id}>
+                        {likingId === item.id ? <Spinner size={16} color={Colors.black} /> : '♥ Like'}
+                      </button>
+                    )}
+                    <button
+                      className="discover-pass-btn"
+                      onClick={() => handlePass(item.id)}
+                      disabled={passingId === item.id || likingId === item.id}
+                    >
+                      {passingId === item.id ? <Spinner size={16} color="var(--color-text-muted)" /> : '✕ Pass'}
                     </button>
-                  )}
+                  </div>
                 </div>
               );
             })}

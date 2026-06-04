@@ -58,6 +58,11 @@ def create_indexes(db_name=None):
     _create(db.chat_messages, [("toUser",   ASCENDING)],                            "chat_to_user")
     _create(db.chat_messages, [("fromUser", ASCENDING), ("toUser", ASCENDING), ("createdAt", ASCENDING)], "chat_conversation")
 
+    print("swipes:")
+    _create(db.swipes, [("user_id", ASCENDING), ("skipped_user_id", ASCENDING)], "swipes_user_skipped", unique=True)
+    _create(db.swipes, [("user_id", ASCENDING)],                                  "swipes_user_id")
+    _create(db.swipes, [("skipped_at", ASCENDING)],                               "swipes_ttl", expireAfterSeconds=2592000)
+
     client.close()
     print("\nAll indexes created successfully.")
 

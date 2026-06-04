@@ -557,3 +557,71 @@
 
 /* Input wrapper for password toggle */
 .profile-input-wrapper { position: relative; }
+
+/* Deactivated banner */
+.profile-deactivated-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background-color: rgba(251, 146, 60, 0.15);
+  border-bottom: 1.5px solid #fb923c;
+  padding: 12px 24px;
+}
+
+.profile-deactivated-banner-text {
+  font-size: 14px;
+  color: #fb923c;
+  font-weight: 600;
+}
+
+.profile-reactivate-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-success);
+  background-color: var(--color-success-dim);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-success);
+  cursor: pointer;
+}
+
+/* Pause active notice */
+.danger-paused-notice {
+  font-size: 12px;
+  color: #fb923c;
+  font-weight: 600;
+  margin: 4px 0 0;
+}
+
+/* Danger zone button variants */
+.danger-action-btn--pause {
+  border-color: #fb923c;
+  color: #fb923c;
+}
+
+.danger-action-btn--unpause {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  background-color: var(--color-success-dim);
+}
+
+.danger-action-btn--warning {
+  border-color: #fb923c;
+  color: #fb923c;
+}
+
+/* Deactivate confirm button */
+.deactivate-confirm-btn {
+  flex: 1;
+  border-radius: var(--radius-md);
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background-color: #fb923c;
+  color: var(--color-white);
+}

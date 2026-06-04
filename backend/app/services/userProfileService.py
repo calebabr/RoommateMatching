@@ -175,12 +175,15 @@ class UserProfileService:
 
     async def get_all_active_users(self) -> list[dict]:
         """
-        Retrieves all users who have fewer than MAX_MATCHES confirmed matches
-        and are not soft-deleted. These users are available in the recommendation pool.
+        Retrieves all users who have fewer than MAX_MATCHES confirmed matches,
+        are not soft-deleted, not deactivated, and not paused.
+        These users are available in the recommendation/discover pool.
         """
         from app.models import MAX_MATCHES
         cursor = self.collection.find({"$and": [
             {"deletedAt": {"$exists": False}},
+            {"is_deactivated": {"$ne": True}},
+            {"is_paused": {"$ne": True}},
             {"$or": [
                 {"matchCount": {"$lt": MAX_MATCHES}},
                 {"matchCount": {"$exists": False}},

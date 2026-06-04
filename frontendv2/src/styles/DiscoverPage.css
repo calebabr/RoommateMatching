@@ -163,8 +163,14 @@
   color: var(--color-text-muted);
 }
 
+.discover-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
 .discover-like-btn {
-  width: 100%;
+  flex: 1;
   background-color: var(--color-accent);
   border-radius: var(--radius-md);
   padding: 11px 0;
@@ -176,5 +182,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: auto;
+}
+
+.discover-pass-btn {
+  flex-shrink: 0;
+  background-color: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.discover-pass-btn:hover:not(:disabled) {
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-secondary);
+}
+
+.discover-pass-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
