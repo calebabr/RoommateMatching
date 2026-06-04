@@ -7,9 +7,17 @@ from PIL import Image
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 import cloudinary
 import cloudinary.uploader
+import httpx
 from app.auth.dependencies import get_current_user, get_current_user_or_403, verify_match_exists, get_admin_user
 from app.auth.utils import calculate_age
-from app.database import users_collection, likes_collection, matches_collection, chat_collection
+from app.database import (
+    users_collection,
+    likes_collection,
+    matches_collection,
+    chat_collection,
+    feedback_collection,
+    conversation_reports_collection,
+)
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
 from app.services.recommendationService import RecommendationService
@@ -33,6 +41,9 @@ from app.models import (
     ResolveReportRequest,
     SubmitAgeRequest,
     AcceptTermsRequest,
+    FeedbackCreate,
+    ConversationReportCreate,
+    ResolveConversationReport,
 )
 
 router = APIRouter()
@@ -625,4 +636,168 @@ async def admin_resolve_report(request: Request, report_id: str, body: ResolveRe
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- P3AD.1: Sentry Error Proxy ---
+
+@router.get("/admin/errors")
+@limiter.limit("30/minute")
+async def admin_sentry_errors(request: Request, _: dict = Depends(get_admin_user)):
+    """Proxy recent Sentry issues to the admin dashboard."""
+    sentry_token = os.environ.get("SENTRY_AUTH_TOKEN")
+    sentry_org = os.environ.get("SENTRY_ORG")
+    sentry_project = os.environ.get("SENTRY_PROJECT")
+
+    if not all([sentry_token, sentry_org, sentry_project]):
+        return {"error": "Sentry not configured", "issues": []}
+
+    url = f"https://sentry.io/api/0/projects/{sentry_org}/{sentry_project}/issues/?limit=25&statsPeriod=7d"
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers={"Authorization": f"Bearer {sentry_token}"})
+            response.raise_for_status()
+            return {"issues": response.json()}
+    except Exception as e:
+        return {"error": str(e), "issues": []}
+
+
+# --- P3AD.2: User Feedback ---
+
+@router.post("/feedback")
+@limiter.limit("10/hour")
+async def submit_feedback(request: Request, body: FeedbackCreate, current_user: dict = Depends(get_current_user)):
+    """Submit user feedback."""
+    doc = {
+        "user_id": current_user["id"],
+        "message": body.message,
+        "createdAt": datetime.utcnow().isoformat(),
+    }
+    await feedback_collection.insert_one(doc)
+    return {"status": "ok"}
+
+
+@router.get("/admin/feedback")
+@limiter.limit("60/minute")
+async def admin_get_feedback(request: Request, _: dict = Depends(get_admin_user)):
+    """Admin endpoint: list all user feedback with usernames, sorted newest first."""
+    cursor = feedback_collection.find({}, {"_id": 0}).sort("createdAt", -1)
+    items = []
+    async for doc in cursor:
+        user = await users_collection.find_one({"id": doc.get("user_id")})
+        doc["username"] = user.get("username", f"User #{doc.get('user_id')}") if user else "Deleted User"
+        items.append(doc)
+    return {"feedback": items}
+
+
+# --- P3AD.4: Reported Conversation Moderation ---
+
+@router.post("/chat/{partner_id}/report")
+@limiter.limit("5/hour")
+async def report_conversation(
+    request: Request,
+    partner_id: int,
+    body: ConversationReportCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Report a chat conversation with a matched partner."""
+    user_id = current_user["id"]
+
+    # Verify a match exists between current user and partner
+    match_doc = await matches_collection.find_one({
+        "$or": [
+            {"user1_id": user_id, "user2_id": partner_id},
+            {"user1_id": partner_id, "user2_id": user_id},
+        ]
+    })
+    if not match_doc:
+        raise HTTPException(status_code=403, detail="You are not matched with this user")
+
+    doc = {
+        "reporter_id": user_id,
+        "reported_user_id": partner_id,
+        "reason": body.reason,
+        "status": "pending",
+        "createdAt": datetime.utcnow().isoformat(),
+    }
+    await conversation_reports_collection.insert_one(doc)
+    return {"status": "ok"}
+
+
+@router.get("/admin/conversation-reports")
+@limiter.limit("60/minute")
+async def admin_get_conversation_reports(request: Request, _: dict = Depends(get_admin_user)):
+    """Admin endpoint: list all pending conversation reports with usernames."""
+    cursor = conversation_reports_collection.find({"status": "pending"}).sort("createdAt", -1)
+    reports = []
+    async for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        reporter = await users_collection.find_one({"id": doc.get("reporter_id")})
+        reported = await users_collection.find_one({"id": doc.get("reported_user_id")})
+        doc["reporter_username"] = reporter.get("username", f"User #{doc.get('reporter_id')}") if reporter else "Deleted User"
+        doc["reported_username"] = reported.get("username", f"User #{doc.get('reported_user_id')}") if reported else "Deleted User"
+        reports.append(doc)
+    return {"reports": reports}
+
+
+@router.get("/admin/conversation-reports/{report_id}/messages")
+@limiter.limit("60/minute")
+async def admin_get_report_messages(request: Request, report_id: str, _: dict = Depends(get_admin_user)):
+    """Admin endpoint: fetch full chat history for a reported conversation."""
+    from bson import ObjectId
+    try:
+        oid = ObjectId(report_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid report_id")
+
+    report = await conversation_reports_collection.find_one({"_id": oid})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    reporter_id = report["reporter_id"]
+    reported_user_id = report["reported_user_id"]
+
+    cursor = chat_collection.find({
+        "$or": [
+            {"fromUser": reporter_id, "toUser": reported_user_id},
+            {"fromUser": reported_user_id, "toUser": reporter_id},
+        ]
+    }).sort("createdAt", 1)
+
+    messages = []
+    async for msg in cursor:
+        msg["_id"] = str(msg["_id"])
+        messages.append(msg)
+    return {"messages": messages}
+
+
+@router.post("/admin/conversation-reports/{report_id}/resolve")
+@limiter.limit("60/minute")
+async def admin_resolve_conversation_report(
+    request: Request,
+    report_id: str,
+    body: ResolveConversationReport,
+    _: dict = Depends(get_admin_user),
+):
+    """Admin endpoint: resolve a conversation report (dismiss or ban reported user)."""
+    from bson import ObjectId
+    try:
+        oid = ObjectId(report_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid report_id")
+
+    report = await conversation_reports_collection.find_one({"_id": oid})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    if body.action == "ban":
+        await users_collection.update_one(
+            {"id": report["reported_user_id"]},
+            {"$set": {"is_banned": True}},
+        )
+
+    await conversation_reports_collection.update_one(
+        {"_id": oid},
+        {"$set": {"status": "resolved"}},
+    )
+    return {"status": "ok"}
 

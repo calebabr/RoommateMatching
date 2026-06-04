@@ -83,8 +83,9 @@ All calls go through `src/services/api.js` via a single Axios instance. The base
 | `/login` | `LoginPage` | Email/password login; rejects non-admin accounts |
 | `/users` | `UserListPage` | Lists all users from `GET /api/admin/users`; search bar; status pills (active/banned) |
 | `/users/:id` | `UserDetailPage` | User detail view; ban/unban button with `ConfirmDialog` |
-| `/errors` | `ErrorsPage` | Placeholder for P3AD.1 (Sentry error log view) |
-| `/feedback` | `FeedbackPage` | Placeholder for P3AD.2 (user feedback inbox) |
+| `/errors` | `ErrorsPage` | Sentry error log — table with Title/Level/Status/First Seen/Last Seen/Times Seen; colour-coded level pills; permalink links to Sentry; warning banner if Sentry not configured (P3AD.1) |
+| `/feedback` | `FeedbackPage` | User feedback inbox — table with User/Message/Submitted columns; full message text; empty state (P3AD.2) |
+| `/reports` | `ReportsPage` | Reported conversation moderation — table of pending reports; expandable rows with full message thread; Dismiss and Ban User actions with confirm dialog (P3AD.4) |
 
 **Session 2026-06-02 (Task P3AD.3):** `UserDetailPage` was extended with an activity section; `adminApi.js` received a new function.
 
@@ -108,8 +109,8 @@ The activity fetch (`adminGetUserActivity`) runs in parallel with the user fetch
 
 | Component | Purpose |
 |-----------|---------|
-| `Sidebar.jsx` | Nav sidebar with links to Users, Errors, Feedback pages |
-| `ConfirmDialog.jsx` | Modal confirmation prompt used by ban/unban actions |
+| `Sidebar.jsx` | Nav sidebar with links to Users, Errors, Feedback, and Reports pages; "(P3AD.1)" and "(P3AD.2)" labels removed after those tasks completed |
+| `ConfirmDialog.jsx` | Modal confirmation prompt used by ban/unban and report moderation actions |
 
 ### Configuration
 
@@ -118,6 +119,44 @@ The activity fetch (`adminGetUserActivity`) runs in parallel with the user fetch
 | `frontendAdmin/.env.example` | Documents `VITE_API_BASE_URL` for this app |
 | `frontendAdmin/vite.config.js` | Dev server on port 3001 |
 | `frontendAdmin/package.json` | Dependencies: `axios ^1.6.0`, `react-router-dom ^6.0.0` |
+
+---
+
+## 13. Beta Admin Readiness (P3AD.1, P3AD.2, P3AD.4 — 2026-06-03)
+
+### Main App — Feedback Modal (`frontendv2/src/App.jsx`)
+
+A `FeedbackModal` component and a "Send Feedback" button were added to the main app sidebar. The modal contains a `<textarea>` limited to 2000 characters with a live character counter, a submit button, and success/error states. On submit it calls `submitFeedback(message)` from `api.js`. The button is always visible in the sidebar for authenticated users.
+
+`frontendv2/src/services/api.js` — added `submitFeedback(message)` calling `POST /api/feedback`.
+
+### Admin Dashboard — `ErrorsPage` (P3AD.1)
+
+`frontendAdmin/src/pages/ErrorsPage.jsx` — replaced placeholder with a live Sentry error viewer. Fetches from `GET /api/admin/errors` (the backend proxy). Renders a table with columns: Title, Level (colour-coded pills: `fatal`/`error` red, `warning` yellow, `info` blue), Status, First Seen, Last Seen, Times Seen. Each title links to the full issue in Sentry. If Sentry is not configured on the backend, a warning banner is shown and the table renders empty.
+
+`frontendAdmin/src/services/adminApi.js` — no new function needed (ErrorsPage calls the existing admin Axios instance directly).
+
+### Admin Dashboard — `FeedbackPage` (P3AD.2)
+
+`frontendAdmin/src/pages/FeedbackPage.jsx` — replaced placeholder with a feedback inbox table. Columns: User (username joined from the users collection), Message (full text), Submitted (ISO timestamp). Empty state shown when no feedback exists.
+
+`frontendAdmin/src/services/adminApi.js` — added `adminGetFeedback()` calling `GET /api/admin/feedback`.
+
+### Admin Dashboard — `ReportsPage` (P3AD.4)
+
+`frontendAdmin/src/pages/ReportsPage.jsx` — new page for reported conversation moderation. Displays a table of pending reports. Each row is expandable to show the full message thread between the two users. Row actions: **Dismiss** (marks report resolved, no action on users) and **Ban User** (bans the reported user + resolves the report) — both behind a confirm dialog.
+
+`frontendAdmin/src/services/adminApi.js` — added three functions:
+
+| Function | Endpoint |
+|----------|---------|
+| `adminGetConversationReports()` | `GET /api/admin/conversation-reports` |
+| `adminGetReportMessages(reportId)` | `GET /api/admin/conversation-reports/{id}/messages` |
+| `adminResolveConversationReport(reportId, action)` | `POST /api/admin/conversation-reports/{id}/resolve` |
+
+`frontendAdmin/src/App.jsx` — added `/reports` route pointing to `ReportsPage`.
+
+`frontendAdmin/src/components/Sidebar.jsx` — added Reports nav item; removed stale "(P3AD.1)" and "(P3AD.2)" labels from Errors and Feedback items.
 
 ---
 

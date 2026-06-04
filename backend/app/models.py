@@ -287,6 +287,22 @@ class AcceptTermsRequest(BaseModel):
     termsVersion: str  # e.g. "2026-06-03"
 
 
+# --- Feedback Models ---
+
+class FeedbackCreate(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000)
+
+
+# --- Conversation Report Models ---
+
+class ConversationReportCreate(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=500)
+
+
+class ResolveConversationReport(BaseModel):
+    action: Literal["dismiss", "ban"]  # "ban" bans the reported user
+
+
 # --- Notification Models ---
 
 class NotificationResponse(BaseModel):

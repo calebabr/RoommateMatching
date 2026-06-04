@@ -2,7 +2,7 @@
 
 ## 1. Current State
 
-Twenty-two backend test files now exist: two legacy scripts, fourteen pytest modules in the root `backend/` directory, and six new pytest modules in `backend/tests/`. Unit tests, pytest fixtures, an isolated test database, a shared helpers module, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present. Total: 252 tests, all passing.
+Twenty-four backend test files now exist: two legacy scripts, fourteen pytest modules in the root `backend/` directory, and eight pytest modules in `backend/tests/`. Unit tests, pytest fixtures, an isolated test database, a shared helpers module, and two `conftest.py` files exist (one root-level, one under `backend/tests/`). No frontend tests of any kind are present. Total: 268 tests, all passing.
 
 ## 2. Test Files
 
@@ -32,6 +32,8 @@ Twenty-two backend test files now exist: two legacy scripts, fourteen pytest mod
 | `backend/tests/test_deletion.py` | pytest | 15 | Soft-delete, restore (valid/invalid/expired token), export contents, hard-delete cascade, Cloudinary call, cleanup expired/non-expired, end-to-end DELETE endpoint; uses `helpers.py` test DB |
 | `backend/tests/test_token_refresh.py` | pytest | 8 | Token refresh and logout: login/register return refresh_token, valid refresh → 200 + new tokens, rotation (new token differs), invalid token 401, used/rotated token 401, logout-then-refresh 401, new access_token authenticates at /me |
 | `backend/tests/test_age_verification.py` | pytest | 12 | Register with adult DOB (ok), register underage (400), register without DOB (ok), submit-age adult (ok + dateOfBirth stored), submit-age underage (banned + is_banned=True), submit-age unauthenticated (401), submit-age wrong user (403), invalid date format (400), banned user cannot login (403), exactly-18 passes (ok), register invalid DOB format (400) |
+| `backend/tests/test_feedback.py` | pytest | 6 | Submit feedback (ok), submit feedback unauthenticated (401), admin get feedback (ok + username joined), non-admin get feedback (403), empty feedback list, message length/content validation |
+| `backend/tests/test_conversation_reports.py` | pytest | 10 | Report conversation (ok), report non-match (403/400), unauthenticated report (401), admin get reports (ok), non-admin get reports (403), admin get messages (ok), admin resolve dismiss (ok), admin resolve ban (ok + user banned), admin resolve non-admin (403), invalid report ID (404) |
 | `backend/app/test/` | JSON data only | — | `usersTest20.json`, `usersTest250.json`, `usersTest1000.json` — seed data, not automated tests |
 
 ## 3. Test Infrastructure
@@ -77,6 +79,8 @@ Twenty-two backend test files now exist: two legacy scripts, fourteen pytest mod
 - Token refresh tests — `test_token_refresh.py` (8 tests) covers login/register returning refresh_token, valid refresh returning new tokens, token rotation correctness, invalid/used token 401, logout-then-refresh 401, and new access token authenticating at `/me` (2026-06-03)
 - Security headers test updated — `test_security_headers.py` stale `unsafe-inline` assertions removed; two `not in` assertions added confirming `unsafe-inline` absent from `script-src` and `style-src` after P3A.6 CSS migration (2026-06-03)
 - Age verification tests — `test_age_verification.py` (12 tests) covers register with valid adult DOB, underage rejection at register, missing DOB permitted, submit-age ok/banned paths, auth enforcement (401/403), invalid date format, exactly-18 boundary, and banned-user login block (2026-06-03)
+- Feedback system tests — `test_feedback.py` (6 tests) covers submit feedback (authenticated and unauthenticated), admin feedback list with username join, non-admin 403, empty list, and message validation (2026-06-03)
+- Conversation report tests — `test_conversation_reports.py` (10 tests) covers report creation, non-match report rejection, unauthenticated report, admin list/messages/resolve (dismiss and ban), non-admin 403, and invalid report ID 404; `backend/tests/helpers.py` updated with `projection` param support (2026-06-03)
 
 **Still TODO**
 - Unit-test `matchScore.py` directly without HTTP round-trips

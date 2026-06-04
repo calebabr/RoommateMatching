@@ -73,8 +73,9 @@ export default function Sidebar() {
       <div style={styles.brand}>RoomMatch Admin</div>
       <nav style={styles.nav}>
         <NavItem to="/users" icon="👥" label="Users" />
-        <NavItem to="/errors" icon="🐛" label="Error Logs (P3AD.1)" />
-        <NavItem to="/feedback" icon="💬" label="User Feedback (P3AD.2)" />
+        <NavItem to="/errors" icon="🐛" label="Error Logs" />
+        <NavItem to="/feedback" icon="💬" label="User Feedback" />
+        <NavItem to="/reports" icon="🚨" label="Reports" />
       </nav>
       <button style={styles.logoutBtn} onClick={logout}>
         <span>🚪</span>

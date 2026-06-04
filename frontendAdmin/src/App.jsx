@@ -6,6 +6,7 @@ import UserListPage from './pages/UserListPage';
 import UserDetailPage from './pages/UserDetailPage';
 import ErrorsPage from './pages/ErrorsPage';
 import FeedbackPage from './pages/FeedbackPage';
+import ReportsPage from './pages/ReportsPage';
 
 function ProtectedLayout() {
   const token = localStorage.getItem('admin_token');
@@ -29,6 +30,7 @@ function AppRoutes() {
         <Route path="/users/:id" element={<UserDetailPage />} />
         <Route path="/errors" element={<ErrorsPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/users" replace />} />
     </Routes>

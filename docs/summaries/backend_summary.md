@@ -9,7 +9,7 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 | File | Role |
 |------|------|
 | `app/main.py` | App entry point — registers routers, CORS (origin-scoped via `FRONTEND_URL`), static file mount for `/uploads`, SlowAPIMiddleware, `BodySizeLimitMiddleware` (1 MB cap), clean 422 error handler, startup index creation, `cleanup_expired_deletions()` call in lifespan |
-| `app/database.py` | Motor client — defines all 9 MongoDB collections (includes `blocks_collection`, `reports_collection`) |
+| `app/database.py` | Motor client — defines all 11 MongoDB collections (includes `blocks_collection`, `reports_collection`, `feedback_collection`, `conversation_reports_collection`) |
 | `app/models.py` | All Pydantic models: users, likes, matches, recommendations, chat, notifications. Includes `ALLOWED_LIFESTYLE_TAGS` frozenset and all field-level validation constraints (see Section 5). |
 | `app/auth/utils.py` | JWT creation/decoding, bcrypt password hashing (`rounds=12`), `validate_password_strength()` |
 | `app/auth/dependencies.py` | `get_current_user`, `get_current_user_or_403`, `verify_match_exists`, `get_admin_user` FastAPI dependencies; `_admin_ids()` reads `ADMIN_USER_IDS` env var |
@@ -82,6 +82,13 @@ The FastAPI backend is fully functional with auth, user CRUD, matching, likes/un
 - `GET  /api/admin/reports` — admin-gated; optional `?status=open|resolved` filter
 - `POST /api/admin/reports/{report_id}/resolve` — admin-gated; sets `status="resolved"`; accepts optional `resolution_note`
 - `POST /api/auth/restore-account` — public (no Bearer); accepts restore token; clears `deletedAt` on match; 400 for invalid/expired token
+- `POST /api/feedback` — auth-required; rate-limited 10/hr; stores `{user_id, message, created_at}` in `feedback_collection`
+- `GET  /api/admin/feedback` — admin-gated; rate-limited 60/min; returns all feedback submissions with username joined from users
+- `GET  /api/admin/errors` — admin-gated; rate-limited 30/min; proxies to Sentry REST API (`https://sentry.io/api/0/projects/{ORG}/{PROJECT}/issues/?limit=25&statsPeriod=7d`); requires `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` env vars; returns `{"error": "Sentry not configured", "issues": []}` gracefully if env vars absent
+- `POST /api/chat/{partner_id}/report` — auth-required; rate-limited 5/hr; verifies the two users are currently matched; stores conversation report in `conversation_reports_collection`
+- `GET  /api/admin/conversation-reports` — admin-gated; rate-limited 60/min; returns all pending conversation reports
+- `GET  /api/admin/conversation-reports/{id}/messages` — admin-gated; rate-limited 60/min; returns full message thread for the reported conversation
+- `POST /api/admin/conversation-reports/{id}/resolve` — admin-gated; rate-limited 60/min; accepts `action` field: `dismiss` (marks resolved, no user action) or `ban` (bans reported user + resolves report)
 
 **Utility**
 - `GET  /` — health/version
@@ -297,6 +304,42 @@ Missing partner users are surfaced as `"Deleted User"` rather than an error. All
 | File | Change |
 |------|--------|
 | `app/routers/userRoutes.py` | Added `GET /api/admin/users/{user_id}/activity` near other admin endpoints |
+
+---
+
+## 20. Beta Admin Readiness (P3AD.1, P3AD.2, P3AD.4 — 2026-06-03)
+
+### P3AD.1 — Sentry Error Viewer
+
+`GET /api/admin/errors` added to `userRoutes.py`. Admin-gated, rate-limited 30/min. Proxies to the Sentry REST API at `https://sentry.io/api/0/projects/{ORG}/{PROJECT}/issues/?limit=25&statsPeriod=7d`. Requires three environment variables on Render: `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`. If any are absent, the endpoint returns `{"error": "Sentry not configured", "issues": []}` with HTTP 200 — the admin frontend shows a warning banner but does not error.
+
+### P3AD.2 — User Feedback System
+
+`feedback_collection` added to `database.py`. `FeedbackCreate` Pydantic model added to `models.py`.
+
+Two new endpoints in `userRoutes.py`:
+
+| Endpoint | Auth | Rate limit | Behavior |
+|----------|------|-----------|---------|
+| `POST /api/feedback` | Bearer | 10/hr | Stores `{user_id, message, created_at}` in `feedback_collection` |
+| `GET /api/admin/feedback` | Admin | 60/min | Returns all feedback with `username` joined from the users collection |
+
+### P3AD.4 — Reported Conversation Moderation
+
+`conversation_reports_collection` added to `database.py`. `ConversationReportCreate` and `ResolveConversationReport` Pydantic models added to `models.py`.
+
+Four new endpoints in `userRoutes.py`:
+
+| Endpoint | Auth | Rate limit | Behavior |
+|----------|------|-----------|---------|
+| `POST /api/chat/{partner_id}/report` | Bearer | 5/hr | Verifies active match between reporter and partner; stores conversation report |
+| `GET /api/admin/conversation-reports` | Admin | 60/min | Returns all pending conversation reports |
+| `GET /api/admin/conversation-reports/{id}/messages` | Admin | 60/min | Returns full message thread for the reported conversation |
+| `POST /api/admin/conversation-reports/{id}/resolve` | Admin | 60/min | `action: "dismiss"` → marks resolved; `action: "ban"` → bans reported user + marks resolved |
+
+### Environment variables required on Render
+
+`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` must be set for `GET /api/admin/errors` to return live Sentry data. Without them the endpoint degrades gracefully.
 
 ---
 

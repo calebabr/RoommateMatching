@@ -24,3 +24,12 @@ export const adminBanUser = (id) => api.post(`/api/admin/ban/${id}`);
 export const adminUnbanUser = (id) => api.post(`/api/admin/unban/${id}`);
 
 export const adminGetUserActivity = (id) => api.get(`/api/admin/users/${id}/activity`);
+
+export const adminGetErrors = () => api.get('/api/admin/errors');
+
+export const adminGetFeedback = () => api.get('/api/admin/feedback');
+
+export const adminGetConversationReports = () => api.get('/api/admin/conversation-reports');
+export const adminGetReportMessages = (reportId) => api.get(`/api/admin/conversation-reports/${reportId}/messages`);
+export const adminResolveConversationReport = (reportId, action) =>
+  api.post(`/api/admin/conversation-reports/${reportId}/resolve`, { action });

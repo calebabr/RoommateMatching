@@ -78,8 +78,15 @@ class FullAsyncMongoWrapper:
 
     # --- synchronous find() → async cursor ---
 
-    def find(self, filter=None, **kwargs):
-        """Return an AsyncCursor directly (no await needed by callers)."""
+    def find(self, filter=None, projection=None, **kwargs):
+        """Return an AsyncCursor directly (no await needed by callers).
+
+        Accepts an optional projection argument (second positional param in
+        pymongo's Collection.find signature) so that routes calling
+        collection.find({}, {"_id": 0}) work correctly.
+        """
+        if projection is not None:
+            return AsyncCursor(self._collection.find(filter, projection, **kwargs))
         return AsyncCursor(self._collection.find(filter, **kwargs))
 
     # --- fallback ---

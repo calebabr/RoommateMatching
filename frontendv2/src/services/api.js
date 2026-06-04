@@ -161,6 +161,9 @@ export const submitAge = (userId, dateOfBirth) =>
 export const acceptTerms = (userId, termsVersion) =>
   api.post(`/users/${userId}/accept-terms`, { termsVersion }).then(r => r.data);
 
+// ── Feedback ───────────────────────────────────────────────────────────────
+export const submitFeedback = (message) => api.post('/feedback', { message });
+
 // ── Health ─────────────────────────────────────────────────────────────────
 export const healthCheck = () => api.get('/health').then(r => r.data);
 
