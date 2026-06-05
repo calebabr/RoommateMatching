@@ -1,6 +1,6 @@
 # RoomMatch
 
-A roommate matching web application for Auburn University students. Users create profiles with lifestyle preferences, receive compatibility-scored recommendations, like and match with each other, and chat in real time.
+A roommate matching web application for college students. Users create profiles with lifestyle preferences, receive compatibility-scored recommendations, like and match with each other, and chat in real time.
 
 For task tracking see [docs/TASKS.md](docs/TASKS.md).
 
