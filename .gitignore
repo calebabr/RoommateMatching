@@ -51,3 +51,7 @@ uploads/
 # Compiled bytecode caches (already listed above, belt-and-suspenders)
 backend/app/__pycache__/
 backend/app/**/__pycache__/
+
+# Claude Code files (kept local, not shared)
+CLAUDE.md
+.claude/
