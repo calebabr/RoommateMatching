@@ -56,5 +56,6 @@ backend/app/**/__pycache__/
 CLAUDE.md
 .claude/
 
-# Local planning notes (kept local, not shared)
+# Local planning notes and internal docs (kept local, not shared)
 IMPROVEMENT_PLAN.md
+docs/
