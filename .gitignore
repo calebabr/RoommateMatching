@@ -55,3 +55,6 @@ backend/app/**/__pycache__/
 # Claude Code files (kept local, not shared)
 CLAUDE.md
 .claude/
+
+# Local planning notes (kept local, not shared)
+IMPROVEMENT_PLAN.md
