@@ -22,7 +22,10 @@ from app.main import app
 from app.auth.utils import create_access_token, hash_password
 
 TEST_MONGO_URL = "mongodb://localhost:27017/"
-TEST_DB_NAME = "roommatch_test"
+# The test database name is per-process (see tests/conftest.py); importing it
+# rather than hard-coding "roommatch_test" keeps this file pointed at the same
+# database the app collections were bound to.
+from tests.conftest import TEST_DB_NAME  # noqa: E402
 
 client = TestClient(app)
 
@@ -61,7 +64,11 @@ def patch_skip_collections():
     orig_users_deps = deps.users_collection
     orig_blocks_deps = deps.blocks_collection
     orig_profile_col = rv.userProfileService.collection
-    orig_rec_col = rv.recommendationService.collection
+    # RecommendationService stores its collection on `.recommendations`; the
+    # `.collection` attribute this used to patch does not exist on the service,
+    # so the patch was a no-op that also *created* a stray attribute other test
+    # modules then depended on.
+    orig_rec_col = rv.recommendationService.recommendations
     orig_block_blocks = rv.blockService.blocks
     orig_block_users = rv.blockService.users
 
@@ -71,7 +78,7 @@ def patch_skip_collections():
     deps.users_collection = users_col
     deps.blocks_collection = blocks_col
     rv.userProfileService.collection = users_col
-    rv.recommendationService.collection = recs_col
+    rv.recommendationService.recommendations = recs_col
     rv.blockService.blocks = blocks_col
     rv.blockService.users = users_col
 
@@ -93,7 +100,7 @@ def patch_skip_collections():
     deps.users_collection = orig_users_deps
     deps.blocks_collection = orig_blocks_deps
     rv.userProfileService.collection = orig_profile_col
-    rv.recommendationService.collection = orig_rec_col
+    rv.recommendationService.recommendations = orig_rec_col
     rv.blockService.blocks = orig_block_blocks
     rv.blockService.users = orig_block_users
     if orig_swipes_ur is not None:

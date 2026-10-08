@@ -107,6 +107,12 @@ function TermsContent() {
         Users may optionally provide their academic major and graduation year for display
         on their profile to help potential roommates learn more about them.
       </p>
+      <p>
+        You may also optionally share your housing plans — whether you want on- or
+        off-campus housing, a preferred dorm or complex, a monthly budget range, a lease
+        term, and a move-in season and year. These are shown on your profile and used to
+        filter out people whose plans cannot work with yours.
+      </p>
 
       <h3 style={sectionHeadingStyle}>3. Acceptable Use</h3>
       <p>You agree not to use RoomMatch to:</p>
@@ -122,7 +128,7 @@ function TermsContent() {
       <h3 style={sectionHeadingStyle}>4. User Content</h3>
       <p>
         You retain ownership of the content you post on RoomMatch, including your
-        profile photo, bio, and messages. By posting content, you grant RoomMatch a
+        profile photo, bio, prompt answers, and messages. By posting content, you grant RoomMatch a
         limited, non-exclusive license to display your content to other users for the
         purpose of facilitating roommate matching.
       </p>
@@ -143,8 +149,32 @@ function TermsContent() {
         with or meeting other users in person. RoomMatch is not responsible for any
         harm resulting from in-person interactions.
       </p>
+      <p>
+        You can tell us you have found a roommate at any time. Doing so hides you from
+        Discover and from new likes, cancels your pending sent likes, and records the
+        outcome — including whether the match came through RoomMatch — so we can improve
+        our matching. Your existing matches and chats stay available, and you can undo
+        the status at any time.
+      </p>
 
-      <h3 style={sectionHeadingStyle}>6. Account Suspension</h3>
+      <h3 style={sectionHeadingStyle}>6. Roommate Groups</h3>
+      <p>
+        You may form a roommate group with people you have already matched with, up to
+        four members. You can belong to only one open group at a time, and every member
+        must be the same gender, consistent with our matching rules.
+      </p>
+      <p>
+        Group members can see each other's profiles and the pairwise compatibility scores
+        within the group. Leaving a group, unmatching, blocking, or deleting your account
+        removes you from the group and cancels any pending invites. The group creator may
+        disband the group at any time.
+      </p>
+      <p>
+        RoomMatch does not arrange, guarantee, or take part in any lease, sublease, or
+        other housing agreement between group members.
+      </p>
+
+      <h3 style={sectionHeadingStyle}>7. Account Suspension</h3>
       <p>
         We may suspend or terminate your account at any time and for any reason,
         including but not limited to:
@@ -156,7 +186,7 @@ function TermsContent() {
         <li>Fraudulent or deceptive activity</li>
       </ul>
 
-      <h3 style={sectionHeadingStyle}>7. Limitation of Liability</h3>
+      <h3 style={sectionHeadingStyle}>8. Limitation of Liability</h3>
       <p>
         RoomMatch is provided "as is" without warranties of any kind, either express
         or implied. To the fullest extent permitted by law, we are not liable for any
@@ -164,20 +194,20 @@ function TermsContent() {
         of the app, including any harm resulting from interactions with other users.
       </p>
 
-      <h3 style={sectionHeadingStyle}>8. Governing Law</h3>
+      <h3 style={sectionHeadingStyle}>9. Governing Law</h3>
       <p>
         These Terms of Service are governed by and construed in accordance with the
         laws of the State of Alabama, without regard to its conflict of law provisions.
       </p>
 
-      <h3 style={sectionHeadingStyle}>9. Changes to These Terms</h3>
+      <h3 style={sectionHeadingStyle}>10. Changes to These Terms</h3>
       <p>
         We may update these Terms of Service from time to time. We will make
         reasonable efforts to notify you of material changes. Your continued use of
         RoomMatch after any changes constitutes your acceptance of the updated Terms.
       </p>
 
-      <h3 style={sectionHeadingStyle}>10. Contact</h3>
+      <h3 style={sectionHeadingStyle}>11. Contact</h3>
       <p>
         If you have questions or concerns about these Terms of Service, please
         contact us at:{' '}
@@ -199,7 +229,23 @@ function PrivacyContent() {
         <li>Date of birth and gender</li>
         <li>Profile photo</li>
         <li>Lifestyle preferences (sleep schedule, cleanliness, noise tolerance, and more)</li>
+        <li>
+          Prompt answers — the short written answers you give to profile prompts. These
+          are shown to other users on your profile and in Discover
+        </li>
         <li>Academic major, expected graduation season and year</li>
+        <li>
+          Housing plans (on- or off-campus preference, preferred dorm or complex,
+          monthly budget range, lease term, and move-in season and year)
+        </li>
+        <li>
+          Roommate status — if you tell us you found a roommate, we record that, when
+          you told us, and which RoomMatch users (if any) you named
+        </li>
+        <li>
+          Roommate group membership — the groups you create or join, who else is in
+          them, and the invites sent between members
+        </li>
         <li>Chat messages sent between matched users</li>
         <li>Usage and analytics data (pages visited, features used, session activity)</li>
       </ul>
@@ -208,7 +254,23 @@ function PrivacyContent() {
       <p>We use the information we collect to:</p>
       <ul>
         <li>Match you with compatible roommates based on your preferences</li>
+        <li>
+          Filter out people whose housing plans cannot work with yours (for example a
+          non-overlapping budget or an incompatible on- or off-campus choice)
+        </li>
+        <li>
+          Show you a per-category breakdown of why a match scored the way it did. This
+          only ever reveals your own answers — never another user's raw preference values
+        </li>
         <li>Enable chat between users who have matched with each other</li>
+        <li>
+          Run roommate groups, including showing pairwise compatibility between group
+          members and delivering group invites
+        </li>
+        <li>
+          Improve our matching algorithm — when you tell us you found a roommate we
+          record the outcome, including whether it happened through RoomMatch
+        </li>
         <li>Send account-related emails (password resets, notifications)</li>
         <li>Monitor app performance and diagnose errors</li>
         <li>Understand how the product is used and improve it over time</li>

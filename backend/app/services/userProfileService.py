@@ -176,7 +176,8 @@ class UserProfileService:
     async def get_all_active_users(self) -> list[dict]:
         """
         Retrieves all users who have fewer than MAX_MATCHES confirmed matches,
-        are not soft-deleted, not deactivated, and not paused.
+        are not soft-deleted, not deactivated, not paused, and have not marked
+        themselves as having found a roommate (P3FT.12).
         These users are available in the recommendation/discover pool.
         """
         from app.models import MAX_MATCHES
@@ -184,6 +185,7 @@ class UserProfileService:
             {"deletedAt": {"$exists": False}},
             {"is_deactivated": {"$ne": True}},
             {"is_paused": {"$ne": True}},
+            {"roommateFound": {"$ne": True}},
             {"$or": [
                 {"matchCount": {"$lt": MAX_MATCHES}},
                 {"matchCount": {"$exists": False}},
@@ -196,51 +198,8 @@ class UserProfileService:
             users.append(user)
         return users
 
-    async def mark_matched(self, user_id: int, matched_with: int) -> dict:
-        """
-        Marks a user as matched with another user.
-
-        Parameters:
-            user_id (int): The user ID to mark as matched.
-            matched_with (int): The user ID of the matched partner.
-
-        Returns:
-            dict: The updated user profile object with matched status.
-
-        Raises:
-            ValueError: If user with the specified ID does not exist.
-        """
-        result = await self.collection.find_one_and_update(
-            {"id": user_id},
-            {"$set": {"matched": True, "matchedWith": matched_with}},
-            return_document=True
-        )
-        if not result:
-            raise ValueError(f"User {user_id} not found")
-        result.pop("_id", None)
-        result.pop("hashed_password", None)
-        return result
-
-    async def unmatch_user(self, user_id: int) -> dict:
-        """
-        Unmatches a user from their current match partner.
-
-        Parameters:
-            user_id (int): The user ID to unmatch.
-
-        Returns:
-            dict: The updated user profile object with matched status set to False.
-
-        Raises:
-            ValueError: If user with the specified ID does not exist.
-        """
-        result = await self.collection.find_one_and_update(
-            {"id": user_id},
-            {"$set": {"matched": False, "matchedWith": None}},
-            return_document=True
-        )
-        if not result:
-            raise ValueError(f"User {user_id} not found")
-        result.pop("_id", None)
-        result.pop("hashed_password", None)
-        return result
+    # P3B.5 — `mark_matched()` and `unmatch_user()` were removed here.  Both
+    # wrote the pre-multi-match format (`matchedWith` as a single int, or None)
+    # which every current reader normalizes away, and neither had a caller.
+    # Matching is owned end to end by `likeService.send_like` / `.unmatch`,
+    # which maintain `matchedWith` as a list plus `matchCount` and `matched`.

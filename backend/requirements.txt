@@ -6,8 +6,12 @@ pydantic==2.12.5
 bcrypt==5.0.0
 python-jose[cryptography]==3.5.0
 python-multipart==0.0.22
-pytest==7.4.4
-pytest-asyncio==0.23.3
+# pytest-asyncio >= 0.26 is required for the loop-scope options in pytest.ini
+# (asyncio_default_fixture_loop_scope landed in 0.24, asyncio_default_test_loop_scope
+# in 0.26) and for the `loop_scope=` fixture kwarg used in test_idor_integration.py.
+# pytest-asyncio >= 0.24 in turn requires pytest >= 8.2.
+pytest==8.3.5
+pytest-asyncio==0.26.0
 httpx==0.25.2
 slowapi==0.1.9
 zxcvbn==4.4.28
@@ -18,3 +22,7 @@ nh3==0.2.17
 python-dotenv==1.0.1
 networkx
 sentry-sdk[fastapi]==2.19.2
+# P3B.10 — daily retention cleanup and nightly recompute (app/main.py).
+# The import is guarded: if this is missing the app still starts, but the
+# scheduled jobs do not run and the cleanups revert to startup-only.
+APScheduler==3.11.0

@@ -39,14 +39,38 @@ class ChatService:
         msg["id"] = msg["_id"]
         return msg
 
-    async def get_messages(self, user_id: int, partner_id: int, limit: int = 100) -> list[dict]:
-        """Get all messages between user and a specific partner."""
-        cursor = self.messages.find({
+    async def get_messages(
+        self,
+        user_id: int,
+        partner_id: int,
+        limit: int = 100,
+        after: str | None = None,
+    ) -> list[dict]:
+        """Get messages between user and a specific partner.
+
+        `after` is an optional ISO-8601 timestamp; only messages strictly newer
+        than it are returned.  This is the timestamp pagination that the never-
+        mounted `chatRoutes.py` advertised but never actually implemented (it
+        called this method with an `after=` kwarg that did not exist).  P3B.1
+        removed that router and moved the capability here, where it is reachable.
+        An unparseable `after` raises ValueError.
+        """
+        query = {
             "$or": [
                 {"fromUser": user_id, "toUser": partner_id},
                 {"fromUser": partner_id, "toUser": user_id},
             ]
-        }).sort("createdAt", 1).limit(limit)
+        }
+        if after:
+            try:
+                cutoff = datetime.fromisoformat(str(after).replace("Z", "+00:00"))
+            except (TypeError, ValueError):
+                raise ValueError("`after` must be an ISO-8601 timestamp")
+            if cutoff.tzinfo is None:
+                cutoff = cutoff.replace(tzinfo=timezone.utc)
+            query["createdAt"] = {"$gt": cutoff}
+
+        cursor = self.messages.find(query).sort("createdAt", 1).limit(limit)
 
         messages = []
         async for msg in cursor:

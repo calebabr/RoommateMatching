@@ -49,14 +49,17 @@ def _reg_body(tag: str) -> dict:
     }
 
 
-@pytest_asyncio.fixture(scope="session", loop_scope="session")
+@pytest_asyncio.fixture
 async def http_client():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
 
-@pytest_asyncio.fixture(scope="session", loop_scope="session")
+# Function-scoped on purpose: conftest's autouse `setup_test_db_per_test`
+# empties every collection between tests, so session-scoped seed data would
+# vanish after the first test and every later one would 401 "User not found".
+@pytest_asyncio.fixture
 async def two_users(http_client: AsyncClient):
     """Register users A and B, yield their IDs and auth headers, then clean up."""
     # Remove any leftover test accounts from a previous interrupted run

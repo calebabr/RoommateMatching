@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
-import { getMatches, getUser, unmatchUser, getMatchScore, getPhotoUrl } from '../services/api';
+import { getMatches, getUser, unmatchUser, getMatchScore, getPhotoUrl, getMyGroup, createGroup, inviteToGroup } from '../services/api';
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
@@ -14,6 +14,37 @@ export default function MatchesPage() {
   const [matches,  setMatches]  = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [modal,    setModal]    = useState(null);
+  const [group,    setGroup]    = useState(null);
+  const [invitingId, setInvitingId] = useState(null);
+
+  const loadGroup = async () => {
+    try {
+      const data = await getMyGroup();
+      setGroup(data?.group ?? (data?.id != null ? data : null));
+    } catch {
+      setGroup(null); // no group yet
+    }
+  };
+
+  // Invite CTA (P3FT.13) — creates a group on first use, then sends the invite.
+  const handleInviteToGroup = async (partnerId, partnerName) => {
+    setInvitingId(partnerId);
+    try {
+      let target = group;
+      if (!target) {
+        const created = await createGroup({ maxSize: 4 });
+        target = created?.group ?? created;
+        setGroup(target);
+      }
+      await inviteToGroup(target.id, partnerId);
+      await loadGroup();
+      setModal({ title: 'Invite sent', message: `${partnerName} was invited to your roommate group.` });
+    } catch (err) {
+      setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not send the group invite.' });
+    } finally {
+      setInvitingId(null);
+    }
+  };
 
   const loadMatches = async () => {
     if (!user?.id) return;
@@ -38,7 +69,7 @@ export default function MatchesPage() {
 
   useEffect(() => {
     let active = true;
-    (async () => { setLoading(true); await refreshUser(); await loadMatches(); if (active) setLoading(false); })();
+    (async () => { setLoading(true); await refreshUser(); await Promise.all([loadMatches(), loadGroup()]); if (active) setLoading(false); })();
     return () => { active = false; };
   }, [user?.id]);
 
@@ -158,6 +189,30 @@ export default function MatchesPage() {
                       Unmatch
                     </button>
                   </div>
+
+                  {(() => {
+                    const memberIds = group?.memberIds || [];
+                    const alreadyIn = memberIds.includes(p.id);
+                    const groupFull = group && memberIds.length >= (group.maxSize || 4);
+                    return (
+                      <div className="matches-group-actions">
+                        <button
+                          className="matches-group-btn"
+                          onClick={() => handleInviteToGroup(p.id, p.username || `User #${p.id}`)}
+                          disabled={alreadyIn || groupFull || invitingId === p.id}
+                          title={alreadyIn ? 'Already in your group' : groupFull ? 'Your group is full' : undefined}
+                        >
+                          {invitingId === p.id
+                            ? '...'
+                            : alreadyIn
+                              ? '✓ In your group'
+                              : groupFull
+                                ? 'Group is full'
+                                : '👥 Invite to group'}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}

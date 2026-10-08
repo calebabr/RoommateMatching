@@ -21,7 +21,10 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from httpx import AsyncClient, ASGITransport
 
 TEST_MONGO_URL = "mongodb://localhost:27017/"
-TEST_DB_NAME = "roommatch_test"
+# The test database name is per-process (see tests/conftest.py); importing it
+# rather than hard-coding "roommatch_test" keeps this file pointed at the same
+# database the app collections were bound to.
+from tests.conftest import TEST_DB_NAME  # noqa: E402
 
 # A password that passes zxcvbn strength check (score >= 2)
 _STRONG_PASSWORD = "Tr0ub4dor&3"

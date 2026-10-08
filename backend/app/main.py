@@ -17,6 +17,7 @@ from app.auth.utils import decode_token
 from app.routers.matchingRoutes import router as matchingRouter
 from app.routers.userRoutes import router as userRouter
 from app.routers.authRoutes import router as authRouter
+from app.routers.groupRoutes import router as groupRouter
 from app.database import users_collection, counters_collection
 
 _SENTRY_DSN = os.getenv("SENTRY_DSN", "")
@@ -103,26 +104,30 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await users_collection.create_index("email", unique=True, sparse=True)
-    current_max = await users_collection.find_one(sort=[("id", -1)])
-    max_id = current_max["id"] if current_max else 0
-    await counters_collection.update_one(
-        {"_id": "user_id"},
-        {"$setOnInsert": {"seq": max_id}},
-        upsert=True,
-    )
-    # Hard-delete accounts whose 30-day grace period has expired
+# ---------------------------------------------------------------------------
+# P3B.10 — scheduled maintenance.
+#
+# These cleanups used to run only at startup, so a process that stays up for
+# weeks (the normal case on Render) would never hard-delete an account whose
+# 30-day grace period expired while it was running.  They are now also run
+# daily by an in-process APScheduler job.
+# ---------------------------------------------------------------------------
+
+_scheduler = None
+
+
+async def _run_retention_cleanup() -> None:
+    """Hard-delete expired soft-deleted and long-deactivated accounts."""
+    import logging
+    log = logging.getLogger(__name__)
     try:
         from app.services.deletionService import DeletionService
         deleted_count = await DeletionService().cleanup_expired_deletions()
         if deleted_count:
-            import logging
-            logging.getLogger(__name__).info(f"Startup cleanup: hard-deleted {deleted_count} expired accounts")
+            log.info("Retention cleanup: hard-deleted %s expired accounts", deleted_count)
     except Exception:
-        pass  # Never block startup if cleanup fails
-    # Hard-delete deactivated accounts older than 30 days
+        log.exception("Retention cleanup (soft-deleted accounts) failed")
+
     try:
         from datetime import datetime, timezone, timedelta
         from app.database import users_collection as _users_col
@@ -132,13 +137,113 @@ async def lifespan(app: FastAPI):
             "deactivatedAt": {"$lt": cutoff},
         })
         if result.deleted_count:
-            import logging
-            logging.getLogger(__name__).info(
-                f"Startup cleanup: hard-deleted {result.deleted_count} deactivated accounts older than 30 days"
+            log.info(
+                "Retention cleanup: hard-deleted %s deactivated accounts older than 30 days",
+                result.deleted_count,
             )
     except Exception:
-        pass  # Never block startup if cleanup fails
-    yield
+        log.exception("Retention cleanup (deactivated accounts) failed")
+
+
+async def _run_nightly_recompute() -> None:
+    """Full recommendation recompute over the active pool.
+
+    P3B.8/P3B.9 made per-save recompute conditional and rate-limited, so this
+    nightly pass is the backstop that guarantees every user's feed is refreshed
+    at least once a day even if their own edits never crossed the threshold.
+    It is also what makes a TTL on the `recommendations` collection (P3D.6)
+    safe: anything that expires is rebuilt on the next run.
+    """
+    import logging
+    log = logging.getLogger(__name__)
+    try:
+        from app.services.recommendationService import RecommendationService
+        count = await RecommendationService().recompute_all_active()
+        log.info("Nightly recompute: refreshed recommendations for %s users", count)
+    except Exception:
+        log.exception("Nightly recompute failed")
+
+
+def _start_scheduler():
+    """Start the daily maintenance scheduler, or return None if unavailable.
+
+    Never fatal: a missing APScheduler or a scheduler that refuses to start
+    degrades the app to the old startup-only behaviour rather than taking it
+    down.  Skipped under the test environment so the suite never has a live
+    scheduler thread running against the test database.
+    """
+    if os.getenv("ROOMMATCH_ENV", "production") == "test":
+        return None
+    try:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from apscheduler.triggers.cron import CronTrigger
+    except ImportError:
+        import logging
+        logging.getLogger(__name__).warning(
+            "APScheduler is not installed — daily retention cleanup and nightly "
+            "recompute will not run. Install it or set up an OS-level cron."
+        )
+        return None
+
+    try:
+        scheduler = AsyncIOScheduler(timezone="UTC")
+        scheduler.add_job(
+            _run_retention_cleanup,
+            CronTrigger(hour=3, minute=0),
+            id="retention_cleanup",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
+        scheduler.add_job(
+            _run_nightly_recompute,
+            CronTrigger(hour=4, minute=0),
+            id="nightly_recompute",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
+        scheduler.start()
+        return scheduler
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("Failed to start the maintenance scheduler")
+        return None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # P3D.7 — the unguarded `create_index("email", unique=True, sparse=True)`
+    # that used to live here was a deploy blocker.  MongoDB auto-names it
+    # `email_1`, while `migrate_indexes.py` creates the same key pattern as
+    # `users_email_unique`; the second one to run raises IndexOptionsConflict
+    # (code 85).  The migration swallows that conflict, so app-then-migration
+    # happened to work locally, but migration-then-app — which is exactly the
+    # deploy order P3D.10 prescribes — crashed startup on a fresh database.
+    # `migrate_indexes.py` is now the single source of truth for indexes; two
+    # places creating one index was the bug, so this call is gone rather than
+    # wrapped.
+    current_max = await users_collection.find_one(sort=[("id", -1)])
+    max_id = current_max["id"] if current_max else 0
+    await counters_collection.update_one(
+        {"_id": "user_id"},
+        {"$setOnInsert": {"seq": max_id}},
+        upsert=True,
+    )
+    # Run the retention cleanup once at boot as well, so a restart still
+    # collects anything that expired while the process was down.
+    await _run_retention_cleanup()
+
+    global _scheduler
+    _scheduler = _start_scheduler()
+    try:
+        yield
+    finally:
+        if _scheduler is not None:
+            try:
+                _scheduler.shutdown(wait=False)
+            except Exception:
+                pass
 
 app = FastAPI(title="RoomMatch API", lifespan=lifespan)
 
@@ -219,6 +324,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.include_router(authRouter, prefix="/api")
 app.include_router(matchingRouter, prefix="/api")
 app.include_router(userRouter, prefix="/api")
+app.include_router(groupRouter, prefix="/api")
 
 @app.get("/")
 def root():

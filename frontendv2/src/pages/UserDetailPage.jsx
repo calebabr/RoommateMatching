@@ -7,6 +7,9 @@ import posthog from 'posthog-js';
 import { getUser, getMatchScore, sendLike, getLikesSent, getPhotoUrl, blockUser, reportUser } from '../services/api';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
+import HousingSummary from '../components/HousingSummary';
+import ScoreBreakdown from '../components/ScoreBreakdown';
+import PromptCards from '../components/PromptCards';
 
 export default function UserDetailPage() {
   const navigate = useNavigate();
@@ -225,6 +228,9 @@ export default function UserDetailPage() {
                 <p className="userdetail-bio">{profile.bio}</p>
               )}
 
+              {/* Prompt answers (P3FT.14) */}
+              <PromptCards answers={profile.promptAnswers} variant="detail" />
+
               {(theirTags.length > 0 || profile.religionTag) && (
                 <div className="userdetail-tags">
                   {theirTags.map(tag => {
@@ -262,6 +268,8 @@ export default function UserDetailPage() {
                 </div>
               )}
 
+              <HousingSummary profile={profile} />
+
               {sharedTags.length > 0 && (
                 <p className="userdetail-shared-count">
                   {sharedTags.length} shared {sharedTags.length === 1 ? 'interest' : 'interests'} with you!
@@ -276,6 +284,10 @@ export default function UserDetailPage() {
                   <p className="userdetail-score-pct" style={{ color }}>{Math.round(score * 100)}%</p>
                   <p className="userdetail-score-label" style={{ color }}>Compatibility — {label}</p>
                 </div>
+              )}
+
+              {user?.id && profile.id !== user.id && (
+                <ScoreBreakdown userId={user.id} otherId={profile.id} />
               )}
 
               {profile.matched && (

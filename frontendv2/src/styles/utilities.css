@@ -203,6 +203,11 @@
   gap: 12px;
 }
 
+.empty-state-emoji {
+  font-size: 56px;
+  line-height: 1;
+}
+
 .empty-state-title {
   font-size: 22px;
   font-weight: 700;
@@ -379,6 +384,17 @@
   .inline-modal {
     max-width: 100%;
     border-radius: var(--radius-md);
+  }
+
+  /* Opt-in bottom-sheet presentation for overlay modals */
+  .overlay-bg--sheet {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .overlay-bg--sheet .inline-modal {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
   }
 
   /* Empty state — reduce padding */

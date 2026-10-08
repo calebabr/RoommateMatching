@@ -3,8 +3,18 @@ import uuid
 import io
 import shutil
 from datetime import datetime, timezone
+from typing import Annotated, Optional
 from PIL import Image
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    File,
+)
 import cloudinary
 import cloudinary.uploader
 import httpx
@@ -22,18 +32,31 @@ from app.database import (
 )
 from app.limiter import limiter
 from app.services.userProfileService import UserProfileService
-from app.services.recommendationService import RecommendationService
+from app.services.recommendationService import (
+    RecommendationService,
+    housing_score_multiplier,
+    candidate_matches_filters,
+    score_passes_min,
+)
 from app.services.likeService import LikeService
 from app.services.chatService import ChatService
 from app.services.notificationService import NotificationService
 from app.services.blockService import BlockService
 from app.services.reportService import ReportService
 from app.services.deletionService import DeletionService
+from app.services.roommateService import RoommateService
+from app.services.groupService import GroupService
+from app.services.matchScore import matchScore
 from app.models import (
+    PROFILE_PROMPTS,
     UserCreate,
     UserResponse,
     UserInDB,
+    DiscoverFilters,
+    ProfilePromptOut,
     TopMatchesResponse,
+    MatchBreakdownResponse,
+    RoommateFoundRequest,
     LikeRequest,
     LikeResponse,
     ChatMessageCreate,
@@ -54,7 +77,19 @@ router = APIRouter()
 _IMMUTABLE_FIELDS = frozenset({
     "password", "hashed_password", "id", "matched",
     "matchCount", "matchedWith", "createdAt", "email", "photoUrl",
+    # P3FT.12 — server-controlled; only the roommate-found endpoints may set these
+    "roommateFound", "roommateFoundAt", "roommateFoundWith",
 })
+
+# Fields needed to apply the P3FT.10 housing filters, the P3FT.16 discover
+# filters, and the visibility gates when serving recommendations.
+_DISCOVER_PROJECTION = {
+    "id": 1, "is_deactivated": 1, "is_paused": 1, "roommateFound": 1,
+    "housingType": 1, "budgetMin": 1, "budgetMax": 1,
+    "moveInSeason": 1, "moveInYear": 1,
+    # P3FT.16 filter inputs
+    "major": 1, "graduationYear": 1, "lifestyleTags": 1, "religionTag": 1,
+}
 
 userProfileService = UserProfileService()
 recommendationService = RecommendationService()
@@ -64,6 +99,9 @@ notificationService = NotificationService()
 blockService = BlockService()
 reportService = ReportService()
 deletionService = DeletionService()
+roommateService = RoommateService()
+groupService = GroupService()
+scorer = matchScore()
 
 # --- User CRUD ---
 
@@ -80,21 +118,29 @@ async def get_all_users(request: Request, _: dict = Depends(get_current_user)):
 
 @router.post("/users", response_model=UserResponse)
 @limiter.limit("60/minute")
-async def create_user(request: Request, user: UserCreate, _: dict = Depends(get_current_user)):
+async def create_user(
+    request: Request,
+    user: UserCreate,
+    background_tasks: BackgroundTasks,
+    _: dict = Depends(get_current_user),
+):
     try:
         user_data = user.model_dump()
+        # P3FT.14 — `promptAnswers` is None when omitted; store [] rather than
+        # null so every user document has a consistent, iterable shape.
+        if user_data.get("promptAnswers") is None:
+            user_data["promptAnswers"] = []
         # Validate gender
         if user_data.get("gender", "").lower() not in ("male", "female"):
             raise ValueError("Gender must be 'male' or 'female'")
         user_data["gender"] = user_data["gender"].lower()
         result = await userProfileService.create_user(user_data)
 
-        # Auto-recompute for this user
-        users = await userProfileService.get_all_active_users()
-        if len(users) >= 2:
-            user_dicts = [UserInDB(**u).toMatchDict() for u in users]
-            new_user_dict = UserInDB(**result).toMatchDict()
-            await recommendationService.on_new_user(new_user_dict, user_dicts)
+        # P3B.8 — a new user changes every other user's feed, which is O(N)
+        # writes.  Queue it instead of making the client wait for it.
+        background_tasks.add_task(
+            recommendationService.recompute_for_user_id, result["id"]
+        )
 
         return result
     except ValueError as e:
@@ -113,18 +159,35 @@ async def get_user(request: Request, user_id: int, _: dict = Depends(get_current
 
 @router.put("/users/{user_id}", response_model=UserResponse)
 @limiter.limit("60/minute")
-async def update_profile(request: Request, user_id: int, user: UserCreate, _: dict = Depends(get_current_user_or_403)):
+async def update_profile(
+    request: Request,
+    user_id: int,
+    user: UserCreate,
+    background_tasks: BackgroundTasks,
+    _: dict = Depends(get_current_user_or_403),
+):
     try:
         preferences = {k: v for k, v in user.model_dump(exclude_none=True).items()
                        if k not in _IMMUTABLE_FIELDS}
+
+        # P3B.9 — snapshot the preference values before the write so we can tell
+        # whether the change is big enough to be worth an O(N) recompute.
+        before = await users_collection.find_one({"id": user_id}) or {}
+
         result = await userProfileService.update_profile(user_id, preferences)
 
-        # Recompute recommendations with new preferences
-        users = await userProfileService.get_all_active_users()
-        if len(users) >= 2:
-            user_dicts = [UserInDB(**u).toMatchDict() for u in users]
-            updated_dict = UserInDB(**result).toMatchDict()
-            await recommendationService.on_new_user(updated_dict, user_dicts)
+        # P3B.8 + P3B.9 — recompute only on a significant preference change, at
+        # most once per user per hour, and never on the request's critical path.
+        # Best-effort: a failure to schedule must not fail the profile save.
+        try:
+            if await recommendationService.should_recompute_on_profile_save(
+                user_id, before, result
+            ):
+                background_tasks.add_task(
+                    recommendationService.recompute_for_user_id, user_id
+                )
+        except Exception:
+            pass
 
         return result
     except ValueError as e:
@@ -145,28 +208,161 @@ async def delete_user(request: Request, user_id: int, body: DeleteAccountRequest
 
 # --- Recommendations ---
 
-@router.get("/users/{user_id}/top-matches", response_model=TopMatchesResponse)
+@router.get(
+    "/users/{user_id}/top-matches",
+    response_model=TopMatchesResponse,
+    response_model_exclude_none=True,
+)
 @limiter.limit("60/minute")
-async def get_top_matches(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+async def get_top_matches(
+    request: Request,
+    user_id: int,
+    filters: Annotated[DiscoverFilters, Query()],
+    current_user: dict = Depends(get_current_user_or_403),
+):
+    """Ranked discover feed.
+
+    Ordering of the gates matters and is deliberate (P3FT.16):
+
+      1. hard exclusions — blocked, skipped, paused, deactivated, roommate-found
+      2. P3FT.10 housing hard filters + move-in soft penalty
+      3. P3FT.16 user-supplied discover filters
+      4. sort
+
+    The user's filters are applied last so they can never compete with the
+    safety and visibility gates for a slot on the page.
+
+    Status codes:
+      * 404 — this user has no stored recommendations at all (unchanged; the
+        genuinely "nothing computed yet" case that the Discover page relies on)
+      * 200 with `matches: []` and `filteredOut: N` — recommendations exist but
+        the supplied filters removed everything, so the UI can offer to widen
+        them instead of showing the empty-feed state.
+    """
     matches = await recommendationService.get_top_matches(user_id)
     if not matches:
+        # Genuinely no recommendations computed — distinct from "filtered to
+        # nothing", and preserved so existing callers behave exactly as before.
         raise HTTPException(status_code=404, detail="No recommendations yet. Run /admin/recompute first.")
-    # Filter out blocked, deactivated, paused, and skipped users from recommendations
+
+    filters_active = filters.is_active()
+
+    # Filter out blocked, deactivated, paused, roommate-found, and skipped users
     blocked_ids = await blockService.get_blocked_ids(user_id)
     skipped_docs = await swipes_collection.find({"user_id": user_id}, {"skipped_user_id": 1}).to_list(length=None)
     skipped_ids = {doc["skipped_user_id"] for doc in skipped_docs}
-    excluded_ids = blocked_ids | skipped_ids
+    excluded_ids = set(blocked_ids) | skipped_ids
     candidate_ids = [m["user_id"] for m in matches if m["user_id"] not in excluded_ids]
-    # Exclude deactivated and paused users
+
+    candidate_docs = {}
     if candidate_ids:
-        deactivated_or_paused = await users_collection.find(
-            {"id": {"$in": candidate_ids}, "$or": [{"is_deactivated": True}, {"is_paused": True}]},
-            {"id": 1}
+        docs = await users_collection.find(
+            {"id": {"$in": candidate_ids}}, _DISCOVER_PROJECTION
         ).to_list(length=None)
-        hidden_ids = {doc["id"] for doc in deactivated_or_paused}
-        excluded_ids = excluded_ids | hidden_ids
-    matches = [m for m in matches if m["user_id"] not in excluded_ids]
-    return TopMatchesResponse(userId=user_id, matches=matches)
+        for doc in docs:
+            # P3FT.3 pause/deactivate + P3FT.12 roommate-found all hide a profile here
+            if doc.get("is_deactivated") or doc.get("is_paused") or doc.get("roommateFound"):
+                excluded_ids.add(doc["id"])
+            else:
+                candidate_docs[doc["id"]] = doc
+
+    # P3FT.10 — housing hard filters, then the move-in soft penalty
+    survivors = []
+    for m in matches:
+        if m["user_id"] in excluded_ids:
+            continue
+        candidate = candidate_docs.get(m["user_id"])
+        if candidate is None:
+            # No profile document to filter on. Left untouched when the caller
+            # supplied no filters (unchanged behaviour); dropped when they did,
+            # since an unfilterable candidate cannot be shown to satisfy them.
+            if not filters_active:
+                survivors.append((m, None))
+            continue
+        multiplier = housing_score_multiplier(current_user, candidate)
+        if multiplier is None:
+            continue
+        survivors.append((
+            {
+                "user_id": m["user_id"],
+                "compatibilityScore": round(m["compatibilityScore"] * multiplier, 6),
+            },
+            candidate,
+        ))
+
+    # P3FT.16 — the caller's own filters, applied last
+    filtered = []
+    filtered_out = 0
+    for entry, candidate in survivors:
+        if filters_active:
+            if candidate is None or not candidate_matches_filters(candidate, filters):
+                filtered_out += 1
+                continue
+            if not score_passes_min(entry["compatibilityScore"], filters):
+                filtered_out += 1
+                continue
+        filtered.append(entry)
+
+    filtered.sort(key=lambda m: m["compatibilityScore"], reverse=True)
+    return TopMatchesResponse(
+        userId=user_id,
+        matches=filtered,
+        filteredOut=filtered_out if filters_active else None,
+    )
+
+
+# --- P3FT.14: curated profile prompts ---
+
+@router.get("/profile-prompts", response_model=list[ProfilePromptOut])
+@limiter.limit("60/minute")
+async def get_profile_prompts(request: Request):
+    """The curated prompt list, served from `models.PROFILE_PROMPTS`.
+
+    Deliberately unauthenticated: it is static reference data with no user
+    content, and the signup flow needs it before a token exists.  This endpoint
+    is the single source of truth — clients must not hardcode their own copy,
+    or the two lists will silently drift apart.
+    """
+    return PROFILE_PROMPTS
+
+
+# --- P3FT.11: Compatibility score breakdown ---
+
+@router.get("/users/{user_id}/match-breakdown/{other_id}", response_model=MatchBreakdownResponse)
+@limiter.limit("60/minute")
+async def get_match_breakdown(
+    request: Request,
+    user_id: int,
+    other_id: int,
+    current_user: dict = Depends(get_current_user_or_403),
+):
+    """Explain the compatibility score with another user, category by category.
+
+    Privacy: the other user's raw preference values are never returned — each
+    category reports the caller's own `yourValue` plus a bucketed `difference`.
+    """
+    if user_id == other_id:
+        raise HTTPException(status_code=400, detail="Cannot compare a user with themselves")
+
+    if await blockService.is_blocked(user_id, other_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    other = await users_collection.find_one({"id": other_id, "deletedAt": {"$exists": False}})
+    if not other:
+        raise HTTPException(status_code=404, detail="User not found")
+    other.pop("_id", None)
+    other.pop("hashed_password", None)
+
+    try:
+        me_dict = UserInDB(**current_user).toMatchDict()
+        other_dict = UserInDB(**other).toMatchDict()
+    except Exception:
+        raise HTTPException(status_code=400, detail="One of these profiles is missing preference data")
+
+    return MatchBreakdownResponse(
+        compatibilityScore=round(scorer.compatibilityScore(me_dict, other_dict), 6),
+        categories=scorer.categoryBreakdown(me_dict, other_dict),
+    )
 
 # --- Likes and Matching ---
 
@@ -187,12 +383,15 @@ async def like_user(request: Request, user_id: int, body: LikeRequest, _: dict =
 async def get_likes_received(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
     likes = await likeService.get_likes_received(user_id)
     blocked_ids = await blockService.get_blocked_ids(user_id)
-    # Filter blocked users; also hide likes from paused or deactivated users
+    # Filter blocked users; also hide likes from paused, deactivated, or
+    # roommate-found (P3FT.12) users
     from_user_ids = [like.get("fromUser") for like in likes if like.get("fromUser") not in blocked_ids]
     hidden_ids: set = set()
     if from_user_ids:
         hidden_docs = await users_collection.find(
-            {"id": {"$in": from_user_ids}, "$or": [{"is_deactivated": True}, {"is_paused": True}]},
+            {"id": {"$in": from_user_ids}, "$or": [
+                {"is_deactivated": True}, {"is_paused": True}, {"roommateFound": True},
+            ]},
             {"id": 1}
         ).to_list(length=None)
         hidden_ids = {doc["id"] for doc in hidden_docs}
@@ -231,15 +430,26 @@ async def get_matches(request: Request, user_id: int, _: dict = Depends(get_curr
 
 @router.post("/users/{user_id}/unmatch/{partner_id}")
 @limiter.limit("60/minute")
-async def unmatch_user(request: Request, user_id: int, partner_id: int, _: dict = Depends(get_current_user_or_403)):
+async def unmatch_user(
+    request: Request,
+    user_id: int,
+    partner_id: int,
+    background_tasks: BackgroundTasks,
+    _: dict = Depends(get_current_user_or_403),
+):
     try:
         result = await likeService.unmatch(user_id, partner_id)
 
-        users = await userProfileService.get_all_active_users()
-        if len(users) >= 2:
-            user_dicts = [UserInDB(**u).toMatchDict() for u in users]
-            await recommendationService.on_user_unmatched(result["unmatched_user"], user_dicts)
-            await recommendationService.on_user_unmatched(result["was_matched_with"], user_dicts)
+        # P3B.8 — unmatch is user-initiated and interactive, and this was two
+        # full O(N)-write passes on the request path (one per side).  Both are
+        # queued so the response returns immediately; each side reappears in the
+        # other's feed a few seconds later.
+        background_tasks.add_task(
+            recommendationService.recompute_for_user_id, result["unmatched_user"]
+        )
+        background_tasks.add_task(
+            recommendationService.recompute_for_user_id, result["was_matched_with"]
+        )
 
         return {"message": "Unmatched successfully"}
     except ValueError as e:
@@ -288,7 +498,56 @@ async def unpause_profile(request: Request, user_id: int, _: dict = Depends(get_
     result = await users_collection.update_one({"id": user_id}, {"$set": {"is_paused": False}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
+    # P3D.7 — the nightly recompute skips paused users, so this user's
+    # recommendations document may have expired under the 7-day TTL while they
+    # were away.  Rebuild just their feed (one write) so they do not face an
+    # empty discover page for up to 24 hours.  Best-effort.
+    await recommendationService.recompute_single_user(user_id)
     return {"message": "Profile unpaused"}
+
+
+# --- P3FT.12: "Found a roommate" ---
+
+@router.post("/users/{user_id}/roommate-found")
+@limiter.limit("10/hour")
+async def mark_roommate_found(
+    request: Request,
+    user_id: int,
+    body: RoommateFoundRequest,
+    _: dict = Depends(get_current_user_or_403),
+):
+    """Mark this user as having found a roommate.
+
+    Hides them from discover / likes-received / top-matches, cancels pending
+    sent likes, and records an `outcomes` doc for each partner that is a real
+    current match. Existing matches and chats stay accessible.
+    """
+    try:
+        return await roommateService.mark_found(user_id, body.partnerIds, body.viaApp)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/users/{user_id}/roommate-found/undo")
+@limiter.limit("10/hour")
+async def undo_roommate_found(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
+    """Clear the roommate-found status and restore discover visibility."""
+    try:
+        result = await roommateService.undo(user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    # The user was pulled out of the recommendation pool when they were marked
+    # as found — rebuild it now that they are searching again.
+    try:
+        users = await userProfileService.get_all_active_users()
+        if len(users) >= 2:
+            user_dicts = [UserInDB(**u).toMatchDict() for u in users]
+            await recommendationService.on_user_unmatched(user_id, user_dicts)
+    except Exception:
+        pass  # recompute is best-effort; /admin/recompute can always fix it up
+
+    return result
 
 
 # --- P3FT.3: Account deactivation ---
@@ -310,6 +569,8 @@ async def deactivate_account(request: Request, user_id: int, body: DeactivateReq
         {"id": user_id},
         {"$set": {"is_deactivated": True, "deactivatedAt": datetime.now(timezone.utc)}},
     )
+    # P3FT.13 cascade — a deactivated user cannot stay in a roommate group
+    await groupService.remove_user_everywhere(user_id)
     return {"message": "Account deactivated"}
 
 
@@ -499,9 +760,25 @@ async def send_chat_message(request: Request, user_id: int, partner_id: int, mes
 
 @router.get("/users/{user_id}/chat/{partner_id}")
 @limiter.limit("60/minute")
-async def get_chat_messages(request: Request, user_id: int, partner_id: int, limit: int = 100, _: dict = Depends(get_current_user_or_403), __: None = Depends(verify_match_exists)):
+async def get_chat_messages(
+    request: Request,
+    user_id: int,
+    partner_id: int,
+    limit: int = 100,
+    after: Optional[str] = Query(
+        None, description="ISO-8601 timestamp — return only messages newer than this"
+    ),
+    _: dict = Depends(get_current_user_or_403),
+    __: None = Depends(verify_match_exists),
+):
+    """Chat history with a matched partner.
+
+    `after` (P3B.1) is the timestamp pagination the removed `chatRoutes.py`
+    advertised: pass the `createdAt` of the newest message you already hold to
+    poll for just the new ones.
+    """
     try:
-        messages = await chatService.get_messages(user_id, partner_id, limit)
+        messages = await chatService.get_messages(user_id, partner_id, limit, after=after)
         # Look up when the PARTNER last read this conversation
         partner_read_status = await chat_read_status_collection.find_one(
             {"user_id": partner_id, "partner_id": user_id}
@@ -572,6 +849,29 @@ async def get_unread_count(request: Request, user_id: int, _: dict = Depends(get
 async def mark_all_notifications_read(request: Request, user_id: int, _: dict = Depends(get_current_user_or_403)):
     count = await notificationService.mark_all_read(user_id)
     return {"marked": count}
+
+@router.post("/users/{user_id}/notifications/{notification_id}/mark-read")
+@limiter.limit("60/minute")
+async def mark_notification_read(
+    request: Request,
+    user_id: int,
+    notification_id: str,
+    _: dict = Depends(get_current_user_or_403),
+):
+    """P3B.6 — mark a single notification as read.
+
+    The service scopes its update to `toUser == user_id`, so a caller can only
+    ever mark their own notifications; a valid id belonging to someone else is
+    indistinguishable from a missing one and both return 404.
+    """
+    try:
+        marked = await notificationService.mark_read(notification_id, user_id)
+    except Exception:
+        # Malformed ObjectId — a bad id, not a server fault
+        raise HTTPException(status_code=400, detail="Invalid notification id")
+    if not marked:
+        raise HTTPException(status_code=404, detail="Notification not found or already read")
+    return {"marked": 1}
 
 # --- Photo Upload ---
 
@@ -695,6 +995,8 @@ async def admin_list_users(request: Request, include_deleted: bool = False, _: d
     async for user in cursor:
         user.pop("_id", None)
         user.pop("hashed_password", None)
+        # P3FT.12 — always present so the admin UI can render the status pill
+        user["roommateFound"] = bool(user.get("roommateFound"))
         users.append(user)
     return users
 

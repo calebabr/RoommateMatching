@@ -6,6 +6,7 @@ import { getLikesReceived, getLikesSent, sendLike, cancelLike, getUser, getPhoto
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
+import RoommateFoundBanner from '../components/RoommateFoundBanner';
 
 export default function LikesPage() {
   const navigate = useNavigate();
@@ -100,6 +101,8 @@ export default function LikesPage() {
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} />}
 
       <div className="page-container">
+        <RoommateFoundBanner />
+
         <div className="page-header">
           <div>
             <p className="page-header-title">Likes</p>

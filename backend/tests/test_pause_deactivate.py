@@ -34,7 +34,10 @@ from app.main import app
 from app.auth.utils import create_access_token, hash_password
 
 TEST_MONGO_URL = "mongodb://localhost:27017/"
-TEST_DB_NAME = "roommatch_test"
+# The test database name is per-process (see tests/conftest.py); importing it
+# rather than hard-coding "roommatch_test" keeps this file pointed at the same
+# database the app collections were bound to.
+from tests.conftest import TEST_DB_NAME  # noqa: E402
 
 client = TestClient(app)
 
@@ -81,7 +84,11 @@ def patch_pause_collections():
     orig_like_users = rv.likeService.users
     orig_like_likes = rv.likeService.likes
     orig_like_matches = rv.likeService.matches
-    orig_rec_col = rv.recommendationService.collection
+    # RecommendationService stores its collection on `.recommendations`; the
+    # `.collection` attribute this used to patch does not exist on the service,
+    # so the patch was a no-op that also *created* a stray attribute other test
+    # modules then depended on.
+    orig_rec_col = rv.recommendationService.recommendations
     orig_block_blocks = rv.blockService.blocks
     orig_block_users = rv.blockService.users
 
@@ -96,7 +103,7 @@ def patch_pause_collections():
     rv.likeService.users = users_col
     rv.likeService.likes = likes_col
     rv.likeService.matches = matches_col
-    rv.recommendationService.collection = recs_col
+    rv.recommendationService.recommendations = recs_col
     rv.blockService.blocks = blocks_col
     rv.blockService.users = users_col
 
@@ -121,7 +128,7 @@ def patch_pause_collections():
     rv.likeService.users = orig_like_users
     rv.likeService.likes = orig_like_likes
     rv.likeService.matches = orig_like_matches
-    rv.recommendationService.collection = orig_rec_col
+    rv.recommendationService.recommendations = orig_rec_col
     rv.blockService.blocks = orig_block_blocks
     rv.blockService.users = orig_block_users
     if orig_ur_users is not None:

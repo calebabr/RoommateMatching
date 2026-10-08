@@ -23,6 +23,24 @@ class LikeService:
         self.recommendations = recommendations_collection
         self.notifications = notifications_collection
 
+    @staticmethod
+    async def _compatibility_at_match(user_a: dict, user_b: dict):
+        """P3D.2 — score the pair at the moment the match is confirmed.
+
+        Returns None (rather than raising or inventing a number) when either
+        profile cannot be scored, so a malformed profile never blocks a match.
+        """
+        try:
+            from app.models import UserInDB
+            from app.services.matchScore import matchScore
+            score = matchScore().compatibilityScore(
+                UserInDB(**user_a).toMatchDict(),
+                UserInDB(**user_b).toMatchDict(),
+            )
+            return round(float(score), 6)
+        except Exception:
+            return None
+
     async def _create_notification(self, notif_type: str, from_user: int, to_user: int, message: str):
         await self.notifications.insert_one({
             "type": notif_type,
@@ -111,6 +129,8 @@ class LikeService:
             await self.matches.insert_one({
                 "user1_id": from_id,
                 "user2_id": to_id,
+                # P3D.2 — compatibility as it stood when the match was made
+                "compatibilityScore": await self._compatibility_at_match(from_user, to_user),
                 "confirmedAt": datetime.now(timezone.utc)
             })
 
@@ -272,5 +292,11 @@ class LikeService:
                 {"fromUser": partner_id, "toUser": user_id},
             ]
         })
+
+        # P3FT.13 cascade — group membership rests on the match.  The user who
+        # unmatched keeps the group; the former partner is removed from it, and
+        # pending group invites between them are cancelled.
+        from app.services.groupService import GroupService
+        await GroupService().separate_pair(user_id, partner_id)
 
         return {"unmatched_user": user_id, "was_matched_with": partner_id}

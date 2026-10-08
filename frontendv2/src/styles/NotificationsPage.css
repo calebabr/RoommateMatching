@@ -103,3 +103,11 @@
     font-size: 13px;
   }
 }
+
+/* Group invite call-to-action hint (P3FT.13) */
+.notifications-action-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin: 4px 0 0;
+}

@@ -41,6 +41,12 @@ export default function TermsOfServicePage() {
             Users may optionally provide their academic major and graduation year for display
             on their profile to help potential roommates learn more about them.
           </p>
+          <p>
+            You may also optionally share your housing plans — whether you want on- or
+            off-campus housing, a preferred dorm or complex, a monthly budget range, a lease
+            term, and a move-in season and year. These are shown on your profile and used to
+            filter out people whose plans cannot work with yours.
+          </p>
         </div>
 
         <div className="legal-section">
@@ -60,7 +66,7 @@ export default function TermsOfServicePage() {
           <h2 className="legal-section-heading">4. User Content</h2>
           <p>
             You retain ownership of the content you post on RoomMatch, including your
-            profile photo, bio, and messages. By posting content, you grant RoomMatch a
+            profile photo, bio, prompt answers, and messages. By posting content, you grant RoomMatch a
             limited, non-exclusive license to display your content to other users for the
             purpose of facilitating roommate matching.
           </p>
@@ -83,10 +89,36 @@ export default function TermsOfServicePage() {
             with or meeting other users in person. RoomMatch is not responsible for any
             harm resulting from in-person interactions.
           </p>
+          <p>
+            You can tell us you have found a roommate at any time. Doing so hides you from
+            Discover and from new likes, cancels your pending sent likes, and records the
+            outcome — including whether the match came through RoomMatch — so we can improve
+            our matching. Your existing matches and chats stay available, and you can undo
+            the status at any time.
+          </p>
         </div>
 
         <div className="legal-section">
-          <h2 className="legal-section-heading">6. Account Suspension</h2>
+          <h2 className="legal-section-heading">6. Roommate Groups</h2>
+          <p>
+            You may form a roommate group with people you have already matched with, up to
+            four members. You can belong to only one open group at a time, and every member
+            must be the same gender, consistent with our matching rules.
+          </p>
+          <p>
+            Group members can see each other's profiles and the pairwise compatibility scores
+            within the group. Leaving a group, unmatching, blocking, or deleting your account
+            removes you from the group and cancels any pending invites. The group creator may
+            disband the group at any time.
+          </p>
+          <p>
+            RoomMatch does not arrange, guarantee, or take part in any lease, sublease, or
+            other housing agreement between group members.
+          </p>
+        </div>
+
+        <div className="legal-section">
+          <h2 className="legal-section-heading">7. Account Suspension</h2>
           <p>
             We may suspend or terminate your account at any time and for any reason,
             including but not limited to:
@@ -100,7 +132,7 @@ export default function TermsOfServicePage() {
         </div>
 
         <div className="legal-section">
-          <h2 className="legal-section-heading">7. Limitation of Liability</h2>
+          <h2 className="legal-section-heading">8. Limitation of Liability</h2>
           <p>
             RoomMatch is provided "as is" without warranties of any kind, either express
             or implied. To the fullest extent permitted by law, we are not liable for any
@@ -110,7 +142,7 @@ export default function TermsOfServicePage() {
         </div>
 
         <div className="legal-section">
-          <h2 className="legal-section-heading">8. Governing Law</h2>
+          <h2 className="legal-section-heading">9. Governing Law</h2>
           <p>
             These Terms of Service are governed by and construed in accordance with the
             laws of the State of Alabama, without regard to its conflict of law provisions.
@@ -118,7 +150,7 @@ export default function TermsOfServicePage() {
         </div>
 
         <div className="legal-section">
-          <h2 className="legal-section-heading">9. Changes to These Terms</h2>
+          <h2 className="legal-section-heading">10. Changes to These Terms</h2>
           <p>
             We may update these Terms of Service from time to time. We will make
             reasonable efforts to notify you of material changes. Your continued use of
@@ -127,7 +159,7 @@ export default function TermsOfServicePage() {
         </div>
 
         <div className="legal-section">
-          <h2 className="legal-section-heading">10. Contact</h2>
+          <h2 className="legal-section-heading">11. Contact</h2>
           <p>
             If you have questions or concerns about these Terms of Service, please
             contact us at:{' '}

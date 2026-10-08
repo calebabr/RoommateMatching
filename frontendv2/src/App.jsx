@@ -3,6 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigat
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { submitAge, acceptTerms, getUnreadChats, updateUser } from './services/api';
 import LegalModal from './components/LegalModal';
+import PromptAnswersEditor from './components/PromptAnswersEditor';
+import { HOUSING_TYPE_OPTIONS } from './utils/housing';
+import { MAJOR_OPTIONS, GRADUATION_SEASONS, GRADUATION_YEARS } from './utils/profileOptions';
+import { useProfilePrompts, sanitizePromptAnswers } from './utils/prompts';
 
 import LoginPage          from './pages/LoginPage';
 import SignupPage         from './pages/SignupPage';
@@ -14,6 +18,7 @@ import ChatListPage       from './pages/ChatListPage';
 import ChatPage           from './pages/ChatPage';
 import UserDetailPage     from './pages/UserDetailPage';
 import NotificationsPage   from './pages/NotificationsPage';
+import GroupPage           from './pages/GroupPage';
 import ForgotPasswordPage  from './pages/ForgotPasswordPage';
 import ResetPasswordPage   from './pages/ResetPasswordPage';
 import RestoreAccountPage  from './pages/RestoreAccountPage';
@@ -29,19 +34,27 @@ const TERMS_CHANGELOG = {
   "2026-06-03": null, // Initial release — no changelog shown for first-time acceptance
 };
 
-const MAJOR_OPTIONS = [
-  'Accounting', 'Aerospace Engineering', 'Architecture', 'Biology',
-  'Business Administration', 'Chemical Engineering', 'Chemistry',
-  'Civil Engineering', 'Communications', 'Computer Science',
-  'Criminal Justice', 'Economics', 'Education', 'Electrical Engineering',
-  'English', 'Finance', 'Graphic Design', 'History', 'Industrial Engineering',
-  'Information Systems', 'Kinesiology', 'Marketing', 'Mathematics',
-  'Mechanical Engineering', 'Nursing', 'Philosophy', 'Physics',
-  'Political Science', 'Psychology', 'Public Health', 'Sociology',
-  'Software Engineering', 'Statistics', 'Theater', 'Undecided', 'Other',
-];
-const GRADUATION_SEASONS = ['Spring', 'Summer', 'Fall'];
-const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
+// P3FT.14 — the zero-prompt-answers nudge is shown at most once per user.
+const PROMPT_NUDGE_KEY = 'roommatch_prompt_nudge_seen';
+
+const readPromptNudgeStore = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PROMPT_NUDGE_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch { return {}; }
+};
+
+const promptNudgeSeen = (userId) =>
+  userId != null && readPromptNudgeStore()[String(userId)] === true;
+
+const markPromptNudgeSeen = (userId) => {
+  if (userId == null) return;
+  try {
+    const store = readPromptNudgeStore();
+    store[String(userId)] = true;
+    localStorage.setItem(PROMPT_NUDGE_KEY, JSON.stringify(store));
+  } catch { /* storage unavailable — the nudge may reappear next session */ }
+};
 
 function calculateAge(dobString) {
   const dob = new Date(dobString);
@@ -220,17 +233,28 @@ function ToSModal() {
   );
 }
 
-function ProfileCompletionModal({ onDismiss }) {
+function ProfileCompletionModal({ onDismiss, showPrompts }) {
   const { user, refreshUser } = useAuth();
   const [major, setMajor] = useState('');
   const [majorOther, setMajorOther] = useState('');
   const [graduationSeason, setGraduationSeason] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
+  const [housingType, setHousingType] = useState(user?.housingType || '');
+  const [promptAnswers, setPromptAnswers] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { prompts: promptCatalogue } = useProfilePrompts();
+
+  const promptsVisible = showPrompts && promptCatalogue.length > 0;
+
+  const dismiss = useCallback(() => {
+    if (showPrompts) markPromptNudgeSeen(user?.id);
+    onDismiss();
+  }, [showPrompts, user, onDismiss]);
 
   const handleSave = useCallback(async () => {
-    if (!major && !graduationSeason && !graduationYear) {
+    const cleanPrompts = promptsVisible ? sanitizePromptAnswers(promptAnswers, promptCatalogue) : [];
+    if (!major && !graduationSeason && !graduationYear && !housingType && cleanPrompts.length === 0) {
       setError('Please fill in at least one field.');
       return;
     }
@@ -242,22 +266,57 @@ function ProfileCompletionModal({ onDismiss }) {
         major: resolvedMajor || undefined,
         graduationSeason: graduationSeason || undefined,
         graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
+        housingType: housingType || undefined,
+        ...(cleanPrompts.length ? { promptAnswers: cleanPrompts } : {}),
       });
+      // The nudge has been shown and acted on — never show it again for this user.
+      if (showPrompts) markPromptNudgeSeen(user?.id);
       await refreshUser();
     } catch (err) {
       setError(err?.response?.data?.detail || 'Could not save. Please try again.');
     } finally {
       setSaving(false);
     }
-  }, [major, majorOther, graduationSeason, graduationYear, user, refreshUser]);
+  }, [major, majorOther, graduationSeason, graduationYear, housingType, promptAnswers, promptsVisible, promptCatalogue, showPrompts, user, refreshUser]);
 
   return (
     <div className="modal-overlay" style={{ zIndex: 9000 }}>
-      <div className="modal-box">
+      <div className="modal-box profile-completion-box">
         <p className="modal-title">Complete Your Profile</p>
         <p className="modal-message">
-          Add your major and graduation year so potential roommates can learn more about you.
+          Add your major, graduation year, and where you want to live so we can find better roommates for you.
         </p>
+
+        {promptsVisible && (
+          <div className="profile-completion-prompts">
+            <label className="housing-field-label">
+              Answer a prompt so people get a feel for you (optional)
+            </label>
+            <PromptAnswersEditor
+              value={promptAnswers}
+              onChange={setPromptAnswers}
+              inputClass="form-input"
+            />
+          </div>
+        )}
+
+        <div className="profile-completion-housing">
+          <label className="housing-field-label">Where do you want to live? (optional)</label>
+          <div className="housing-type-row">
+            {HOUSING_TYPE_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setHousingType(housingType === opt.value ? '' : opt.value)}
+                className={`housing-type-btn ${housingType === opt.value ? 'housing-type-btn--selected' : ''}`}
+                aria-pressed={housingType === opt.value}
+              >
+                <span className="housing-type-emoji">{opt.emoji}</span>
+                <span className="housing-type-label">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div style={{ marginBottom: 14 }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
@@ -321,7 +380,7 @@ function ProfileCompletionModal({ onDismiss }) {
           </button>
           <button
             className="modal-btn"
-            onClick={onDismiss}
+            onClick={dismiss}
             style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }}
           >
             Skip for now
@@ -332,7 +391,7 @@ function ProfileCompletionModal({ onDismiss }) {
   );
 }
 
-const TAB_ICONS = { Profile: '👤', Discover: '🔍', Likes: '💌', Matches: '🤝', Chat: '💬' };
+const TAB_ICONS = { Profile: '👤', Discover: '🔍', Likes: '💌', Matches: '🤝', Group: '👥', Chat: '💬' };
 
 function SidebarLayout() {
   const { user } = useAuth();
@@ -394,6 +453,7 @@ function SidebarLayout() {
       { path: '/likes',    label: 'Likes'    },
     ] : []),
     { path: '/matches',  label: 'Matches'  },
+    { path: '/group',    label: 'Group'    },
     { path: '/chat',     label: 'Chat'     },
   ];
 
@@ -562,13 +622,20 @@ function AppRoutes() {
     return <ToSModal />;
   }
 
-  const needsProfileCompletion = !user.major || !user.graduationYear;
+  // P3FT.14 — nudge users with zero prompt answers, but only once ever.
+  const needsPromptNudge =
+    (user.promptAnswers?.length ?? 0) === 0 && !promptNudgeSeen(user.id);
+  const needsProfileCompletion =
+    !user.major || !user.graduationYear || !user.housingType || needsPromptNudge;
   const showProfileCompletion = needsProfileCompletion && !profileCompletionDismissed;
 
   return (
     <>
       {showProfileCompletion && (
-        <ProfileCompletionModal onDismiss={() => setProfileCompletionDismissed(true)} />
+        <ProfileCompletionModal
+          showPrompts={needsPromptNudge}
+          onDismiss={() => setProfileCompletionDismissed(true)}
+        />
       )}
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -579,6 +646,7 @@ function AppRoutes() {
           <Route path="discover"              element={<DiscoverPage />} />
           <Route path="likes"                 element={<LikesPage />} />
           <Route path="matches"               element={<MatchesPage />} />
+          <Route path="group"                 element={<GroupPage />} />
           <Route path="chat"                  element={<ChatListPage />} />
           <Route path="chat/:partnerId"       element={<ChatPage />} />
           <Route path="user/:userId"          element={<UserDetailPage />} />

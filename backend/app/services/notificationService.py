@@ -1,9 +1,20 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import notifications_collection
 
 class NotificationService:
     def __init__(self):
         self.notifications = notifications_collection
+
+    async def create(self, notif_type: str, from_user: int, to_user: int, message: str) -> None:
+        """Insert a notification. Used by group formation (P3FT.13) and others."""
+        await self.notifications.insert_one({
+            "type": notif_type,
+            "fromUser": from_user,
+            "toUser": to_user,
+            "message": message,
+            "read": False,
+            "createdAt": datetime.now(timezone.utc),
+        })
 
     async def get_notifications(self, user_id: int, limit: int = 50) -> list[dict]:
         """Get all notifications for a user, newest first."""

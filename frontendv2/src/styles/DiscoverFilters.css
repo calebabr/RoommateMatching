@@ -1,0 +1,370 @@
+/* ── P3FT.16 — Discover filters ── */
+
+.discover-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.discover-filter-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.discover-filter-trigger:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.discover-filter-trigger--active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background-color: var(--color-accent-glow);
+}
+
+.discover-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent);
+  color: var(--color-black);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.discover-filter-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.discover-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-accent);
+  background-color: var(--color-accent-glow);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.discover-filter-chip:hover {
+  background-color: var(--color-accent);
+  color: var(--color-black);
+}
+
+.discover-filter-clear {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.discover-filter-clear:hover {
+  color: var(--color-danger);
+}
+
+.discover-filter-result-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Filter sheet / dialog ── */
+
+.discover-filter-sheet {
+  max-width: 520px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.discover-filter-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.discover-filter-sheet-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.discover-filter-sheet-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.discover-filter-sheet-close:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.discover-filter-sheet-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-right: 4px;
+}
+
+.discover-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discover-filter-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.discover-filter-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.discover-filter-optionlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 132px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.discover-filter-option {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-card-light);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.discover-filter-option:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.discover-filter-option:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.discover-filter-option:disabled:hover {
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.discover-filter-option--selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-glow);
+  color: var(--color-accent);
+}
+
+.discover-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.discover-filter-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.discover-filter-row-sep {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.discover-filter-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.discover-filter-range {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
+.discover-filter-sheet-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+  flex-shrink: 0;
+}
+
+.discover-filter-apply-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.discover-filter-apply-btn {
+  flex: 1;
+  background-color: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-black);
+  cursor: pointer;
+}
+
+.discover-filter-reset-btn {
+  flex-shrink: 0;
+  background-color: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.discover-filter-reset-btn:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* Empty-result state when filters exclude everyone */
+.discover-filter-empty-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.discover-filter-empty-btn {
+  background-color: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-black);
+  cursor: pointer;
+}
+
+.discover-filter-empty-btn--ghost {
+  background-color: transparent;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .discover-filter-bar {
+    gap: 8px;
+  }
+
+  .discover-filter-trigger {
+    min-height: 44px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .discover-filter-result-count {
+    margin-left: 0;
+    width: 100%;
+    order: 3;
+  }
+
+  .discover-filter-chips {
+    order: 4;
+    flex-basis: 100%;
+  }
+
+  .discover-filter-chip,
+  .discover-filter-clear {
+    min-height: 32px;
+  }
+
+  .discover-filter-sheet {
+    max-width: 100%;
+    max-height: 88vh;
+  }
+
+  .discover-filter-sheet-close,
+  .discover-filter-option {
+    min-height: 44px;
+  }
+
+  .discover-filter-sheet-close {
+    width: 44px;
+  }
+
+  .discover-filter-optionlist {
+    max-height: 168px;
+  }
+
+  /* Prevent iOS auto-zoom on focus */
+  .discover-filter-sheet-body select,
+  .discover-filter-sheet-body input[type="number"] {
+    font-size: 16px;
+  }
+
+  .discover-filter-apply-btn,
+  .discover-filter-reset-btn,
+  .discover-filter-empty-btn {
+    min-height: 44px;
+  }
+}

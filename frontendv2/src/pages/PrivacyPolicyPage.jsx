@@ -26,7 +26,23 @@ export default function PrivacyPolicyPage() {
             <li>Date of birth and gender</li>
             <li>Profile photo</li>
             <li>Lifestyle preferences (sleep schedule, cleanliness, noise tolerance, and more)</li>
+            <li>
+              Prompt answers — the short written answers you give to profile prompts. These
+              are shown to other users on your profile and in Discover
+            </li>
             <li>Academic major, expected graduation season and year</li>
+            <li>
+              Housing plans (on- or off-campus preference, preferred dorm or complex,
+              monthly budget range, lease term, and move-in season and year)
+            </li>
+            <li>
+              Roommate status — if you tell us you found a roommate, we record that, when
+              you told us, and which RoomMatch users (if any) you named
+            </li>
+            <li>
+              Roommate group membership — the groups you create or join, who else is in
+              them, and the invites sent between members
+            </li>
             <li>Chat messages sent between matched users</li>
             <li>Usage and analytics data (pages visited, features used, session activity)</li>
           </ul>
@@ -37,7 +53,23 @@ export default function PrivacyPolicyPage() {
           <p>We use the information we collect to:</p>
           <ul>
             <li>Match you with compatible roommates based on your preferences</li>
+            <li>
+              Filter out people whose housing plans cannot work with yours (for example a
+              non-overlapping budget or an incompatible on- or off-campus choice)
+            </li>
+            <li>
+              Show you a per-category breakdown of why a match scored the way it did. This
+              only ever reveals your own answers — never another user's raw preference values
+            </li>
             <li>Enable chat between users who have matched with each other</li>
+            <li>
+              Run roommate groups, including showing pairwise compatibility between group
+              members and delivering group invites
+            </li>
+            <li>
+              Improve our matching algorithm — when you tell us you found a roommate we
+              record the outcome, including whether it happened through RoomMatch
+            </li>
             <li>Send account-related emails (password resets, notifications)</li>
             <li>Monitor app performance and diagnose errors</li>
             <li>Understand how the product is used and improve it over time</li>

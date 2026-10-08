@@ -16,6 +16,9 @@ from app.database import (
     blocks_collection,
     reports_collection,
     recommendations_collection,
+    groups_collection,
+    group_invites_collection,
+    outcomes_collection,
 )
 
 
@@ -40,6 +43,9 @@ class DeletionService:
         self.blocks = blocks_collection
         self.reports = reports_collection
         self.recommendations = recommendations_collection
+        self.groups = groups_collection
+        self.group_invites = group_invites_collection
+        self.outcomes = outcomes_collection
 
     async def soft_delete_user(self, user_id: int, password: str) -> str:
         """Verify password, mark user deleted, return plain restore token.
@@ -67,6 +73,11 @@ class DeletionService:
                 "restoreTokenExpiry": expiry,
             }}
         )
+
+        # P3FT.13 cascade — a deleted account cannot stay in a roommate group
+        from app.services.groupService import GroupService
+        await GroupService().remove_user_everywhere(user_id)
+
         return plain_token
 
     async def restore_account(self, token: str) -> dict:
@@ -128,6 +139,27 @@ class DeletionService:
             doc["_id"] = str(doc.pop("_id"))
             notifs.append(doc)
 
+        # P3FT.13 — groups the user belongs to.  Only member *ids* are exposed;
+        # other members' profiles are never inlined.
+        user_groups = []
+        async for doc in self.groups.find({"memberIds": user_id}):
+            doc.pop("_id", None)
+            user_groups.append(doc)
+
+        # P3FT.13 — invites in either direction (ids only, same as above).
+        group_invites = []
+        async for doc in self.group_invites.find({
+            "$or": [{"fromUserId": user_id}, {"toUserId": user_id}]
+        }):
+            doc.pop("_id", None)
+            group_invites.append(doc)
+
+        # P3FT.12 — roommate outcomes this user recorded.
+        user_outcomes = []
+        async for doc in self.outcomes.find({"userId": user_id}):
+            doc.pop("_id", None)
+            user_outcomes.append(doc)
+
         return {
             "user": user,
             "likes_sent": likes_sent,
@@ -135,6 +167,9 @@ class DeletionService:
             "matches": user_matches,
             "chat_messages": messages,
             "notifications": notifs,
+            "groups": user_groups,
+            "group_invites": group_invites,
+            "outcomes": user_outcomes,
         }
 
     async def hard_delete_user(self, user_id: int) -> None:
@@ -142,6 +177,10 @@ class DeletionService:
         user = await self.users.find_one({"id": user_id})
         if not user:
             return  # already gone
+
+        # P3FT.13 cascade — drop out of any group and cancel pending invites
+        from app.services.groupService import GroupService
+        await GroupService().remove_user_everywhere(user_id)
 
         # Remove from matched partners' matchedWith arrays
         partner_ids = _normalize_matched_with(user)
@@ -182,6 +221,25 @@ class DeletionService:
             {}, {"$pull": {"matches": {"user_id": user_id}}}
         )
         await self.recommendations.delete_one({"userId": user_id})
+
+        # P3FT.12 — anonymize rather than delete outcome rows.
+        #
+        # `outcomes` exists to tune scoring weights: the signal is entirely in
+        # compatibilityScore + viaApp, and the user ids contribute nothing to it.
+        # Nulling both id fields leaves a genuinely anonymous row (not merely
+        # pseudonymous), which satisfies erasure while keeping 100% of the
+        # analytical value.  Deleting the rows instead would bias the training
+        # set toward users who never left.
+        #
+        # The two sides are updated independently: a row may name the deleted
+        # user as partnerId while userId belongs to someone still active, and
+        # that surviving user's own record must stay intact.
+        await self.outcomes.update_many(
+            {"userId": user_id}, {"$set": {"userId": None}}
+        )
+        await self.outcomes.update_many(
+            {"partnerId": user_id}, {"$set": {"partnerId": None}}
+        )
 
         # Delete Cloudinary photo if present
         photo_url = user.get("photoUrl", "")

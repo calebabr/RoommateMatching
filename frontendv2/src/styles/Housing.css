@@ -1,0 +1,166 @@
+/* ── Housing intent fields + summary (P3FT.10) ── */
+
+.housing-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.housing-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.housing-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.housing-field-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 6px 0 0;
+  line-height: 16px;
+}
+
+.housing-field-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin: 6px 0 0;
+}
+
+.housing-char-count {
+  text-align: right;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin: 4px 0 0;
+}
+
+/* Housing type selector */
+.housing-type-row {
+  display: flex;
+  gap: 10px;
+}
+
+.housing-type-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 14px 6px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-card);
+  border: 1.5px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.housing-type-btn--selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-glow);
+}
+
+.housing-type-emoji { font-size: 22px; line-height: 1; }
+
+.housing-type-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.housing-type-btn--selected .housing-type-label { color: var(--color-accent); }
+
+/* Budget + move-in rows */
+.housing-budget-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.housing-budget-row input { flex: 1; min-width: 0; }
+
+.housing-budget-sep {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.housing-movein-row {
+  display: flex;
+  gap: 8px;
+}
+
+.housing-movein-row select { flex: 1; min-width: 0; }
+
+/* Housing block inside the profile-completion modal */
+.profile-completion-housing { margin-bottom: 16px; }
+
+/* ── Read-only summary ── */
+.housing-summary {
+  margin-top: 12px;
+  width: 100%;
+  background-color: var(--color-bg-card-light);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.housing-summary-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin: 0 0 8px;
+}
+
+.housing-summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.housing-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.housing-summary-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.housing-summary-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .housing-type-row {
+    flex-direction: column;
+  }
+
+  .housing-type-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .housing-type-label { text-align: left; }
+
+  .housing-fields { gap: 16px; }
+}

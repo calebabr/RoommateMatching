@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import posthog from 'posthog-js';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, getCompatibilityColor, getCompatibilityLabel } from '../utils/categories';
 import { useAuth } from '../context/AuthContext';
 import { getTopMatches, sendLike, getLikesSent, skipUser, getUser, getPhotoUrl } from '../services/api';
+import {
+  EMPTY_FILTERS,
+  loadFilters,
+  saveFilters,
+  normalizeFilters,
+  activeFilterKeys,
+  countActiveFilters,
+} from '../utils/discoverFilters';
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
+import RoommateFoundBanner from '../components/RoommateFoundBanner';
+import DiscoverFilterBar from '../components/DiscoverFilterBar';
+import PromptCards from '../components/PromptCards';
 
 export default function DiscoverPage() {
   const navigate = useNavigate();
@@ -18,12 +30,24 @@ export default function DiscoverPage() {
   const [likingId,  setLikingId]  = useState(null);
   const [passingId, setPassingId] = useState(null);
   const [modal,     setModal]     = useState(null);
+  // P3FT.16 — filters are restored from localStorage per user, never from the URL.
+  const [filters,    setFilters]    = useState(() => loadFilters(user?.id));
+  const [filteredOut,setFilteredOut]= useState(0);
+  const [loadError,  setLoadError]  = useState(false);
+  const initialisedRef = useRef(false);
 
-  const loadMatches = async () => {
+  const loadMatches = async (activeFilters) => {
     if (!user?.id) return;
     try {
-      const [data, sentIds] = await Promise.all([getTopMatches(user.id), getLikesSent(user.id)]);
+      const [data, sentIds] = await Promise.all([
+        getTopMatches(user.id, activeFilters),
+        getLikesSent(user.id),
+      ]);
       const topList = data.matches || [];
+      // Filters that exclude everyone come back as 200 {matches: [], filteredOut: N} —
+      // an empty result, not an error.
+      setFilteredOut(data.filteredOut || 0);
+      setLoadError(false);
       setLikedIds(new Set(sentIds));
       const profiles = await Promise.all(
         topList.map(async (m) => {
@@ -32,14 +56,36 @@ export default function DiscoverPage() {
         })
       );
       setMatchProfiles(profiles);
-    } catch { setMatchProfiles([]); }
+    } catch {
+      setMatchProfiles([]);
+      setFilteredOut(0);
+      setLoadError(true);
+    }
+  };
+
+  const applyFilters = (next) => {
+    const normalized = normalizeFilters(next);
+    setFilters(normalized);
+    saveFilters(user?.id, normalized);
+    const keys = activeFilterKeys(normalized);
+    if (keys.length > 0) {
+      // Keys only — filter VALUES (religion, budget) never leave the device.
+      posthog.capture('discover_filter_applied', { filter_keys: keys, filter_count: keys.length });
+    }
   };
 
   useEffect(() => {
+    if (!user?.id) return;
     let active = true;
-    (async () => { setLoading(true); await refreshUser(); await loadMatches(); if (active) setLoading(false); })();
+    (async () => {
+      setLoading(true);
+      if (!initialisedRef.current) await refreshUser();
+      await loadMatches(filters);
+      initialisedRef.current = true;
+      if (active) setLoading(false);
+    })();
     return () => { active = false; };
-  }, [user?.id]);
+  }, [user?.id, filters]);
 
   const handleLike = async (targetId) => {
     setLikingId(targetId);
@@ -47,7 +93,7 @@ export default function DiscoverPage() {
       const result = await sendLike(user.id, targetId);
       if (result.status === 'matched') {
         setModal({ title: "🎉 It's a Match!", message: `You and User #${targetId} are now roommate matches!` });
-        await refreshUser(); await loadMatches();
+        await refreshUser(); await loadMatches(filters);
       } else {
         setLikedIds(prev => new Set([...prev, targetId]));
       }
@@ -68,6 +114,8 @@ export default function DiscoverPage() {
     }
   };
 
+  const hasActiveFilters = countActiveFilters(filters) > 0;
+
   if (loading) return (
     <div className="loading-page">
       <Spinner size={40} />
@@ -80,25 +128,58 @@ export default function DiscoverPage() {
       {modal && <Modal title={modal.title} message={modal.message} onClose={() => setModal(null)} />}
 
       <div className="page-container">
+        <RoommateFoundBanner />
+
         <div className="page-header">
           <div>
             <p className="page-header-title">Discover</p>
             <p className="page-header-sub">{matchProfiles.length} compatible roommates</p>
           </div>
           <div className="discover-header-actions">
-            <button className="discover-refresh-btn" onClick={() => { setRefreshing(true); loadMatches().finally(() => setRefreshing(false)); }} disabled={refreshing}>
+            <button className="discover-refresh-btn" onClick={() => { setRefreshing(true); loadMatches(filters).finally(() => setRefreshing(false)); }} disabled={refreshing}>
               {refreshing ? <Spinner size={14} color={Colors.black} /> : '↻ Refresh'}
             </button>
             <NotificationBell />
           </div>
         </div>
 
+        <DiscoverFilterBar
+          filters={filters}
+          onChange={applyFilters}
+          resultCount={matchProfiles.length}
+          filteredOut={filteredOut}
+          loading={refreshing}
+        />
+
         {matchProfiles.length === 0 ? (
-          <div className="empty-state">
-            <span style={{ fontSize: 56 }}>🔍</span>
-            <p className="empty-state-title">No Matches Yet</p>
-            <p className="empty-state-desc">New users are being added all the time. Hit Refresh!</p>
-          </div>
+          loadError ? (
+            <div className="empty-state">
+              <span className="empty-state-emoji">⚠️</span>
+              <p className="empty-state-title">Couldn't Load Matches</p>
+              <p className="empty-state-desc">Something went wrong on our side. Try Refresh in a moment.</p>
+            </div>
+          ) : hasActiveFilters ? (
+            <div className="empty-state">
+              <span className="empty-state-emoji">🎛️</span>
+              <p className="empty-state-title">No one matches these filters</p>
+              <p className="empty-state-desc">
+                {filteredOut > 0
+                  ? `${filteredOut} ${filteredOut === 1 ? 'person was' : 'people were'} hidden by your filters. Try widening them.`
+                  : 'Try widening your filters to see more people.'}
+              </p>
+              <div className="discover-filter-empty-actions">
+                <button className="discover-filter-empty-btn" onClick={() => applyFilters({ ...EMPTY_FILTERS })}>
+                  Clear all filters
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <span className="empty-state-emoji">🔍</span>
+              <p className="empty-state-title">No Matches Yet</p>
+              <p className="empty-state-desc">New users are being added all the time. Hit Refresh!</p>
+            </div>
+          )
         ) : (
           <div className="discover-grid">
             {matchProfiles.map(item => {
@@ -137,6 +218,9 @@ export default function DiscoverPage() {
                       {item.bio && <p className="discover-bio">{item.bio}</p>}
                     </div>
                   </div>
+
+                  {/* Prompt answers (P3FT.14) — below the bio */}
+                  <PromptCards answers={item.promptAnswers} variant="compact" max={2} />
 
                   {/* Tags */}
                   {theirTags.length > 0 && (

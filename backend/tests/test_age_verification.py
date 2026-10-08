@@ -248,13 +248,19 @@ async def test_submit_age_underage_bans_user():
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["status"] == "banned"
-    assert "banned" in data["message"].lower()
+    # Assert on the substance, not the exact wording: the user-facing copy was
+    # softened from "banned" to "suspended ... minimum age requirement" and the
+    # old literal check broke on a pure copy edit.
+    assert "age" in data["message"].lower()
 
-    # Verify update_one was called with is_banned=True
-    mock_col.update_one.assert_awaited_once_with(
-        {"id": _USER_ID},
-        {"$set": {"is_banned": True, "ban_reason": "Age verification failed: user is under 18"}},
-    )
+    # Verify update_one was called with is_banned=True and an age-related reason.
+    # The reason copy is asserted by substance, not literally: the previous exact
+    # string match broke when the wording was softened.
+    mock_col.update_one.assert_awaited_once()
+    filter_arg, update_arg = mock_col.update_one.await_args.args
+    assert filter_arg == {"id": _USER_ID}
+    assert update_arg["$set"]["is_banned"] is True
+    assert "18" in update_arg["$set"]["ban_reason"]
 
 
 @pytest.mark.asyncio

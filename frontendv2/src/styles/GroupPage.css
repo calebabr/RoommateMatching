@@ -1,0 +1,344 @@
+/* ── Roommate group formation (P3FT.13) ── */
+
+.group-loading-text {
+  font-size: 14px;
+  margin: 0;
+}
+
+.group-empty-emoji { font-size: 56px; }
+
+.group-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--color-text-muted);
+  margin: 24px 0 12px;
+}
+
+/* ── Pending invites ── */
+.group-invites {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 8px;
+}
+
+.group-invites .group-section-title { margin-top: 0; }
+
+.group-invite-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.group-invite-row:first-of-type { border-top: none; }
+
+.group-invite-text {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.group-invite-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Summary strip ── */
+.group-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.group-summary-item {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.group-summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-text-muted);
+}
+
+.group-summary-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
+.group-summary-value--text {
+  font-size: 16px;
+  text-transform: capitalize;
+}
+
+.group-summary-sub {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* ── Members ── */
+.group-members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.group-member-card {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.group-member-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.group-member-avatar,
+.group-member-avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-input);
+  color: var(--color-accent);
+  font-size: 18px;
+  font-weight: 800;
+  object-fit: cover;
+}
+
+.group-member-identity { min-width: 0; }
+
+.group-member-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-member-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin: 2px 0 0;
+}
+
+.group-member-pairs {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-pair-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.group-pair-name {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-pair-score {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.group-pair-empty {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Buttons ── */
+.group-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.group-btn {
+  min-height: 44px;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+
+.group-btn--primary {
+  background-color: var(--color-accent);
+  color: var(--color-black);
+}
+
+.group-btn--ghost {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.group-btn--danger {
+  background-color: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.group-btn--small {
+  min-height: 36px;
+  padding: 8px 14px;
+  font-size: 13px;
+  background-color: var(--color-accent);
+  color: var(--color-black);
+  flex-shrink: 0;
+}
+
+.group-btn--block { width: 100%; margin-top: 16px; }
+
+.group-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Invite picker modal ── */
+.group-invite-modal { max-width: 460px; }
+
+.group-invite-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 8px;
+}
+
+.group-invite-modal-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 18px;
+  margin: 0 0 16px;
+}
+
+.group-invite-loading {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.group-invite-empty {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.group-invite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.group-invite-candidate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-card-light);
+  border: 1px solid var(--color-border);
+}
+
+.group-invite-candidate-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-invite-notice {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 12px 0 0;
+}
+
+/* ── Invite CTA on MatchesPage cards ── */
+.matches-group-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.matches-group-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 0;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  border: 1.5px solid var(--color-accent);
+  color: var(--color-accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.matches-group-btn:disabled { opacity: 0.5; cursor: default; }
+
+@media (max-width: 768px) {
+  .group-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .group-members-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .group-invite-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .group-invite-actions { width: 100%; }
+
+  .group-invite-actions .group-btn { flex: 1; }
+
+  .group-actions { flex-direction: column; }
+
+  .group-actions .group-btn { width: 100%; }
+
+  .group-invite-modal { max-width: 100%; }
+}

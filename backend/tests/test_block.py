@@ -7,7 +7,10 @@ from app.main import app
 from app.auth.utils import create_access_token, hash_password
 
 TEST_MONGO_URL = "mongodb://localhost:27017/"
-TEST_DB_NAME = "roommatch_test"
+# The test database name is per-process (see tests/conftest.py); importing it
+# rather than hard-coding "roommatch_test" keeps this file pointed at the same
+# database the app collections were bound to.
+from tests.conftest import TEST_DB_NAME  # noqa: E402
 
 client = TestClient(app)
 
@@ -266,19 +269,26 @@ class TestBlockFiltering:
             "userId": 701,
             "matches": [{"user_id": 702, "compatibilityScore": 0.95}],
         })
-        rv.recommendationService.collection = FullAsyncMongoWrapper(sync_db["recommendations"])
+        # Patch the real attribute (`.recommendations`), and restore it before
+        # leaving: assigning a non-existent `.collection` here leaked a stray
+        # attribute that test_skip.py and test_pause_deactivate.py then read,
+        # so those files passed in a full run and errored when run alone.
+        orig_recs = rv.recommendationService.recommendations
+        rv.recommendationService.recommendations = FullAsyncMongoWrapper(sync_db["recommendations"])
+        try:
 
-        # Block user 702
-        client.post("/api/users/701/block", json={"userId": 702}, headers=_auth(701))
+            # Block user 702
+            client.post("/api/users/701/block", json={"userId": 702}, headers=_auth(701))
 
-        resp = client.get("/api/users/701/top-matches", headers=_auth(701))
-        if resp.status_code == 200:
-            ids_returned = [m["user_id"] for m in resp.json().get("matches", [])]
-            assert 702 not in ids_returned
-        else:
-            assert resp.status_code == 404
-
-        sync_db["recommendations"].delete_many({})
+            resp = client.get("/api/users/701/top-matches", headers=_auth(701))
+            if resp.status_code == 200:
+                ids_returned = [m["user_id"] for m in resp.json().get("matches", [])]
+                assert 702 not in ids_returned
+            else:
+                assert resp.status_code == 404
+        finally:
+            rv.recommendationService.recommendations = orig_recs
+            sync_db["recommendations"].delete_many({})
 
     def test_block_is_bidirectional_in_filtering(self):
         """A blocks B: A's likes-received endpoint does not show B (B is blocked)."""

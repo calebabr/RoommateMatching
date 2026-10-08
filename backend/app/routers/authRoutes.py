@@ -1,7 +1,7 @@
 import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from pymongo import ReturnDocument
@@ -9,17 +9,24 @@ from app.database import users_collection, counters_collection
 from app.auth.utils import hash_password, verify_password, create_access_token, validate_password_strength, calculate_age
 from app.auth.dependencies import get_current_user, _admin_ids
 from app.limiter import limiter
-from app.models import Preference, ALLOWED_LIFESTYLE_TAGS, UserInDB
+from app.models import (
+    Preference,
+    ALLOWED_LIFESTYLE_TAGS,
+    HousingIntentFields,
+    PromptAnswerFields,
+)
 from app.services.recommendationService import RecommendationService
-from app.services.userProfileService import UserProfileService
 
 _rec_service = RecommendationService()
-_profile_service = UserProfileService()
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-class RegisterRequest(BaseModel):
+class RegisterRequest(HousingIntentFields, PromptAnswerFields):
+    # Inherits the optional P3FT.10 housing-intent fields:
+    # housingType, preferredLocation, budgetMin, budgetMax, leaseTerm,
+    # moveInSeason, moveInYear
+    # ...and the optional P3FT.14 `promptAnswers` list.
     email: str = Field(..., max_length=254)
     password: str = Field(..., max_length=128)
     username: str = Field(..., min_length=1, max_length=30, pattern=r'^[A-Za-z0-9_-]+$')
@@ -114,7 +121,7 @@ async def _get_next_id() -> int:
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/hour")
-async def register(request: Request, body: RegisterRequest):
+async def register(request: Request, body: RegisterRequest, background_tasks: BackgroundTasks):
     existing = await users_collection.find_one({"email": body.email.lower()})
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
@@ -170,19 +177,26 @@ async def register(request: Request, body: RegisterRequest):
     if body.graduationYear is not None:
         user_doc["graduationYear"] = body.graduationYear
 
+    # P3FT.10 — persist any housing-intent fields that were supplied
+    for field in HousingIntentFields.model_fields:
+        value = getattr(body, field, None)
+        if value is not None:
+            user_doc[field] = value
+
+    # P3FT.14 — prompt answers are display-only; store as plain dicts
+    user_doc["promptAnswers"] = (
+        [a.model_dump() for a in body.promptAnswers] if body.promptAnswers else []
+    )
+
     await users_collection.insert_one(user_doc)
     user_doc.pop("_id", None)
     user_doc.pop("hashed_password", None)
 
-    # Recompute recommendations for new user and all existing users
-    try:
-        all_users = await _profile_service.get_all_active_users()
-        if len(all_users) >= 2:
-            user_dicts = [UserInDB(**u).toMatchDict() for u in all_users]
-            new_user_dict = UserInDB(**user_doc).toMatchDict()
-            await _rec_service.on_new_user(new_user_dict, user_dicts)
-    except Exception:
-        pass  # never block registration if recompute fails
+    # P3B.8 — recomputing the whole pool is O(N) writes.  Queue it so the
+    # registration response is not held open behind it; the new user's discover
+    # feed may lag a few seconds, which is a much better trade than a slow or
+    # timed-out signup.
+    background_tasks.add_task(_rec_service.recompute_for_user_id, user_id)
 
     token = create_access_token({"sub": str(user_id)})
     refresh_token = await _generate_refresh_token(user_id)

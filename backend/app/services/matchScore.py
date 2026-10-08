@@ -13,6 +13,19 @@ class matchScore:
             "sharedSpace": [10, 0.2],
             "communication": [10, 0.2],
         }
+        # P3FT.11 — human-readable labels for the score breakdown endpoint.
+        # Display metadata only; it does not affect scoring.
+        self.categoryLabels = {
+            "sleepScheduleWeekdays": "Sleep Schedule (Weekdays)",
+            "sleepScheduleWeekends": "Sleep Schedule (Weekends)",
+            "cleanliness": "Cleanliness",
+            "noiseTolerance": "Noise Tolerance",
+            "guests": "Guests",
+            "personality": "Personality",
+            "smoking": "Smoking",
+            "sharedSpace": "Shared Space",
+            "communication": "Communication",
+        }
 
     def genderCompatible(self, user1, user2) -> bool:
         """
@@ -54,3 +67,49 @@ class matchScore:
         if not self.genderCompatible(user1, user2):
             return 0.0
         return min(self.matchScore(user1, user2), self.matchScore(user2, user1))
+
+    # --- P3FT.11: per-category breakdown -----------------------------------
+
+    # Normalized-distance thresholds used to bucket how far apart two users are
+    # on a single category.  Buckets exist so the endpoint never has to leak the
+    # other user's raw preference value.
+    SAME_THRESHOLD = 0.05
+    CLOSE_THRESHOLD = 0.25
+
+    def differenceBucket(self, category, cat1, cat2) -> str:
+        """Bucket the gap between two values as 'same' / 'close' / 'different'."""
+        catRange = self.categoryRange[category][0]
+        delta = abs(cat1 - cat2) / catRange
+        if delta <= self.SAME_THRESHOLD:
+            return "same"
+        if delta <= self.CLOSE_THRESHOLD:
+            return "close"
+        return "different"
+
+    def categoryBreakdown(self, user1, user2) -> list:
+        """Explain `compatibilityScore(user1, user2)` one category at a time.
+
+        `user1` is the *viewer*: `yourValue` is always their own raw value.  The
+        other user's value is never returned — only the bucketed `difference`.
+        Each per-category `score` is the minimum of `preferenceScore` evaluated
+        in both directions, matching how `compatibilityScore` takes the min of
+        the two `matchScore` directions.
+        """
+        rows = []
+        for c in self.categoryRange.keys():
+            v1 = user1[c][0]
+            v2 = user2[c][0]
+            score = min(
+                self.preferenceScore(c, v1, v2),
+                self.preferenceScore(c, v2, v1),
+            )
+            rows.append({
+                "key": c,
+                "label": self.categoryLabels[c],
+                "yourValue": v1,
+                "difference": self.differenceBucket(c, v1, v2),
+                "score": round(score, 6),
+                "isDealBreaker": bool(user1[c][1] or user2[c][1]),
+                "dealBreakerTriggered": self.dealBreak(c, user1, user2) == 0.0,
+            })
+        return rows

@@ -15,8 +15,17 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-const NOTIF_ICON  = { like_received: '💌', match_created: '🎉', unmatch: '💔' };
-const NOTIF_COLOR = { like_received: '#F87171', match_created: '#4ADE80', unmatch: '#666666' };
+const NOTIF_ICON  = {
+  like_received: '💌', match_created: '🎉', unmatch: '💔',
+  group_invite: '👥', group_invite_accepted: '🤝', group_member_left: '🚪',
+};
+const NOTIF_COLOR = {
+  like_received: '#F87171', match_created: '#4ADE80', unmatch: '#666666',
+  group_invite: '#E8A838', group_invite_accepted: '#4ADE80', group_member_left: '#666666',
+};
+
+/** Any group-related notification routes to the Group page. */
+const isGroupNotification = (type) => typeof type === 'string' && type.startsWith('group');
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
@@ -65,14 +74,19 @@ export default function NotificationsPage() {
         ) : (
           <div className="notifications-list">
             {notifications.map(item => {
-              const icon  = NOTIF_ICON[item.type]  || '🔔';
+              const group = isGroupNotification(item.type);
+              const icon  = NOTIF_ICON[item.type]  || (group ? '👥' : '🔔');
               const color = NOTIF_COLOR[item.type] || 'var(--color-accent)';
-              const clickable = item.type === 'like_received' || item.type === 'match_created';
+              const clickable = group || item.type === 'like_received' || item.type === 'match_created';
+              const goTo = () => {
+                if (group) navigate('/group');
+                else if (clickable) navigate(`/user/${item.fromUser}`);
+              };
               return (
                 <div
                   key={item.id}
                   className={`notifications-item ${item.read ? 'notifications-item--read' : 'notifications-item--unread'} ${clickable ? 'notifications-item--clickable' : 'notifications-item--static'}`}
-                  onClick={() => clickable && navigate(`/user/${item.fromUser}`)}
+                  onClick={goTo}
                 >
                   <div
                     className="notifications-icon-circle"
@@ -82,6 +96,9 @@ export default function NotificationsPage() {
                   </div>
                   <div className="notifications-content">
                     <p className="notifications-message">{item.message}</p>
+                    {item.type === 'group_invite' && (
+                      <p className="notifications-action-hint">Open Group to accept or decline →</p>
+                    )}
                     <p className="notifications-time">{timeAgo(item.createdAt)}</p>
                   </div>
                   {!item.read && (

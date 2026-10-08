@@ -22,33 +22,37 @@ import { useNavigate } from 'react-router-dom';
 import { Colors } from '../utils/theme';
 import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 
-const RELIGION_OPTIONS = [
-  'Christian', 'Catholic', 'Muslim', 'Jewish', 'Hindu',
-  'Buddhist', 'Agnostic', 'Atheist', 'Spiritual', 'Other', 'Prefer not to say',
-];
-
-const MAJOR_OPTIONS = [
-  'Accounting', 'Aerospace Engineering', 'Architecture', 'Biology',
-  'Business Administration', 'Chemical Engineering', 'Chemistry',
-  'Civil Engineering', 'Communications', 'Computer Science',
-  'Criminal Justice', 'Economics', 'Education', 'Electrical Engineering',
-  'English', 'Finance', 'Graphic Design', 'History', 'Industrial Engineering',
-  'Information Systems', 'Kinesiology', 'Marketing', 'Mathematics',
-  'Mechanical Engineering', 'Nursing', 'Philosophy', 'Physics',
-  'Political Science', 'Psychology', 'Public Health', 'Sociology',
-  'Software Engineering', 'Statistics', 'Theater', 'Undecided', 'Other',
-];
-
-const GRADUATION_SEASONS = ['Spring', 'Summer', 'Fall'];
-const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
+import {
+  RELIGION_OPTIONS,
+  MAJOR_OPTIONS,
+  GRADUATION_SEASONS,
+  GRADUATION_YEARS,
+} from '../utils/profileOptions';
 import { useAuth } from '../context/AuthContext';
 import posthog from 'posthog-js';
-import { updateUser, uploadPhoto, getPhotoUrl, getBlockedUsers, unblockUser, exportUserData, deleteAccount, pauseProfile, unpauseProfile, deactivateProfile, reactivateProfile } from '../services/api';
+import { updateUser, uploadPhoto, getPhotoUrl, getBlockedUsers, unblockUser, exportUserData, deleteAccount, pauseProfile, unpauseProfile, deactivateProfile, reactivateProfile, undoRoommateFound } from '../services/api';
 import SliderPicker from '../components/SliderPicker';
 import Toggle from '../components/Toggle';
 import NotificationBell from '../components/NotificationBell';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
+import HousingFields from '../components/HousingFields';
+import HousingSummary from '../components/HousingSummary';
+import RoommateFoundModal from '../components/RoommateFoundModal';
+import PromptAnswersEditor from '../components/PromptAnswersEditor';
+import PromptCards from '../components/PromptCards';
+import { buildHousingPayload } from '../utils/housing';
+import { useProfilePrompts, sanitizePromptAnswers } from '../utils/prompts';
+
+const housingStateFrom = (u) => ({
+  housingType:       u?.housingType || '',
+  preferredLocation: u?.preferredLocation || '',
+  budgetMin:         u?.budgetMin != null ? String(u.budgetMin) : '',
+  budgetMax:         u?.budgetMax != null ? String(u.budgetMax) : '',
+  leaseTerm:         u?.leaseTerm || '',
+  moveInSeason:      u?.moveInSeason || '',
+  moveInYear:        u?.moveInYear ? String(u.moveInYear) : '',
+});
 
 export default function ProfilePage() {
   const { user, refreshUser, logout } = useAuth();
@@ -71,7 +75,17 @@ export default function ProfilePage() {
   });
   const [graduationSeason, setGraduationSeason] = useState(user?.graduationSeason || '');
   const [graduationYear,   setGraduationYear]   = useState(user?.graduationYear ? String(user.graduationYear) : '');
+  const [housing,          setHousing]          = useState(() => housingStateFrom(user));
+  // P3FT.14 — prompt answers. The catalogue is fetched once; when it is
+  // unavailable the editor and the cards both render nothing.
+  const [promptAnswers,    setPromptAnswers]    = useState(() => (user?.promptAnswers || []).map(a => ({ ...a })));
+  const { prompts: promptCatalogue } = useProfilePrompts();
   const fileInputRef   = useRef(null);
+
+  // Roommate-found status (P3FT.12)
+  const [showRoommateFound, setShowRoommateFound] = useState(false);
+  const [undoingFound,      setUndoingFound]      = useState(false);
+  const [foundError,        setFoundError]        = useState('');
   const cameraInputRef = useRef(null);
 
   // Blocked users
@@ -119,6 +133,9 @@ export default function ProfilePage() {
   const toggleTag = (tag) =>
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
 
+  const updateHousing = (field, val) =>
+    setHousing(prev => ({ ...prev, [field]: val }));
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) { setPhotoFile(file); setPhotoPreview(URL.createObjectURL(file)); }
@@ -128,6 +145,10 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       const resolvedMajor = major === 'Other' ? (majorOther.trim() ? `Other: ${majorOther.trim()}` : '') : major;
+      // Only send promptAnswers once the catalogue has loaded — if the prompts
+      // endpoint is unavailable the field is omitted rather than blanked out.
+      const promptsAvailable = promptCatalogue.length > 0;
+      const cleanPrompts = promptsAvailable ? sanitizePromptAnswers(promptAnswers, promptCatalogue) : [];
       const payload = {
         username: username.trim() || user.username,
         gender: user.gender || 'male',
@@ -137,9 +158,12 @@ export default function ProfilePage() {
         major: resolvedMajor || undefined,
         graduationSeason: graduationSeason || undefined,
         graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
+        ...(promptsAvailable ? { promptAnswers: cleanPrompts } : {}),
+        ...buildHousingPayload(housing),
         ...preferences,
       };
       await updateUser(user.id, payload);
+      if (cleanPrompts.length > 0) posthog.capture('prompt_answered', { count: cleanPrompts.length });
       if (photoFile) {
         await uploadPhoto(user.id, photoFile);
         posthog.capture('photo_uploaded');
@@ -167,6 +191,8 @@ export default function ProfilePage() {
     setMajorOther(m.startsWith('Other: ') ? m.slice(7) : '');
     setGraduationSeason(user?.graduationSeason || '');
     setGraduationYear(user?.graduationYear ? String(user.graduationYear) : '');
+    setHousing(housingStateFrom(user));
+    setPromptAnswers((user?.promptAnswers || []).map(a => ({ ...a })));
     setPreferences(CATEGORIES.reduce((acc, cat) => {
       acc[cat.key] = { value: user?.[cat.key]?.value ?? Math.round((cat.max - cat.min) / 2), isDealBreaker: user?.[cat.key]?.isDealBreaker ?? false };
       return acc;
@@ -257,6 +283,19 @@ export default function ProfilePage() {
       setModal({ title: 'Error', message: err?.response?.data?.detail || 'Could not deactivate account. Check your password.' });
     } finally {
       setDeactivating(false);
+    }
+  };
+
+  const handleUndoRoommateFound = async () => {
+    setUndoingFound(true);
+    setFoundError('');
+    try {
+      await undoRoommateFound(user.id);
+      await refreshUser();
+    } catch (err) {
+      setFoundError(err?.response?.data?.detail || 'Could not undo. Please try again.');
+    } finally {
+      setUndoingFound(false);
     }
   };
 
@@ -370,6 +409,10 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
+
+              {!editing && <PromptCards answers={user.promptAnswers} variant="detail" />}
+
+              {!editing && <HousingSummary profile={user} />}
 
               <span className={`profile-match-status ${matchCount > 0 ? 'profile-match-status--matched' : 'profile-match-status--searching'}`}>
                 {matchCount > 0 ? `Matched with ${matchCount} roommate${matchCount > 1 ? 's' : ''}` : 'Searching for roommate'}
@@ -488,6 +531,27 @@ export default function ProfilePage() {
                     </select>
                   </div>
                 </div>
+
+                <div className="profile-section">
+                  <p className="profile-section-title">Housing</p>
+                  <HousingFields values={housing} onChange={updateHousing} inputClass="profile-input" />
+                </div>
+
+                {/* Prompts (P3FT.14) — hidden entirely when the catalogue is unavailable */}
+                {promptCatalogue.length > 0 && (
+                  <div className="profile-section">
+                    <p className="profile-section-title">Prompts</p>
+                    <p className="profile-section-hint">
+                      Optional — answer up to 3 prompts so people get a feel for you. Drag-free
+                      reordering with the arrows; answers show on your profile and in Discover.
+                    </p>
+                    <PromptAnswersEditor
+                      value={promptAnswers}
+                      onChange={setPromptAnswers}
+                      inputClass="profile-input"
+                    />
+                  </div>
+                )}
               </>
             )}
 
@@ -567,6 +631,41 @@ export default function ProfilePage() {
               </div>
             )}
 
+            {/* ── Roommate status (P3FT.12) ── */}
+            <div className="roommate-status-section">
+              <p className="roommate-status-title">Roommate Status</p>
+              {user.roommateFound ? (
+                <>
+                  <p className="roommate-status-active">🎉 You've marked that you found a roommate.</p>
+                  <p className="roommate-status-desc">
+                    You're hidden from Discover and Liked You. Your existing matches and chats
+                    still work. Changed your mind?
+                  </p>
+                  <button
+                    className="roommate-status-btn roommate-status-btn--undo"
+                    onClick={handleUndoRoommateFound}
+                    disabled={undoingFound}
+                  >
+                    {undoingFound ? '...' : 'Undo — I\'m still looking'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="roommate-status-desc">
+                    Sorted out your living situation? Let us know and we'll take you out of
+                    Discover. You can undo it any time.
+                  </p>
+                  <button
+                    className="roommate-status-btn"
+                    onClick={() => { setFoundError(''); setShowRoommateFound(true); }}
+                  >
+                    I found a roommate 🎉
+                  </button>
+                </>
+              )}
+              {foundError && <p className="roommate-status-error">{foundError}</p>}
+            </div>
+
             {/* ── Danger Zone ── */}
             <div className="danger-zone">
               <p className="danger-zone-title">Danger Zone</p>
@@ -642,6 +741,21 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* "I found a roommate" modal */}
+      {showRoommateFound && (
+        <RoommateFoundModal
+          onClose={() => setShowRoommateFound(false)}
+          onDone={(result) => {
+            const n = result?.outcomesRecorded || 0;
+            setModal({
+              title: 'Congrats! 🎉',
+              message: "You're hidden from Discover. Your matches and chats still work."
+                + (n > 0 ? ` We recorded ${n} match ${n === 1 ? 'outcome' : 'outcomes'} to improve our matching.` : ''),
+            });
+          }}
+        />
+      )}
 
       {/* Delete account confirmation modal */}
       {showDeleteModal && (

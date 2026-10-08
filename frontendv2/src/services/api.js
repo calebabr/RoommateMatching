@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { buildFilterParams } from '../utils/discoverFilters';
 
 const DEFAULT_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:8000/api'
@@ -53,7 +54,11 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config;
-    if (err?.response?.status === 401 && !original._retry) {
+    // `_skipAuthRedirect` opts a request out of the refresh-or-logout path.
+    // Used by calls that legitimately run while signed out (e.g. the signup
+    // form fetching the prompt catalogue) so a 401 there cannot bounce a
+    // half-finished signup to /login.
+    if (err?.response?.status === 401 && !original._retry && !original._skipAuthRedirect) {
       const refreshToken = loadRefreshToken();
       // Don't try to refresh if the failing call was itself the refresh endpoint
       if (!refreshToken || original.url?.includes('/auth/refresh')) {
@@ -134,7 +139,24 @@ export const getPhotoUrl = (relativePath) => {
 };
 
 // ── Recommendations ────────────────────────────────────────────────────────
-export const getTopMatches = (userId) => api.get(`/users/${userId}/top-matches`).then(r => r.data);
+/**
+ * `filters` is the Discover filter state (P3FT.16). It is serialized by
+ * `buildFilterParams`, which returns a URLSearchParams so repeatable params
+ * (`major`, `tags`) are sent as `?tags=A&tags=B` rather than comma-joined.
+ * Pass nothing for an unfiltered request.
+ *
+ * When filters exclude everyone the endpoint returns `200 {matches: [], filteredOut: N}` —
+ * that is a normal empty result, not an error.
+ */
+export const getTopMatches = (userId, filters) => {
+  const params = buildFilterParams(filters);
+  return api.get(`/users/${userId}/top-matches`, params ? { params } : undefined).then(r => r.data);
+};
+
+// ── Profile prompts (P3FT.14) ──────────────────────────────────────────────
+// Single source of truth for the curated prompt list — never hardcode it here.
+export const getProfilePrompts = () =>
+  api.get('/profile-prompts', { _skipAuthRedirect: true }).then(r => r.data);
 
 // ── Likes & Matching ───────────────────────────────────────────────────────
 export const sendLike         = (userId, toUserId) => api.post(`/users/${userId}/like`, { toUser: toUserId }).then(r => r.data);
@@ -148,6 +170,23 @@ export const skipUser         = (userId, skippedUserId) => api.post(`/users/${us
 // ── Match Score ────────────────────────────────────────────────────────────
 export const getMatchScore = (user1Id, user2Id) =>
   api.post('/matchScore', { user1_id: user1Id, user2_id: user2Id }).then(r => r.data);
+
+// ── Match Score breakdown ──────────────────────────────────────────────────
+export const getMatchBreakdown = (userId, otherId) =>
+  api.get(`/users/${userId}/match-breakdown/${otherId}`).then(r => r.data);
+
+// ── Roommate found status ──────────────────────────────────────────────────
+export const markRoommateFound = (userId, payload) => api.post(`/users/${userId}/roommate-found`, payload).then(r => r.data);
+export const undoRoommateFound = (userId)          => api.post(`/users/${userId}/roommate-found/undo`).then(r => r.data);
+
+// ── Roommate groups ────────────────────────────────────────────────────────
+export const createGroup            = (data = {})              => api.post('/groups', data).then(r => r.data);
+export const getMyGroup             = ()                       => api.get('/groups/mine').then(r => r.data);
+export const inviteToGroup          = (groupId, userId)        => api.post(`/groups/${groupId}/invite/${userId}`).then(r => r.data);
+export const respondToGroupInvite   = (groupId, inviteId, action)  => api.post(`/groups/${groupId}/invites/${inviteId}/respond`, { action }).then(r => r.data);
+export const leaveGroup             = (groupId)                => api.post(`/groups/${groupId}/leave`).then(r => r.data);
+export const disbandGroup           = (groupId)                => api.delete(`/groups/${groupId}`).then(r => r.data);
+export const getGroupCompatibility  = (groupId)                => api.get(`/groups/${groupId}/compatibility`).then(r => r.data);
 
 // ── Chat ───────────────────────────────────────────────────────────────────
 export const getChatConversations = (userId)                  => api.get(`/users/${userId}/chat/conversations`).then(r => r.data);

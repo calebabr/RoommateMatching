@@ -163,6 +163,13 @@
   margin: 0 0 14px;
 }
 
+.profile-section-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin: -8px 0 12px;
+}
+
 .profile-input {
   width: 100%;
   background-color: var(--color-bg-input);

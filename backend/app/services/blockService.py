@@ -67,6 +67,12 @@ class BlockService:
             ]
         })
 
+        # P3FT.13 cascade — the two cannot share a roommate group.  The blocker
+        # keeps the group; the blocked user is removed from it.  Pending group
+        # invites between them are cancelled in both directions.
+        from app.services.groupService import GroupService
+        await GroupService().separate_pair(blocker_id, blocked_id)
+
     async def unblock_user(self, blocker_id: int, blocked_id: int) -> None:
         """Remove a block record. Does NOT restore a previously removed match."""
         await self.blocks.delete_one({"blockerId": blocker_id, "blockedId": blocked_id})

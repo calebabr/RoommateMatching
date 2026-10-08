@@ -25,30 +25,26 @@ import { CATEGORIES, LIFESTYLE_TAGS } from '../utils/categories';
 import posthog from 'posthog-js';
 import { uploadPhoto, setApiBase } from '../services/api';
 
-const RELIGION_OPTIONS = [
-  'Christian', 'Catholic', 'Muslim', 'Jewish', 'Hindu',
-  'Buddhist', 'Agnostic', 'Atheist', 'Spiritual', 'Other', 'Prefer not to say',
-];
-
-const MAJOR_OPTIONS = [
-  'Accounting', 'Aerospace Engineering', 'Architecture', 'Biology',
-  'Business Administration', 'Chemical Engineering', 'Chemistry',
-  'Civil Engineering', 'Communications', 'Computer Science',
-  'Criminal Justice', 'Economics', 'Education', 'Electrical Engineering',
-  'English', 'Finance', 'Graphic Design', 'History', 'Industrial Engineering',
-  'Information Systems', 'Kinesiology', 'Marketing', 'Mathematics',
-  'Mechanical Engineering', 'Nursing', 'Philosophy', 'Physics',
-  'Political Science', 'Psychology', 'Public Health', 'Sociology',
-  'Software Engineering', 'Statistics', 'Theater', 'Undecided', 'Other',
-];
-
-const GRADUATION_SEASONS = ['Spring', 'Summer', 'Fall'];
-const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
+import {
+  RELIGION_OPTIONS,
+  MAJOR_OPTIONS,
+  GRADUATION_SEASONS,
+  GRADUATION_YEARS,
+} from '../utils/profileOptions';
 import { useAuth } from '../context/AuthContext';
 import SliderPicker from '../components/SliderPicker';
 import Toggle from '../components/Toggle';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
+import HousingFields from '../components/HousingFields';
+import PromptAnswersEditor from '../components/PromptAnswersEditor';
+import { buildHousingPayload } from '../utils/housing';
+import { useProfilePrompts, sanitizePromptAnswers, MAX_PROMPT_ANSWERS } from '../utils/prompts';
+
+const EMPTY_HOUSING = {
+  housingType: '', preferredLocation: '', budgetMin: '', budgetMax: '',
+  leaseTerm: '', moveInSeason: '', moveInYear: '',
+};
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -69,6 +65,9 @@ export default function SignupPage() {
   const [majorOther,        setMajorOther]        = useState('');
   const [graduationSeason,  setGraduationSeason]  = useState('');
   const [graduationYear,    setGraduationYear]    = useState('');
+  const [housing,           setHousing]           = useState(EMPTY_HOUSING);
+  const [promptAnswers,     setPromptAnswers]     = useState([]);
+  const { prompts: promptCatalogue } = useProfilePrompts();
   const [agreedToTerms,   setAgreedToTerms]   = useState(false);
   const [termsError,      setTermsError]      = useState('');
   const [legalModal,      setLegalModal]      = useState(null); // 'terms' | 'privacy' | null
@@ -105,6 +104,9 @@ export default function SignupPage() {
   const updatePref = (key, field, val) =>
     setPreferences(prev => ({ ...prev, [key]: { ...prev[key], [field]: val } }));
 
+  const updateHousing = (field, val) =>
+    setHousing(prev => ({ ...prev, [field]: val }));
+
   const toggleTag = (tag) =>
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
 
@@ -127,6 +129,10 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const resolvedMajor = major === 'Other' ? (majorOther.trim() ? `Other: ${majorOther.trim()}` : '') : major;
+      // Prompt answers are omitted entirely when the catalogue never loaded.
+      const cleanPrompts = promptCatalogue.length
+        ? sanitizePromptAnswers(promptAnswers, promptCatalogue)
+        : [];
       const profileData = {
         username: username.trim(),
         gender,
@@ -138,9 +144,12 @@ export default function SignupPage() {
         graduationYear: graduationYear ? parseInt(graduationYear) : undefined,
         dateOfBirth,
         termsVersion: "2026-06-03",
+        ...(cleanPrompts.length ? { promptAnswers: cleanPrompts } : {}),
+        ...buildHousingPayload(housing),
         ...preferences,
       };
       const created = await signup(email.trim(), password, profileData);
+      if (cleanPrompts.length > 0) posthog.capture('prompt_answered', { count: cleanPrompts.length });
       if (photoFile) {
         try { const r = await uploadPhoto(created.id, photoFile); created.photoUrl = r.photoUrl; }
         catch {}
@@ -169,7 +178,7 @@ export default function SignupPage() {
           ← Back
         </button>
         <div className="signup-step-row">
-          {[0, 1, 2].map((i) => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <React.Fragment key={i}>
               {i > 0 && <div className={`signup-step-line ${step >= i ? 'signup-step-line--active' : ''}`} />}
               <div className={`signup-step-dot ${step >= i ? 'signup-step-dot--active' : ''}`} />
@@ -369,11 +378,48 @@ export default function SignupPage() {
                 />
               </div>
             ))}
-            <button className="signup-next-btn" onClick={() => setStep(2)}>Next — Lifestyle Tags</button>
+            <button className="signup-next-btn" onClick={() => setStep(2)}>Next — Housing</button>
           </>
         )}
 
         {step === 2 && (
+          <>
+            <h2 className="signup-title">Housing Plans</h2>
+            <p className="signup-subtitle">
+              All optional — but it helps us hide people whose housing plans can't work with yours.
+            </p>
+
+            <HousingFields values={housing} onChange={updateHousing} inputClass="form-input" />
+
+            <button className="signup-next-btn" onClick={() => setStep(3)}>
+              {promptCatalogue.length > 0 ? 'Next — Prompts' : 'Next — Lifestyle Tags'}
+            </button>
+          </>
+        )}
+
+        {/* Prompts (P3FT.14) — optional; skipped entirely when the catalogue is unavailable */}
+        {step === 3 && (
+          <>
+            <h2 className="signup-title">Prompts</h2>
+            <p className="signup-subtitle">
+              Optional — answer up to {MAX_PROMPT_ANSWERS} prompts so people get a feel for you.
+            </p>
+
+            {promptCatalogue.length > 0 ? (
+              <PromptAnswersEditor
+                value={promptAnswers}
+                onChange={setPromptAnswers}
+                inputClass="form-input"
+              />
+            ) : (
+              <p className="signup-subtitle">Prompts aren't available right now — you can add them later from your profile.</p>
+            )}
+
+            <button className="signup-next-btn" onClick={() => setStep(4)}>Next — Lifestyle Tags</button>
+          </>
+        )}
+
+        {step === 4 && (
           <>
             <h2 className="signup-title">Lifestyle Tags</h2>
             <p className="signup-subtitle">Pick tags that describe you — shared tags boost your match score!</p>

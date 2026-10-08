@@ -18,7 +18,10 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from httpx import AsyncClient, ASGITransport
 
 TEST_MONGO_URL = "mongodb://localhost:27017/"
-TEST_DB_NAME = "roommatch_test"
+# The test database name is per-process (see tests/conftest.py); importing it
+# rather than hard-coding "roommatch_test" keeps this file pointed at the same
+# database the app collections were bound to.
+from tests.conftest import TEST_DB_NAME  # noqa: E402
 
 _STRONG_PASSWORD = "Tr0ub4dor&3"
 
@@ -53,6 +56,17 @@ async def client():
     users_col = db["users"]
     counters_col = db["counters"]
 
+    # Save originals. Without this the Motor collections below leaked into every
+    # test module that ran after this one; motor_client.close() at teardown then
+    # left them bound to a closed client, so ~40 later tests died with
+    # "pymongo.errors.InvalidOperation: Cannot use MongoClient after close".
+    orig = {
+        "db.users": app.database.users_collection,
+        "ar.users": app.routers.authRoutes.users_collection,
+        "ar.counters": app.routers.authRoutes.counters_collection,
+        "deps.users": app.auth.dependencies.users_collection,
+    }
+
     app.database.users_collection = users_col
     app.routers.authRoutes.users_collection = users_col
     app.routers.authRoutes.counters_collection = counters_col
@@ -70,6 +84,11 @@ async def client():
     transport = ASGITransport(app=fastapi_app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+    app.database.users_collection = orig["db.users"]
+    app.routers.authRoutes.users_collection = orig["ar.users"]
+    app.routers.authRoutes.counters_collection = orig["ar.counters"]
+    app.auth.dependencies.users_collection = orig["deps.users"]
 
     motor_client.close()
 
